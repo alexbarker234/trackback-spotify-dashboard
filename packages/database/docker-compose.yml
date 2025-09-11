@@ -1,0 +1,17 @@
+name: spotify-dashboard
+
+services:
+  db:
+    container_name: spotify-dashboard-database
+    image: postgres
+    environment:
+      # comes from the .env file
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    ports:
+      - ${POSTGRES_DEV_PORT}:5432
+    volumes:
+      - app-volume:/var/lib/postgresql/data
+volumes:
+  app-volume: #

@@ -1,0 +1,13 @@
+{
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+    },
+    "editor.tabSize": 2,
+    "files.associations": {
+        "*.css": "postcss"
+    },
+    "[*.sql]": {
+        "editor.formatOnSave": false
+    }
+}
