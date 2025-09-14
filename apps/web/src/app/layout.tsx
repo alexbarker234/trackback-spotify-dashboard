@@ -11,8 +11,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "University Club",
-  description: "University Club"
+  title: "Trackback",
+  description: "Trackback"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

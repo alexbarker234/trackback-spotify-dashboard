@@ -4,6 +4,17 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { createAuthMiddleware, customSession } from "better-auth/plugins";
 
+const scopes = [
+  "user-read-recently-played",
+  "user-read-private",
+  "user-read-email",
+  "user-top-read",
+  "playlist-read-private",
+  "playlist-read-collaborative",
+  "playlist-modify-public",
+  "playlist-modify-private"
+];
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -17,7 +28,8 @@ export const auth = betterAuth({
   socialProviders: {
     spotify: {
       clientId: process.env.SPOTIFY_CLIENT_ID as string,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
+      scope: scopes
     }
   },
   databaseHooks: {

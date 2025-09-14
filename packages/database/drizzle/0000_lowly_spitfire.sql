@@ -46,5 +46,45 @@ CREATE TABLE "verification" (
 	"updated_at" timestamp
 );
 --> statement-breakpoint
+CREATE TABLE "album" (
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"image_url" text
+);
+--> statement-breakpoint
+CREATE TABLE "album_track" (
+	"album_id" text NOT NULL,
+	"track_id" text NOT NULL,
+	"track_isrc" text NOT NULL,
+	CONSTRAINT "album_track_album_id_track_id_pk" PRIMARY KEY("album_id","track_id")
+);
+--> statement-breakpoint
+CREATE TABLE "artist" (
+	"id" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"image_url" text
+);
+--> statement-breakpoint
+CREATE TABLE "listen" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"duration_ms" integer NOT NULL,
+	"played_at" timestamp NOT NULL,
+	"track_id" text NOT NULL,
+	"artist_id" text NOT NULL,
+	"album_id" text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "track" (
+	"isrc" text PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"duration_ms" integer NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "track_artist" (
+	"track_isrc" text NOT NULL,
+	"artist_id" text NOT NULL,
+	CONSTRAINT "track_artist_track_isrc_artist_id_pk" PRIMARY KEY("track_isrc","artist_id")
+);
+--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
