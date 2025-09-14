@@ -1,3 +1,5 @@
+import LocalDate from "@/components/LocalDate";
+import LocalTime from "@/components/LocalTime";
 import { album, albumTrack, artist, db, desc, eq, listen, track } from "@workspace/database";
 
 async function getListens() {
@@ -20,7 +22,6 @@ async function getListens() {
       .leftJoin(album, eq(listen.albumId, album.id))
       .orderBy(desc(listen.playedAt))
       .limit(50);
-    console.log(listens);
     return listens;
   } catch (error) {
     console.error("Error fetching listens:", error);
@@ -57,8 +58,12 @@ export default async function Home() {
                   <p className="text-sm text-zinc-500">{listen.albumName || "Unknown Album"}</p>
                 </div>
                 <div className="text-right text-sm text-zinc-400">
-                  <p>{new Date(listen.playedAt).toLocaleDateString()}</p>
-                  <p>{new Date(listen.playedAt).toLocaleTimeString()}</p>
+                  <p>
+                    <LocalDate date={listen.playedAt} />
+                  </p>
+                  <p>
+                    <LocalTime date={listen.playedAt} />
+                  </p>
                   <p className="text-xs">{Math.round(listen.durationMS / 1000)}s</p>
                 </div>
               </div>

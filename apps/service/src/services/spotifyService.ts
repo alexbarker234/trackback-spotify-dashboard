@@ -2,7 +2,7 @@ import {
   getArtistsNeedingImages,
   getSpotifyUser,
   getUserAccessToken,
-  saveTrackData,
+  saveListens,
   updateArtistImage
 } from "./database";
 import { fetchArtistData, fetchRecentlyPlayedTracks } from "./spotify";
@@ -56,10 +56,14 @@ export async function fetchRecentlyPlayedTracksService(): Promise<void> {
 
       console.log(`Found ${recentlyPlayed.items.length} recent tracks for user ${spotifyUser.userId}`);
 
-      // Save each track
-      for (const item of recentlyPlayed.items) {
-        await saveTrackData(item.track, new Date(item.played_at));
-      }
+      // Prepare all tracks for bulk save
+      const tracksData = recentlyPlayed.items.map((item) => ({
+        trackData: item.track,
+        playedAt: new Date(item.played_at)
+      }));
+
+      // Save all tracks in bulk
+      await saveListens(tracksData);
 
       // Update artist data
       await updateArtistData(accessToken);
