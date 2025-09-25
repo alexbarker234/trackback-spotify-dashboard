@@ -225,15 +225,6 @@ export async function updateArtistImage(artistId: string, imageUrl: string | nul
 }
 
 /**
- * Gets listens that need artist or album IDs populated
- */
-export async function getListensNeedingArtistAlbumData(): Promise<Listen[]> {
-  return db.query.listen.findMany({
-    where: (listen, { or, isNull }) => or(isNull(listen.artistId), isNull(listen.albumId))
-  });
-}
-
-/**
  * Gets track data with artist and album relationships for a specific track ID
  */
 export async function getTrackWithRelations(trackId: string) {
@@ -259,6 +250,16 @@ export async function getTrackWithRelations(trackId: string) {
     artists: trackArtists,
     albums: albumTracks
   };
+}
+
+/**
+ * Gets listens that don't have corresponding albumTrack entries
+ */
+export async function getListensWithoutAlbumTrack(): Promise<Listen[]> {
+  return db.query.listen.findMany({
+    where: (listen, { notExists }) =>
+      notExists(db.select().from(albumTrack).where(eq(albumTrack.trackId, listen.trackId)))
+  });
 }
 
 /**

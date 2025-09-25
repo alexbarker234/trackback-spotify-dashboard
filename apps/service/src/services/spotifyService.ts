@@ -1,14 +1,12 @@
 import { Listen } from "@workspace/database";
 import {
   getArtistsNeedingImages,
-  getListensNeedingArtistAlbumData,
+  getListensWithoutAlbumTrack,
   getSpotifyUser,
-  getTrackWithRelations,
   getUserAccessToken,
   saveBatchTrackDataToDatabase,
   saveListens,
-  updateArtistImage,
-  updateListenArtistAlbum
+  updateArtistImage
 } from "./database";
 import { fetchArtistData, fetchMultipleTracks, fetchRecentlyPlayedTracks } from "./spotify";
 
@@ -84,17 +82,17 @@ export async function fetchRecentlyPlayedTracksService(): Promise<void> {
 
 export async function populateImportedListensService(): Promise<void> {
   try {
-    console.log(`[${new Date().toISOString()}] 🔍 Finding listens that need artist/album data...`);
+    console.log(`[${new Date().toISOString()}] 🔍 Finding listens that don't have albumTrack entries...`);
 
-    // Get all listens that need artist or album IDs
-    const listensNeedingData = await getListensNeedingArtistAlbumData();
+    // Get all listens that don't have corresponding albumTrack entries
+    const listensWithoutAlbumTrack = await getListensWithoutAlbumTrack();
 
-    if (listensNeedingData.length === 0) {
-      console.log("No listens need artist/album data population");
+    if (listensWithoutAlbumTrack.length === 0) {
+      console.log("No listens need albumTrack entries");
       return;
     }
 
-    console.log(`Found ${listensNeedingData.length} listens needing artist/album data`);
+    console.log(`Found ${listensWithoutAlbumTrack.length} listens without albumTrack entries`);
 
     // Get Spotify user and access token
     const spotifyUser = await getSpotifyUser();
@@ -111,7 +109,7 @@ export async function populateImportedListensService(): Promise<void> {
 
     // Group listens by track ID to minimize API calls
     const listensByTrackId = new Map<string, Listen[]>();
-    for (const listen of listensNeedingData) {
+    for (const listen of listensWithoutAlbumTrack) {
       if (!listensByTrackId.has(listen.trackId)) {
         listensByTrackId.set(listen.trackId, []);
       }
@@ -123,8 +121,6 @@ export async function populateImportedListensService(): Promise<void> {
     // Process tracks in batches of 50 (Spotify API limit)
     const trackIds = Array.from(listensByTrackId.keys());
     const batchSize = 50;
-    let processedCount = 0;
-    let updatedCount = 0;
 
     for (let i = 0; i < trackIds.length; i += batchSize) {
       const batch = trackIds.slice(i, i + batchSize);
@@ -141,49 +137,6 @@ export async function populateImportedListensService(): Promise<void> {
         // Save all track, artist, and album data to database in bulk
         await saveBatchTrackDataToDatabase(spotifyTracks);
 
-        // Process each track in the batch to update listens
-        for (const spotifyTrack of spotifyTracks) {
-          const trackListens = listensByTrackId.get(spotifyTrack.id) || [];
-
-          // Get existing track relationships from database
-          const trackIsrc = spotifyTrack.external_ids?.isrc || `spotify_${spotifyTrack.id}`;
-          const existingRelations = await getTrackWithRelations(trackIsrc);
-
-          // Determine artist and album IDs
-          let artistId: string | null = null;
-          let albumId: string | null = null;
-
-          // Use existing database data if available
-          if (existingRelations && existingRelations.artists.length > 0) {
-            artistId = existingRelations.artists[0].artistId;
-          } else if (spotifyTrack.artists.length > 0) {
-            artistId = spotifyTrack.artists[0].id;
-          }
-
-          if (existingRelations && existingRelations.albums.length > 0) {
-            albumId = existingRelations.albums[0].albumId;
-          } else if (spotifyTrack.album) {
-            albumId = spotifyTrack.album.id;
-          }
-
-          // Update all listens for this track
-          for (const listen of trackListens) {
-            const needsArtistUpdate = !listen.artistId && artistId;
-            const needsAlbumUpdate = !listen.albumId && albumId;
-
-            if (needsArtistUpdate || needsAlbumUpdate) {
-              await updateListenArtistAlbum(
-                listen.id,
-                needsArtistUpdate ? artistId : listen.artistId,
-                needsAlbumUpdate ? albumId : listen.albumId
-              );
-              updatedCount++;
-            }
-          }
-
-          processedCount++;
-        }
-
         // Add a small delay to respect rate limits
         if (i + batchSize < trackIds.length) {
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -195,7 +148,7 @@ export async function populateImportedListensService(): Promise<void> {
     }
 
     console.log(
-      `[${new Date().toISOString()}] ✅ Successfully processed ${processedCount} tracks, saved track/artist/album data, and updated ${updatedCount} listens`
+      `[${new Date().toISOString()}] ✅ Successfully processed ${trackIds.length} tracks, saved track/artist/album data`
     );
   } catch (error) {
     console.error(`[${new Date().toISOString()}] ❌ Error populating imported listens:`, error);

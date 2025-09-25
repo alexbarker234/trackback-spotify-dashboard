@@ -1,7 +1,7 @@
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import UploadDropzone from "@/components/UploadDropzone";
-import { album, albumTrack, artist, db, desc, eq, listen, track } from "@workspace/database";
+import { album, albumTrack, artist, db, desc, eq, listen, track, trackArtist } from "@workspace/database";
 
 async function getListens() {
   try {
@@ -20,8 +20,9 @@ async function getListens() {
       .from(listen)
       .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
       .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(artist, eq(listen.artistId, artist.id))
-      .leftJoin(album, eq(listen.albumId, album.id))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
       .orderBy(desc(listen.playedAt))
       .limit(50);
     return listens;
