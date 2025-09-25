@@ -1,4 +1,5 @@
 "use client";
+import { formatDate } from "@/lib/utils/timeUtils";
 import { useEffect, useState } from "react";
 
 type LocalDateProps = {
@@ -15,7 +16,7 @@ export default function LocalDate({ date }: LocalDateProps) {
     } else {
       d = date;
     }
-    setLocalDate(d.toLocaleDateString());
+    setLocalDate(formatDate(d.getTime()));
   }, [date]);
 
   return <span>{localDate}</span>;
