@@ -1,3 +1,4 @@
+import DailyStreamChart from "@/components/DailyStreamChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
@@ -225,6 +226,38 @@ async function getTopAlbums(artistId: string, limit: number = 10): Promise<TopAl
   }
 }
 
+async function getDailyStreamData(artistId: string, days: number = -1) {
+  try {
+    const whereConditions = [eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)];
+
+    // Only add date filter if days is not -1 (get all data)
+    if (days !== -1) {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    const dailyStreams = await db
+      .select({
+        date: sql<string>`date(${listen.playedAt})`.as("date"),
+        streamCount: sql<number>`count(*)`.as("streamCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(...whereConditions))
+      .groupBy(sql`date(${listen.playedAt})`)
+      .orderBy(sql`date(${listen.playedAt})`);
+
+    return dailyStreams;
+  } catch (error) {
+    console.error("Error fetching daily stream data:", error);
+    return [];
+  }
+}
+
 async function getRecentListens(artistId: string, limit: number = 10) {
   try {
     const recentListens = await db
@@ -263,12 +296,13 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
 
   const { artistId } = await params;
 
-  const [artistData, stats, topTracks, topAlbums, recentListens] = await Promise.all([
+  const [artistData, stats, topTracks, topAlbums, recentListens, dailyStreamData] = await Promise.all([
     getArtistData(artistId),
     getArtistStats(artistId),
     getTopTracks(artistId),
     getTopAlbums(artistId),
-    getRecentListens(artistId)
+    getRecentListens(artistId),
+    getDailyStreamData(artistId)
   ]);
 
   if (!artistData) {
@@ -321,6 +355,13 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
             <p className="text-sm text-zinc-500">{formatDuration(stats.weekDuration)} total time</p>
           </div>
         </div>
+
+        {/* Daily Stream Chart */}
+        {dailyStreamData.length > 0 && (
+          <div className="mb-8">
+            <DailyStreamChart data={dailyStreamData} />
+          </div>
+        )}
 
         {/* Additional Stats */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
