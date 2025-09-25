@@ -45,7 +45,7 @@ export default function Button({
     "px-4 py-2 rounded-lg transition-colors flex items-center disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed justify-center";
 
   const variantClasses = {
-    primary: "bg-purple-600 hover:bg-purple-700 text-white",
+    primary: "bg-spotify-green hover:bg-spotify-green/80 text-white",
     secondary: "bg-zinc-600 hover:bg-zinc-700 text-white",
     danger: "bg-red-600 hover:bg-red-700 text-white",
     success: "bg-green-600 hover:bg-green-700 text-white",

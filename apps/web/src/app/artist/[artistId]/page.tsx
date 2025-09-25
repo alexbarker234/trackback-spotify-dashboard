@@ -1,8 +1,10 @@
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
+import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 
 interface ArtistStats {
   totalListens: number;
@@ -251,6 +253,14 @@ async function getRecentListens(artistId: string, limit: number = 10) {
 }
 
 export default async function ArtistPage({ params }: { params: Promise<{ artistId: string }> }) {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   const { artistId } = await params;
 
   const [artistData, stats, topTracks, topAlbums, recentListens] = await Promise.all([

@@ -1,9 +1,11 @@
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
+import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { albumTrack, and, db, desc, eq, gte, listen, track } from "@workspace/database";
+import { headers } from "next/headers";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 interface TrackStats {
   totalListens: number;
@@ -167,6 +169,14 @@ async function getRecentListens(isrc: string, limit: number = 10) {
 }
 
 export default async function TrackPage({ params }: { params: Promise<{ isrc: string }> }) {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   const { isrc } = await params;
 
   const [trackData, stats, recentListens] = await Promise.all([
