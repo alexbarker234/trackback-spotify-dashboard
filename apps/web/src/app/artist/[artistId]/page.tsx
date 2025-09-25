@@ -1,5 +1,6 @@
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
+import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { notFound } from "next/navigation";
 
@@ -24,6 +25,7 @@ interface TopTrack {
   trackIsrc: string;
   listenCount: number;
   totalDuration: number;
+  imageUrl: string | null;
 }
 
 interface TopAlbum {
@@ -32,12 +34,6 @@ interface TopAlbum {
   albumImageUrl: string | null;
   listenCount: number;
   totalDuration: number;
-}
-
-interface ArtistPageProps {
-  params: {
-    artistId: string;
-  };
 }
 
 async function getArtistData(artistId: string) {
@@ -180,14 +176,16 @@ async function getTopTracks(artistId: string, limit: number = 10): Promise<TopTr
         trackName: track.name,
         trackIsrc: track.isrc,
         listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration"),
+        imageUrl: album.imageUrl
       })
       .from(listen)
       .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
       .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
       .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
       .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
-      .groupBy(track.isrc, track.name)
+      .groupBy(track.isrc, track.name, album.imageUrl)
       .orderBy(desc(sql<number>`count(*)`))
       .limit(limit);
 
@@ -233,12 +231,14 @@ async function getRecentListens(artistId: string, limit: number = 10) {
         durationMS: listen.durationMS,
         playedAt: listen.playedAt,
         trackName: track.name,
-        trackIsrc: track.isrc
+        trackIsrc: track.isrc,
+        imageUrl: album.imageUrl
       })
       .from(listen)
       .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
       .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
       .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
       .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
       .orderBy(desc(listen.playedAt))
       .limit(limit);
@@ -250,34 +250,8 @@ async function getRecentListens(artistId: string, limit: number = 10) {
   }
 }
 
-function formatDuration(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes % 60}m`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`;
-  } else {
-    return `${seconds}s`;
-  }
-}
-
-function formatTime(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  if (hours > 0) {
-    return `${hours}:${(minutes % 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
-  } else {
-    return `${minutes}:${(seconds % 60).toString().padStart(2, "0")}`;
-  }
-}
-
-export default async function ArtistPage({ params }: ArtistPageProps) {
-  const { artistId } = params;
+export default async function ArtistPage({ params }: { params: Promise<{ artistId: string }> }) {
+  const { artistId } = await params;
 
   const [artistData, stats, topTracks, topAlbums, recentListens] = await Promise.all([
     getArtistData(artistId),
@@ -400,12 +374,21 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
                 <div key={track.trackIsrc} className="rounded-lg bg-zinc-800 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <span className="text-2xl font-bold text-zinc-400">#{index + 1}</span>
-                      <div>
-                        <p className="text-zinc-100">{track.trackName}</p>
-                        <p className="text-sm text-zinc-400">
-                          {track.listenCount} listens • {formatDuration(track.totalDuration)}
-                        </p>
+                      <span className="w-16 text-2xl font-bold text-zinc-400">#{index + 1}</span>
+                      <div className="flex items-center gap-4">
+                        {track.imageUrl && (
+                          <img
+                            src={track.imageUrl}
+                            alt={`${track.trackName} album cover`}
+                            className="h-16 w-16 rounded-lg object-cover"
+                          />
+                        )}
+                        <div>
+                          <p className="text-zinc-100">{track.trackName}</p>
+                          <p className="text-sm text-zinc-400">
+                            {track.listenCount} listens • {formatDuration(track.totalDuration)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -423,6 +406,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
               {topAlbums.map((album, index) => (
                 <div key={album.albumId} className="rounded-lg bg-zinc-800 p-4">
                   <div className="flex gap-4">
+                    <div className="text-lg font-bold text-zinc-400">#{index + 1}</div>
                     {album.albumImageUrl && (
                       <img
                         src={album.albumImageUrl}
@@ -432,7 +416,6 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
                     )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-zinc-400">#{index + 1}</span>
                         <h4 className="font-medium text-zinc-100">{album.albumName}</h4>
                       </div>
                       <p className="text-sm text-zinc-400">
@@ -454,11 +437,20 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
               {recentListens.map((listen) => (
                 <div key={listen.id} className="rounded-lg bg-zinc-800 p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-zinc-100">{listen.trackName}</p>
-                      <p className="text-sm text-zinc-400">
-                        <LocalDate date={listen.playedAt} /> • <LocalTime date={listen.playedAt} />
-                      </p>
+                    <div className="flex items-center gap-4">
+                      {listen.imageUrl && (
+                        <img
+                          src={listen.imageUrl}
+                          alt={`${listen.trackName} album cover`}
+                          className="h-16 w-16 rounded-lg object-cover"
+                        />
+                      )}
+                      <div>
+                        <p className="text-zinc-100">{listen.trackName}</p>
+                        <p className="text-sm text-zinc-400">
+                          <LocalDate date={listen.playedAt} /> • <LocalTime date={listen.playedAt} />
+                        </p>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-zinc-100">{formatTime(listen.durationMS)}</p>

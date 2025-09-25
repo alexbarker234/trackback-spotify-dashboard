@@ -1,5 +1,6 @@
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
+import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { albumTrack, and, db, desc, eq, gte, listen, track } from "@workspace/database";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -168,32 +169,6 @@ async function getRecentListens(isrc: string, limit: number = 10) {
   } catch (error) {
     console.error("Error fetching recent listens:", error);
     return [];
-  }
-}
-
-function formatDuration(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes % 60}m`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`;
-  } else {
-    return `${seconds}s`;
-  }
-}
-
-function formatTime(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  if (hours > 0) {
-    return `${hours}:${(minutes % 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
-  } else {
-    return `${minutes}:${(seconds % 60).toString().padStart(2, "0")}`;
   }
 }
 
