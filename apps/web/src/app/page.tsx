@@ -1,7 +1,7 @@
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
-import UploadDropzone from "@/components/UploadDropzone";
-import { album, albumTrack, artist, db, desc, eq, listen, track, trackArtist } from "@workspace/database";
+import { album, albumTrack, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import Link from "next/link";
 
 async function getListens() {
   try {
@@ -13,7 +13,7 @@ async function getListens() {
         trackName: track.name,
         trackIsrc: track.isrc,
         trackId: albumTrack.trackId,
-        artistName: artist.name,
+        artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
         albumName: album.name,
         albumImageUrl: album.imageUrl
       })
@@ -23,8 +23,20 @@ async function getListens() {
       .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
       .leftJoin(artist, eq(trackArtist.artistId, artist.id))
       .leftJoin(album, eq(albumTrack.albumId, album.id))
+      .groupBy(
+        listen.id,
+        listen.durationMS,
+        listen.playedAt,
+        track.name,
+        track.isrc,
+        albumTrack.trackId,
+        album.name,
+        album.imageUrl
+      )
+      .where(gte(listen.durationMS, 30000))
       .orderBy(desc(listen.playedAt))
       .limit(50);
+
     return listens;
   } catch (error) {
     console.error("Error fetching listens:", error);
@@ -37,7 +49,6 @@ export default async function Home() {
 
   return (
     <div className="flex-1 p-8">
-      <UploadDropzone />
       <h1 className="mb-6 text-3xl font-bold text-zinc-100">Recent Listens</h1>
 
       {listens.length === 0 ? (
@@ -47,7 +58,11 @@ export default async function Home() {
       ) : (
         <div className="space-y-4">
           {listens.map((listen) => (
-            <div key={listen.id} className="rounded-lg bg-zinc-800 p-4 transition-colors hover:bg-zinc-700">
+            <Link
+              key={listen.id}
+              href={`/track/${listen.trackIsrc}`}
+              className="block rounded-lg bg-zinc-800 p-4 transition-colors hover:bg-zinc-700"
+            >
               <div className="flex items-center space-x-4">
                 {listen.albumImageUrl && (
                   <img
@@ -58,7 +73,11 @@ export default async function Home() {
                 )}
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-zinc-100">{listen.trackName || "Unknown Track"}</h3>
-                  <p className="text-zinc-400">{listen.artistName || "Unknown Artist"}</p>
+                  <p className="text-zinc-400">
+                    {listen.artistNames && listen.artistNames.length > 0
+                      ? listen.artistNames.join(", ")
+                      : "Unknown Artist"}
+                  </p>
                   <p className="text-sm text-zinc-500">{listen.albumName || "Unknown Album"}</p>
                 </div>
                 <div className="text-right text-sm text-zinc-400">
@@ -71,7 +90,7 @@ export default async function Home() {
                   <p className="text-xs">{Math.round(listen.durationMS / 1000)}s</p>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

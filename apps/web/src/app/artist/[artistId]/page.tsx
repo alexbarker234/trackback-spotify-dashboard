@@ -1,0 +1,475 @@
+import LocalDate from "@/components/LocalDate";
+import LocalTime from "@/components/LocalTime";
+import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { notFound } from "next/navigation";
+
+interface ArtistStats {
+  totalListens: number;
+  totalDuration: number;
+  yearListens: number;
+  yearDuration: number;
+  monthListens: number;
+  monthDuration: number;
+  weekListens: number;
+  weekDuration: number;
+  firstListen: Date | null;
+  lastListen: Date | null;
+  avgDuration: number;
+  uniqueTracks: number;
+  uniqueAlbums: number;
+}
+
+interface TopTrack {
+  trackName: string;
+  trackIsrc: string;
+  listenCount: number;
+  totalDuration: number;
+}
+
+interface TopAlbum {
+  albumName: string;
+  albumId: string;
+  albumImageUrl: string | null;
+  listenCount: number;
+  totalDuration: number;
+}
+
+interface ArtistPageProps {
+  params: {
+    artistId: string;
+  };
+}
+
+async function getArtistData(artistId: string) {
+  try {
+    // Get artist data
+    const artistData = await db.query.artist.findFirst({
+      where: (artist, { eq }) => eq(artist.id, artistId)
+    });
+
+    if (!artistData) return null;
+
+    // Get tracks for this artist
+    const trackArtists = await db.query.trackArtist.findMany({
+      where: (trackArtist, { eq }) => eq(trackArtist.artistId, artistId)
+    });
+
+    const tracks = await db.query.track.findMany({
+      where: (track, { inArray }) =>
+        inArray(
+          track.isrc,
+          trackArtists.map((ta) => ta.trackIsrc)
+        )
+    });
+
+    // Get albums for this artist
+    const albumArtists = await db.query.albumArtist.findMany({
+      where: (albumArtist, { eq }) => eq(albumArtist.artistId, artistId)
+    });
+
+    const albums = await db.query.album.findMany({
+      where: (album, { inArray }) =>
+        inArray(
+          album.id,
+          albumArtists.map((aa) => aa.albumId)
+        )
+    });
+
+    return {
+      artist: artistData,
+      tracks,
+      albums
+    };
+  } catch (error) {
+    console.error("Error fetching artist data:", error);
+    return null;
+  }
+}
+
+async function getArtistStats(artistId: string): Promise<ArtistStats> {
+  try {
+    const now = new Date();
+    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Get all listens for this artist
+    const allListens = await db
+      .select({
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt,
+        trackIsrc: track.isrc
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
+      .orderBy(desc(listen.playedAt));
+
+    // Calculate statistics
+    const totalListens = allListens.length;
+    const totalDuration = allListens.reduce((sum, l) => sum + l.durationMS, 0);
+
+    const yearListens = allListens.filter((l) => l.playedAt >= oneYearAgo).length;
+    const yearDuration = allListens.filter((l) => l.playedAt >= oneYearAgo).reduce((sum, l) => sum + l.durationMS, 0);
+
+    const monthListens = allListens.filter((l) => l.playedAt >= oneMonthAgo).length;
+    const monthDuration = allListens.filter((l) => l.playedAt >= oneMonthAgo).reduce((sum, l) => sum + l.durationMS, 0);
+
+    const weekListens = allListens.filter((l) => l.playedAt >= oneWeekAgo).length;
+    const weekDuration = allListens.filter((l) => l.playedAt >= oneWeekAgo).reduce((sum, l) => sum + l.durationMS, 0);
+
+    const firstListen = allListens.length > 0 ? allListens[allListens.length - 1].playedAt : null;
+    const lastListen = allListens.length > 0 ? allListens[0].playedAt : null;
+
+    const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
+
+    // Get unique tracks and albums
+    const uniqueTracks = new Set(allListens.map((l) => l.trackIsrc)).size;
+
+    // Get unique albums for this artist
+    const albumTracks = await db
+      .select({ albumId: albumTrack.albumId })
+      .from(albumTrack)
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(eq(trackArtist.artistId, artistId));
+
+    const uniqueAlbums = new Set(albumTracks.map((at) => at.albumId)).size;
+
+    return {
+      totalListens,
+      totalDuration,
+      yearListens,
+      yearDuration,
+      monthListens,
+      monthDuration,
+      weekListens,
+      weekDuration,
+      firstListen,
+      lastListen,
+      avgDuration,
+      uniqueTracks,
+      uniqueAlbums
+    };
+  } catch (error) {
+    console.error("Error fetching artist stats:", error);
+    return {
+      totalListens: 0,
+      totalDuration: 0,
+      yearListens: 0,
+      yearDuration: 0,
+      monthListens: 0,
+      monthDuration: 0,
+      weekListens: 0,
+      weekDuration: 0,
+      firstListen: null,
+      lastListen: null,
+      avgDuration: 0,
+      uniqueTracks: 0,
+      uniqueAlbums: 0
+    };
+  }
+}
+
+async function getTopTracks(artistId: string, limit: number = 10): Promise<TopTrack[]> {
+  try {
+    const topTracks = await db
+      .select({
+        trackName: track.name,
+        trackIsrc: track.isrc,
+        listenCount: sql<number>`count(*)`.as("listenCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
+      .groupBy(track.isrc, track.name)
+      .orderBy(desc(sql<number>`count(*)`))
+      .limit(limit);
+
+    return topTracks;
+  } catch (error) {
+    console.error("Error fetching top tracks:", error);
+    return [];
+  }
+}
+
+async function getTopAlbums(artistId: string, limit: number = 10): Promise<TopAlbum[]> {
+  try {
+    const topAlbums = await db
+      .select({
+        albumName: album.name,
+        albumId: album.id,
+        albumImageUrl: album.imageUrl,
+        listenCount: sql<number>`count(*)`.as("listenCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
+      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
+      .groupBy(album.id, album.name, album.imageUrl)
+      .orderBy(desc(sql<number>`count(*)`))
+      .limit(limit);
+
+    return topAlbums;
+  } catch (error) {
+    console.error("Error fetching top albums:", error);
+    return [];
+  }
+}
+
+async function getRecentListens(artistId: string, limit: number = 10) {
+  try {
+    const recentListens = await db
+      .select({
+        id: listen.id,
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt,
+        trackName: track.name,
+        trackIsrc: track.isrc
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
+      .orderBy(desc(listen.playedAt))
+      .limit(limit);
+
+    return recentListens;
+  } catch (error) {
+    console.error("Error fetching recent listens:", error);
+    return [];
+  }
+}
+
+function formatDuration(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`;
+  } else {
+    return `${seconds}s`;
+  }
+}
+
+function formatTime(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) {
+    return `${hours}:${(minutes % 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
+  } else {
+    return `${minutes}:${(seconds % 60).toString().padStart(2, "0")}`;
+  }
+}
+
+export default async function ArtistPage({ params }: ArtistPageProps) {
+  const { artistId } = params;
+
+  const [artistData, stats, topTracks, topAlbums, recentListens] = await Promise.all([
+    getArtistData(artistId),
+    getArtistStats(artistId),
+    getTopTracks(artistId),
+    getTopAlbums(artistId),
+    getRecentListens(artistId)
+  ]);
+
+  if (!artistData) {
+    notFound();
+  }
+
+  const { artist } = artistData;
+
+  return (
+    <div className="flex-1 p-8">
+      <div className="mx-auto max-w-4xl">
+        {/* Artist Header */}
+        <div className="mb-8 flex gap-4">
+          <div>{artist.imageUrl && <img src={artist.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
+          <div>
+            <h1 className="mb-2 text-4xl font-bold text-zinc-100">{artist.name}</h1>
+            <div className="text-sm text-zinc-400">
+              {stats.uniqueTracks} tracks • {stats.uniqueAlbums} albums
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Grid */}
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total Listens */}
+          <div className="rounded-lg bg-zinc-800 p-6">
+            <h3 className="mb-2 text-sm font-medium text-zinc-400">Total Listens</h3>
+            <p className="text-3xl font-bold text-zinc-100">{stats.totalListens.toLocaleString()}</p>
+            <p className="text-sm text-zinc-500">{formatDuration(stats.totalDuration)} total time</p>
+          </div>
+
+          {/* This Year */}
+          <div className="rounded-lg bg-zinc-800 p-6">
+            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Year</h3>
+            <p className="text-3xl font-bold text-zinc-100">{stats.yearListens.toLocaleString()}</p>
+            <p className="text-sm text-zinc-500">{formatDuration(stats.yearDuration)} total time</p>
+          </div>
+
+          {/* This Month */}
+          <div className="rounded-lg bg-zinc-800 p-6">
+            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Month</h3>
+            <p className="text-3xl font-bold text-zinc-100">{stats.monthListens.toLocaleString()}</p>
+            <p className="text-sm text-zinc-500">{formatDuration(stats.monthDuration)} total time</p>
+          </div>
+
+          {/* This Week */}
+          <div className="rounded-lg bg-zinc-800 p-6">
+            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Week</h3>
+            <p className="text-3xl font-bold text-zinc-100">{stats.weekListens.toLocaleString()}</p>
+            <p className="text-sm text-zinc-500">{formatDuration(stats.weekDuration)} total time</p>
+          </div>
+        </div>
+
+        {/* Additional Stats */}
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Listen History */}
+          <div className="rounded-lg bg-zinc-800 p-6">
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen History</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-zinc-400">First Listen:</span>
+                <span className="text-zinc-100">
+                  {stats.firstListen ? (
+                    <>
+                      <LocalDate date={stats.firstListen} />
+                      <br />
+                      <LocalTime date={stats.firstListen} />
+                    </>
+                  ) : (
+                    "Never"
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Last Listen:</span>
+                <span className="text-zinc-100">
+                  {stats.lastListen ? (
+                    <>
+                      <LocalDate date={stats.lastListen} />
+                      <br />
+                      <LocalTime date={stats.lastListen} />
+                    </>
+                  ) : (
+                    "Never"
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Listen Quality */}
+          <div className="rounded-lg bg-zinc-800 p-6">
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen Quality</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Average Duration:</span>
+                <span className="text-zinc-100">{formatTime(stats.avgDuration)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Unique Tracks:</span>
+                <span className="text-zinc-100">{stats.uniqueTracks}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Tracks */}
+        {topTracks.length > 0 && (
+          <div className="mb-8">
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks</h3>
+            <div className="space-y-2">
+              {topTracks.map((track, index) => (
+                <div key={track.trackIsrc} className="rounded-lg bg-zinc-800 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl font-bold text-zinc-400">#{index + 1}</span>
+                      <div>
+                        <p className="text-zinc-100">{track.trackName}</p>
+                        <p className="text-sm text-zinc-400">
+                          {track.listenCount} listens • {formatDuration(track.totalDuration)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top Albums */}
+        {topAlbums.length > 0 && (
+          <div className="mb-8">
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Albums</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {topAlbums.map((album, index) => (
+                <div key={album.albumId} className="rounded-lg bg-zinc-800 p-4">
+                  <div className="flex gap-4">
+                    {album.albumImageUrl && (
+                      <img
+                        src={album.albumImageUrl}
+                        alt={`${album.albumName} album cover`}
+                        className="h-16 w-16 rounded-lg object-cover"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-zinc-400">#{index + 1}</span>
+                        <h4 className="font-medium text-zinc-100">{album.albumName}</h4>
+                      </div>
+                      <p className="text-sm text-zinc-400">
+                        {album.listenCount} listens • {formatDuration(album.totalDuration)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Listens */}
+        {recentListens.length > 0 && (
+          <div>
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
+            <div className="space-y-2">
+              {recentListens.map((listen) => (
+                <div key={listen.id} className="rounded-lg bg-zinc-800 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-zinc-100">{listen.trackName}</p>
+                      <p className="text-sm text-zinc-400">
+                        <LocalDate date={listen.playedAt} /> • <LocalTime date={listen.playedAt} />
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-zinc-100">{formatTime(listen.durationMS)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
