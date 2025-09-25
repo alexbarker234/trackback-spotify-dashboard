@@ -20,12 +20,6 @@ interface TrackStats {
   completionRate: number;
 }
 
-interface TrackPageProps {
-  params: {
-    isrc: string;
-  };
-}
-
 async function getTrackData(isrc: string) {
   try {
     // Get track with artists and albums
@@ -172,8 +166,8 @@ async function getRecentListens(isrc: string, limit: number = 10) {
   }
 }
 
-export default async function TrackPage({ params }: TrackPageProps) {
-  const { isrc } = params;
+export default async function TrackPage({ params }: { params: Promise<{ isrc: string }> }) {
+  const { isrc } = await params;
 
   const [trackData, stats, recentListens] = await Promise.all([
     getTrackData(isrc),

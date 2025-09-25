@@ -1,4 +1,4 @@
-import { processSpotifyStreamingHistory } from "@workspace/core";
+import { processSpotifyStreamingHistory } from "@workspace/core/import";
 import { SpotifyStreamingHistoryItem } from "@workspace/core/types";
 import { NextRequest, NextResponse } from "next/server";
 
