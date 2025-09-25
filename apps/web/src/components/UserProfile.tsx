@@ -1,28 +1,28 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import { faChevronDown, faSignOutAlt, faUser, IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
-import { IconType } from "react-icons";
-import { FaChevronDown, FaSignOutAlt, FaUser } from "react-icons/fa";
 
 interface MenuItemProps {
   href?: string;
   onClick?: () => void;
-  icon: IconType;
+  icon: IconDefinition;
   label: string;
 }
 
-function ProfileMenuItem({ href, onClick, icon: Icon, label }: MenuItemProps) {
+function ProfileMenuItem({ href, onClick, icon, label }: MenuItemProps) {
   const baseClasses =
     "flex items-center w-full px-4 py-2 text-sm text-zinc-200 rounded-lg transition-colors hover:bg-zinc-700 cursor-pointer";
 
   if (href) {
     return (
       <Link href={href} className={baseClasses}>
-        <Icon className="mr-3 h-4 w-4" />
+        <FontAwesomeIcon icon={icon} className="mr-3 h-4 w-4" />
         {label}
       </Link>
     );
@@ -30,7 +30,7 @@ function ProfileMenuItem({ href, onClick, icon: Icon, label }: MenuItemProps) {
 
   return (
     <button onClick={onClick} className={baseClasses}>
-      <Icon className="mr-3 h-4 w-4" />
+      <FontAwesomeIcon icon={icon} className="mr-3 h-4 w-4" />
       {label}
     </button>
   );
@@ -38,7 +38,7 @@ function ProfileMenuItem({ href, onClick, icon: Icon, label }: MenuItemProps) {
 
 export default function UserProfile({ userInfo }: { userInfo: { username: string; avatarURL: string } }) {
   const menuItems: MenuItemProps[] = [
-    { href: "/profile", icon: FaUser, label: "Profile" }
+    { href: "/profile", icon: faUser, label: "Profile" }
     //{ href: "/settings", icon: FaCog, label: "Settings" }
   ];
 
@@ -47,7 +47,7 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
       await authClient.signOut();
       window.location.href = "/";
     },
-    icon: FaSignOutAlt,
+    icon: faSignOutAlt,
     label: "Sign Out"
   });
 
@@ -62,7 +62,7 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
           className="h-8 w-8 rounded-full"
         />
         <span className="hidden font-medium text-zinc-100 sm:inline">{userInfo.username}</span>
-        <FaChevronDown className="h-4 w-4 text-zinc-400" />
+        <FontAwesomeIcon icon={faChevronDown} className="h-4 w-4 text-zinc-400" />
       </MenuButton>
 
       <Transition

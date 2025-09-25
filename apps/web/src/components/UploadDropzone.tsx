@@ -1,9 +1,10 @@
 "use client";
 
 import { useUploadFiles, type FileToUpload, type UploadResponse } from "@/hooks/useUploadFiles";
+import { faCheck, faClock, faFile, faUpload, faX } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { FiCheck, FiClock, FiFile, FiUpload, FiX } from "react-icons/fi";
 
 export default function UploadDropzone() {
   const [files, setFiles] = useState<FileToUpload[]>([]);
@@ -118,13 +119,13 @@ export default function UploadDropzone() {
   const getStatusIcon = (status: FileToUpload["status"]) => {
     switch (status) {
       case "success":
-        return <FiCheck className="h-4 w-4 text-green-400" />;
+        return <FontAwesomeIcon icon={faCheck} className="h-4 w-4 text-green-400" />;
       case "error":
-        return <FiX className="h-4 w-4 text-red-400" />;
+        return <FontAwesomeIcon icon={faX} className="h-4 w-4 text-red-400" />;
       case "uploading":
-        return <FiClock className="h-4 w-4 animate-spin text-blue-400" />;
+        return <FontAwesomeIcon icon={faClock} className="h-4 w-4 animate-spin text-blue-400" />;
       default:
-        return <FiFile className="h-4 w-4 text-zinc-400" />;
+        return <FontAwesomeIcon icon={faFile} className="h-4 w-4 text-zinc-400" />;
     }
   };
 
@@ -177,7 +178,7 @@ export default function UploadDropzone() {
         >
           <input {...getInputProps()} />
           <div className="space-y-4">
-            <FiUpload className="mx-auto h-12 w-12 text-zinc-400" />
+            <FontAwesomeIcon icon={faUpload} className="mx-auto h-12 w-12 text-zinc-400" />
             <div>
               <p className="text-lg font-medium text-zinc-100">
                 {isDragActive ? "Drop files here" : "Drag & drop JSON files here"}
@@ -225,7 +226,7 @@ export default function UploadDropzone() {
                       disabled={isUploading}
                       className="text-zinc-400 hover:text-red-400 disabled:opacity-50"
                     >
-                      <FiX className="h-4 w-4" />
+                      <FontAwesomeIcon icon={faX} className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -244,7 +245,7 @@ export default function UploadDropzone() {
                 >
                   {isUploading ? (
                     <div className="flex items-center space-x-2">
-                      <FiClock className="h-4 w-4 animate-spin" />
+                      <FontAwesomeIcon icon={faClock} className="h-4 w-4 animate-spin" />
                       <span>Uploading...</span>
                     </div>
                   ) : (

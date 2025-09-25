@@ -1,7 +1,7 @@
 "use client";
 import Button from "@/components/Button";
+import { faArrowLeft, faHome } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
-import { FaArrowLeft, FaHome } from "react-icons/fa";
 
 export default function NotFound() {
   const [hasBackButton, setHasBackButton] = useState(true);
@@ -28,12 +28,12 @@ export default function NotFound() {
 
         {/* Action Buttons */}
         <div className="space-y-4">
-          <Button label="Go Home" variant="primary" className="w-full py-3 font-medium" icon={FaHome} href="/" />
+          <Button label="Go Home" variant="primary" className="w-full py-3 font-medium" icon={faHome} href="/" />
           {hasBackButton && (
             <Button
               label="Go Back"
               className="w-full bg-zinc-800 py-3 font-medium text-zinc-200 hover:bg-zinc-700"
-              icon={FaArrowLeft}
+              icon={faArrowLeft}
               onClick={() => window.history.back()}
             />
           )}
