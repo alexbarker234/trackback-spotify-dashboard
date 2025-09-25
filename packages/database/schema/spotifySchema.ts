@@ -1,4 +1,4 @@
-import { integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 // UNIQUE - Distinguished by ISRC
 export const track = pgTable("track", {
@@ -22,6 +22,15 @@ export const album = pgTable("album", {
   imageUrl: text("image_url")
 });
 
+export const albumArtist = pgTable(
+  "album_artist",
+  {
+    albumId: text("album_id").notNull(),
+    artistId: text("artist_id").notNull()
+  },
+  (table) => [primaryKey({ columns: [table.albumId, table.artistId] })]
+);
+
 export const artist = pgTable("artist", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -39,10 +48,9 @@ export const albumTrack = pgTable(
 );
 
 export const listen = pgTable("listen", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   durationMS: integer("duration_ms").notNull(),
   playedAt: timestamp("played_at").notNull(),
   trackId: text("track_id").notNull(),
-  artistId: text("artist_id").notNull(),
-  albumId: text("album_id").notNull()
+  imported: boolean("imported").notNull()
 });

@@ -72,5 +72,6 @@ export const auth = betterAuth({
     }),
     nextCookies()
   ],
-  baseURL: process.env.BASE_URL
+  baseURL: process.env.BASE_URL,
+  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(",") || []
 });

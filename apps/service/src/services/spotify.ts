@@ -1,5 +1,10 @@
 import { SPOTIFY_CONFIG } from "@/config";
-import { SpotifyArtistResponse, SpotifyRecentlyPlayedResponse, SpotifyTokenResponse } from "@/types/spotify";
+import {
+  SpotifyArtistResponse,
+  SpotifyRecentlyPlayedResponse,
+  SpotifyTokenResponse,
+  SpotifyTrack
+} from "@/types/spotify";
 
 /**
  * Refreshes an access token using a refresh token
@@ -84,4 +89,22 @@ export async function fetchRecentlyPlayedTracks(
  */
 export async function fetchArtistData(artistId: string, accessToken: string): Promise<SpotifyArtistResponse> {
   return spotifyApiRequest<SpotifyArtistResponse>(`/artists/${artistId}`, accessToken);
+}
+
+/**
+ * Fetches track data including artists and album information
+ */
+export async function fetchTrackData(trackId: string, accessToken: string): Promise<SpotifyTrack> {
+  return spotifyApiRequest<SpotifyTrack>(`/tracks/${trackId}`, accessToken);
+}
+
+/**
+ * Fetches multiple tracks in a single request (up to 50 tracks)
+ */
+export async function fetchMultipleTracks(
+  trackIds: string[],
+  accessToken: string
+): Promise<{ tracks: SpotifyTrack[] }> {
+  const ids = trackIds.join(",");
+  return spotifyApiRequest<{ tracks: SpotifyTrack[] }>(`/tracks?ids=${ids}`, accessToken);
 }

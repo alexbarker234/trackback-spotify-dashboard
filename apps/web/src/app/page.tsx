@@ -1,5 +1,6 @@
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
+import UploadDropzone from "@/components/UploadDropzone";
 import { album, albumTrack, artist, db, desc, eq, listen, track } from "@workspace/database";
 
 async function getListens() {
@@ -11,6 +12,7 @@ async function getListens() {
         playedAt: listen.playedAt,
         trackName: track.name,
         trackIsrc: track.isrc,
+        trackId: albumTrack.trackId,
         artistName: artist.name,
         albumName: album.name,
         albumImageUrl: album.imageUrl
@@ -34,6 +36,7 @@ export default async function Home() {
 
   return (
     <div className="flex-1 p-8">
+      <UploadDropzone />
       <h1 className="mb-6 text-3xl font-bold text-zinc-100">Recent Listens</h1>
 
       {listens.length === 0 ? (
