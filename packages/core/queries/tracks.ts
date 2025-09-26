@@ -24,43 +24,22 @@ type BaseTopTrack = {
   imageUrl: string | null;
 };
 
-export async function getTopTracksForArtist(artistId: string, limit: number = 10): Promise<TopTrack[]> {
-  try {
-    const trackStats: BaseTopTrack[] = await db
-      .select({
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration"),
-        imageUrl: sql<string>`min(${album.imageUrl})`.as("imageUrl")
-      })
-      .from(listen)
-      .innerJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .innerJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .innerJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(
-        and(
-          eq(trackArtist.artistId, artistId),
-          gte(listen.durationMS, 30000),
-          isNotNull(track.name),
-          isNotNull(track.isrc)
-        )
-      )
-      .groupBy(track.isrc, track.name)
-      .orderBy(desc(sql<number>`count(*)`))
-      .limit(limit);
+type GetTopTracksOptions = {
+  artistId?: string;
+  albumId?: string;
+  limit?: number;
+};
 
-    return populateArtists(trackStats);
-  } catch (error) {
-    console.error("Error fetching top tracks:", error);
-    return [];
+export async function getTopTracks(options: GetTopTracksOptions = {}): Promise<TopTrack[]> {
+  const { artistId, albumId, limit = 10 } = options;
+
+  // Validate that exactly one filter is provided
+  if ((artistId && albumId) || (!artistId && !albumId)) {
+    throw new Error("Exactly one of artistId or albumId must be provided");
   }
-}
 
-export async function getTopTracksForAlbum(albumId: string, limit: number = 10): Promise<TopTrack[]> {
   try {
-    const topTracks: BaseTopTrack[] = await db
+    let query = db
       .select({
         trackName: track.name,
         trackIsrc: track.isrc,
@@ -71,15 +50,23 @@ export async function getTopTracksForAlbum(albumId: string, limit: number = 10):
       .from(listen)
       .innerJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
       .innerJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(
-        and(
-          eq(albumTrack.albumId, albumId),
-          gte(listen.durationMS, 30000),
-          isNotNull(track.name),
-          isNotNull(track.isrc)
-        )
-      )
+      .leftJoin(album, eq(albumTrack.albumId, album.id));
+
+    // Add artist join and filter only when filtering by artist
+    if (artistId) {
+      query = query.innerJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc));
+    }
+
+    // Build where conditions
+    const conditions = [gte(listen.durationMS, 30000), isNotNull(track.name), isNotNull(track.isrc)];
+    if (artistId) {
+      conditions.push(eq(trackArtist.artistId, artistId));
+    } else if (albumId) {
+      conditions.push(eq(albumTrack.albumId, albumId));
+    }
+
+    const topTracks: BaseTopTrack[] = await query
+      .where(and(...conditions))
       .groupBy(track.isrc, track.name)
       .orderBy(desc(sql<number>`count(*)`))
       .limit(limit);
@@ -89,6 +76,14 @@ export async function getTopTracksForAlbum(albumId: string, limit: number = 10):
     console.error("Error fetching top tracks:", error);
     return [];
   }
+}
+
+export async function getTopTracksForArtist(artistId: string, limit: number = 10): Promise<TopTrack[]> {
+  return getTopTracks({ artistId, limit });
+}
+
+export async function getTopTracksForAlbum(albumId: string, limit: number = 10): Promise<TopTrack[]> {
+  return getTopTracks({ albumId, limit });
 }
 
 async function populateArtists(topTracks: BaseTopTrack[]): Promise<TopTrack[]> {

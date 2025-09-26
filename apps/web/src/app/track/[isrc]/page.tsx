@@ -1,11 +1,12 @@
 import BackNav from "@/components/BackNav";
+import AlbumGrid from "@/components/Cards/AlbumGrid";
 import ListenCard from "@/components/Cards/ListenCard";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
-import { Listen } from "@/types";
-import { album, albumTrack, and, db, desc, eq, gte, listen, track } from "@workspace/database";
+import { Listen, TopAlbum } from "@/types";
+import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -27,10 +28,19 @@ interface TrackStats {
 
 async function getTrackData(isrc: string) {
   try {
-    // Get track with artists and albums
-    const trackData = await db.query.track.findFirst({
-      where: (track, { eq }) => eq(track.isrc, isrc)
-    });
+    const trackRows = await db
+      .select({
+        name: track.name,
+        isrc: track.isrc,
+        durationMS: track.durationMS,
+        imageUrl: album.imageUrl
+      })
+      .from(track)
+      .leftJoin(albumTrack, eq(track.isrc, albumTrack.trackIsrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
+      .where(eq(track.isrc, isrc))
+      .limit(1);
+    const trackData = trackRows[0];
 
     if (!trackData) return null;
 
@@ -47,23 +57,9 @@ async function getTrackData(isrc: string) {
         )
     });
 
-    // Get albums for this track
-    const albumTracks = await db.query.albumTrack.findMany({
-      where: (albumTrack, { eq }) => eq(albumTrack.trackIsrc, isrc)
-    });
-
-    const albums = await db.query.album.findMany({
-      where: (album, { inArray }) =>
-        inArray(
-          album.id,
-          albumTracks.map((at) => at.albumId)
-        )
-    });
-
     return {
       track: trackData,
-      artists,
-      albums
+      artists
     };
   } catch (error) {
     console.error("Error fetching track data:", error);
@@ -149,6 +145,33 @@ async function getTrackStats(isrc: string): Promise<TrackStats> {
   }
 }
 
+async function getTopAlbums(isrc: string, limit: number = 10): Promise<TopAlbum[]> {
+  try {
+    const topAlbums = await db
+      .select({
+        albumName: album.name,
+        albumId: album.id,
+        albumImageUrl: album.imageUrl,
+        listenCount: sql<number>`count(*)`.as("listenCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
+      .where(and(eq(albumTrack.trackIsrc, isrc), gte(listen.durationMS, 30000)))
+      .groupBy(album.id, album.name, album.imageUrl)
+      .orderBy(desc(sql<number>`count(*)`))
+      .limit(limit);
+
+    return topAlbums;
+  } catch (error) {
+    console.error("Error fetching top albums:", error);
+    return [];
+  }
+}
+
 async function getRecentListens(isrc: string, limit: number = 10): Promise<Listen[]> {
   try {
     const recentListens = await db
@@ -187,17 +210,18 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
   const { isrc } = await params;
 
-  const [trackData, stats, recentListens] = await Promise.all([
+  const [trackData, stats, recentListens, topAlbums] = await Promise.all([
     getTrackData(isrc),
     getTrackStats(isrc),
-    getRecentListens(isrc)
+    getRecentListens(isrc),
+    getTopAlbums(isrc)
   ]);
 
   if (!trackData) {
     notFound();
   }
 
-  const { track, artists, albums } = trackData;
+  const { track, artists } = trackData;
 
   return (
     <div className="flex-1 p-8">
@@ -206,7 +230,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
         {/* Track Header */}
         <div className="mb-8 flex gap-4">
           <div>
-            <img src={albums[0].imageUrl} className="h-32 w-32 rounded-lg object-cover" />
+            <img src={track.imageUrl} className="h-32 w-32 rounded-lg object-cover" />
           </div>
           <div>
             <h1 className="mb-2 text-4xl font-bold text-zinc-100">{track.name}</h1>
@@ -312,25 +336,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
         </div>
 
         {/* Albums */}
-        {albums.length > 0 && (
-          <div className="mb-8">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Albums</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {albums.map((album) => (
-                <div key={album.id} className="rounded-lg bg-zinc-800 p-4">
-                  {album.imageUrl && (
-                    <img
-                      src={album.imageUrl}
-                      alt={`${album.name} album cover`}
-                      className="mb-3 h-32 w-32 rounded-lg object-cover"
-                    />
-                  )}
-                  <h4 className="font-medium text-zinc-100">{album.name}</h4>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <AlbumGrid albums={topAlbums} />
 
         {/* Recent Listens */}
         {recentListens.length > 0 && (
