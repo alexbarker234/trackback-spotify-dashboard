@@ -252,15 +252,6 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
           </div>
         </div>
 
-        {/* Daily Stream Chart */}
-        {dailyStreamData.length > 0 && (
-          <div className="mb-8">
-            <DailyStreamChart data={dailyStreamData} />
-          </div>
-        )}
-        {/* Cumulative Stream Chart */}
-        {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
-
         {/* Additional Stats */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Listen History */}
@@ -313,6 +304,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
             </div>
           </div>
         </div>
+
+        {/* Daily Stream Chart */}
+        {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
+        {/* Cumulative Stream Chart */}
+        {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
 
         {/* Top Tracks */}
         {topTracks.length > 0 && (
