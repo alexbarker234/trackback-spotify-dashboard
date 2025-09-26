@@ -152,7 +152,7 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
           className="flex gap-3"
           style={{
             transform: "translateX(0px)",
-            transition: "transform 0.3s ease-in-out"
+            transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
           }}
         >
           {children}

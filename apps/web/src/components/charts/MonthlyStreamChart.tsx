@@ -18,8 +18,12 @@ export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
   // Sort data by month number to ensure proper chronological order
   const sortedData = [...data].sort((a, b) => a.monthNumber - b.monthNumber);
 
-  const formatMonth = (monthStr: string) => {
+  const formatShortMonth = (monthStr: string) => {
     return monthStr.trim().slice(0, 3);
+  };
+
+  const formatMonth = (monthStr: string) => {
+    return monthStr.trim().charAt(0).toUpperCase() + monthStr.trim().slice(1).toLowerCase();
   };
 
   const formatDurationFromMS = (ms: number) => {
@@ -68,7 +72,7 @@ export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
             }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="month" tickFormatter={formatMonth} stroke="#9CA3AF" fontSize={12} />
+            <XAxis dataKey="month" tickFormatter={formatShortMonth} stroke="#9CA3AF" fontSize={12} />
             <YAxis stroke="#9CA3AF" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="streamCount" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
