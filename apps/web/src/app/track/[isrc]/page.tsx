@@ -1,6 +1,6 @@
+import AlbumGrid from "@/components/adsa/AlbumGrid";
+import ListenCard from "@/components/adsa/ListenCard";
 import BackNav from "@/components/BackNav";
-import AlbumGrid from "@/components/Cards/AlbumGrid";
-import ListenCard from "@/components/Cards/ListenCard";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";

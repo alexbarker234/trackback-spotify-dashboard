@@ -1,8 +1,8 @@
+import AlbumGrid from "@/components/adsa/AlbumGrid";
+import ListenCard from "@/components/adsa/ListenCard";
+import TrackCard from "@/components/adsa/TrackCard";
 import BackNav from "@/components/BackNav";
-import AlbumGrid from "@/components/Cards/AlbumGrid";
-import ListenCard from "@/components/Cards/ListenCard";
-import TrackCard from "@/components/Cards/TrackCard";
-import DailyStreamChart from "@/components/DailyStreamChart";
+import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";

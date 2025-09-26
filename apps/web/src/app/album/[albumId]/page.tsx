@@ -1,7 +1,7 @@
+import ArtistCard from "@/components/adsa/ArtistCard";
+import ListenCard from "@/components/adsa/ListenCard";
+import TrackCard from "@/components/adsa/TrackCard";
 import BackNav from "@/components/BackNav";
-import ArtistCard from "@/components/Cards/ArtistCard";
-import ListenCard from "@/components/Cards/ListenCard";
-import TrackCard from "@/components/Cards/TrackCard";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";

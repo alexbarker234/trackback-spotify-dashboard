@@ -1,6 +1,6 @@
 "use client";
 
-import ArtistRankingChart from "@/components/ArtistRankingChart";
+import ArtistRankingChart from "@/components/charts/ArtistRankingChart";
 import { useArtistRanking } from "@/hooks/useArtistRanking";
 import { useState } from "react";
 
