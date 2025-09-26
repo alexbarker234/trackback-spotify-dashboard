@@ -2,13 +2,19 @@ import BackNav from "@/components/BackNav";
 import AlbumGrid from "@/components/cards/AlbumGrid";
 import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
+import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { ArtistStats, TopAlbum } from "@/types";
-import { getDailyStreamData, getRecentListensForArtist, getTopTracksForArtist } from "@workspace/core";
+import {
+  getCumulativeStreamData,
+  getDailyStreamData,
+  getRecentListensForArtist,
+  getTopTracksForArtist
+} from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -184,14 +190,16 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
 
   const { artistId } = await params;
 
-  const [artistData, stats, topTracks, topAlbums, recentListens, dailyStreamData] = await Promise.all([
-    getArtistData(artistId),
-    getArtistStats(artistId),
-    getTopTracksForArtist(artistId),
-    getTopAlbums(artistId),
-    getRecentListensForArtist(artistId),
-    getDailyStreamData({ artistId })
-  ]);
+  const [artistData, stats, topTracks, topAlbums, recentListens, dailyStreamData, cumulativeStreamData] =
+    await Promise.all([
+      getArtistData(artistId),
+      getArtistStats(artistId),
+      getTopTracksForArtist(artistId),
+      getTopAlbums(artistId),
+      getRecentListensForArtist(artistId),
+      getDailyStreamData({ artistId }),
+      getCumulativeStreamData({ artistId })
+    ]);
 
   if (!artistData) {
     notFound();
@@ -200,10 +208,10 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
   const { artist } = artistData;
   return (
     <div className="flex-1 p-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto flex max-w-4xl flex-col gap-5">
         <BackNav />
         {/* Artist Header */}
-        <div className="mb-8 flex gap-4">
+        <div className="flex gap-4">
           <div>{artist.imageUrl && <img src={artist.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
           <div>
             <h1 className="mb-2 text-4xl font-bold text-zinc-100">{artist.name}</h1>
@@ -214,7 +222,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
         </div>
 
         {/* Statistics Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Listens */}
           <div className="rounded-lg bg-zinc-800 p-6">
             <h3 className="mb-2 text-sm font-medium text-zinc-400">Total Listens</h3>
@@ -250,9 +258,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
             <DailyStreamChart data={dailyStreamData} />
           </div>
         )}
+        {/* Cumulative Stream Chart */}
+        {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
 
         {/* Additional Stats */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Listen History */}
           <div className="rounded-lg bg-zinc-800 p-6">
             <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen History</h3>
@@ -306,7 +316,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
 
         {/* Top Tracks */}
         {topTracks.length > 0 && (
-          <div className="mb-8">
+          <div>
             <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks</h3>
             <div className="space-y-2">
               {topTracks.map((track, index) => (

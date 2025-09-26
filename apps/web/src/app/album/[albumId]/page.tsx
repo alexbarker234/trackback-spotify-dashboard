@@ -2,13 +2,14 @@ import BackNav from "@/components/BackNav";
 import ArtistCard from "@/components/cards/ArtistCard";
 import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
+import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { TopArtist } from "@/types";
-import { getDailyStreamData, getTopTracksForAlbum } from "@workspace/core";
+import { getCumulativeStreamData, getDailyStreamData, getTopTracksForAlbum } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -239,14 +240,16 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
 
   const { albumId } = await params;
 
-  const [albumData, stats, topTracks, topArtists, recentListens, dailyStreamData] = await Promise.all([
-    getAlbumData(albumId),
-    getAlbumStats(albumId),
-    getTopTracksForAlbum(albumId),
-    getTopArtists(albumId),
-    getRecentListens(albumId),
-    getDailyStreamData({ albumId })
-  ]);
+  const [albumData, stats, topTracks, topArtists, recentListens, dailyStreamData, cumulativeStreamData] =
+    await Promise.all([
+      getAlbumData(albumId),
+      getAlbumStats(albumId),
+      getTopTracksForAlbum(albumId),
+      getTopArtists(albumId),
+      getRecentListens(albumId),
+      getDailyStreamData({ albumId }),
+      getCumulativeStreamData({ albumId })
+    ]);
 
   if (!albumData) {
     notFound();
@@ -256,10 +259,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
 
   return (
     <div className="flex-1 p-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto flex max-w-4xl flex-col gap-5">
         <BackNav />
         {/* Album Header */}
-        <div className="mb-8 flex gap-4">
+        <div className="flex gap-4">
           <div>{album.imageUrl && <img src={album.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
           <div>
             <h1 className="mb-2 text-4xl font-bold text-zinc-100">{album.name}</h1>
@@ -281,7 +284,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
         </div>
 
         {/* Statistics Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Listens */}
           <div className="rounded-lg bg-zinc-800 p-6">
             <h3 className="mb-2 text-sm font-medium text-zinc-400">Total Listens</h3>
@@ -312,7 +315,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
         </div>
 
         {/* Additional Stats */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Listen History */}
           <div className="rounded-lg bg-zinc-800 p-6">
             <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen History</h3>
@@ -367,9 +370,12 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
         {/* Daily Stream Chart */}
         {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
 
+        {/* Cumulative Stream Chart */}
+        {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
+
         {/* Top Tracks */}
         {topTracks.length > 0 && (
-          <div className="mb-8">
+          <div>
             <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks on this album</h3>
             <div className="space-y-2">
               {topTracks.map((track, index) => (
@@ -381,7 +387,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
 
         {/* Top Artists */}
         {topArtists.length > 0 && (
-          <div className="mb-8">
+          <div>
             <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Artists on this album</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {topArtists.map((artist, index) => (

@@ -1,13 +1,14 @@
 import BackNav from "@/components/BackNav";
 import AlbumGrid from "@/components/cards/AlbumGrid";
 import ListenCard from "@/components/cards/ListenCard";
+import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { Listen, TopAlbum } from "@/types";
-import { getDailyStreamData } from "@workspace/core";
+import { getCumulativeStreamData, getDailyStreamData } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -212,12 +213,13 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
   const { isrc } = await params;
 
-  const [trackData, stats, recentListens, topAlbums, dailyStreamData] = await Promise.all([
+  const [trackData, stats, recentListens, topAlbums, dailyStreamData, cumulativeStreamData] = await Promise.all([
     getTrackData(isrc),
     getTrackStats(isrc),
     getRecentListens(isrc),
     getTopAlbums(isrc),
-    getDailyStreamData({ trackIsrc: isrc })
+    getDailyStreamData({ trackIsrc: isrc }),
+    getCumulativeStreamData({ trackIsrc: isrc })
   ]);
 
   if (!trackData) {
@@ -228,10 +230,10 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
   return (
     <div className="flex-1 p-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto flex max-w-4xl flex-col gap-5">
         <BackNav />
         {/* Track Header */}
-        <div className="mb-8 flex gap-4">
+        <div className="flex gap-4">
           <div>
             <img src={track.imageUrl} className="h-32 w-32 rounded-lg object-cover" />
           </div>
@@ -255,7 +257,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
         </div>
 
         {/* Statistics Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Listens */}
           <div className="rounded-lg bg-zinc-800 p-6">
             <h3 className="mb-2 text-sm font-medium text-zinc-400">Total Listens</h3>
@@ -286,7 +288,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
         </div>
 
         {/* Additional Stats */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Listen History */}
           <div className="rounded-lg bg-zinc-800 p-6">
             <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen History</h3>
@@ -340,6 +342,9 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
         {/* Daily Stream Chart */}
         {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
+
+        {/* Cumulative Stream Chart */}
+        {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
 
         {/* Albums */}
         <AlbumGrid albums={topAlbums} />
