@@ -4,6 +4,7 @@ import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
+import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
@@ -13,7 +14,8 @@ import {
   getCumulativeStreamData,
   getDailyStreamData,
   getRecentListensForArtist,
-  getTopTracksForArtist
+  getTopTracksForArtist,
+  getYearlyPercentageData
 } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
@@ -190,16 +192,25 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
 
   const { artistId } = await params;
 
-  const [artistData, stats, topTracks, topAlbums, recentListens, dailyStreamData, cumulativeStreamData] =
-    await Promise.all([
-      getArtistData(artistId),
-      getArtistStats(artistId),
-      getTopTracksForArtist(artistId),
-      getTopAlbums(artistId),
-      getRecentListensForArtist(artistId),
-      getDailyStreamData({ artistId }),
-      getCumulativeStreamData({ artistId })
-    ]);
+  const [
+    artistData,
+    stats,
+    topTracks,
+    topAlbums,
+    recentListens,
+    dailyStreamData,
+    cumulativeStreamData,
+    yearlyPercentageData
+  ] = await Promise.all([
+    getArtistData(artistId),
+    getArtistStats(artistId),
+    getTopTracksForArtist(artistId),
+    getTopAlbums(artistId),
+    getRecentListensForArtist(artistId),
+    getDailyStreamData({ artistId }),
+    getCumulativeStreamData({ artistId }),
+    getYearlyPercentageData({ artistId })
+  ]);
 
   if (!artistData) {
     notFound();
@@ -309,6 +320,10 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
         {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
         {/* Cumulative Stream Chart */}
         {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
+        {/* Yearly Percentage Chart */}
+        {yearlyPercentageData.length > 0 && (
+          <YearlyPercentageChart data={yearlyPercentageData} itemName={artist.name} />
+        )}
 
         {/* Top Tracks */}
         {topTracks.length > 0 && (

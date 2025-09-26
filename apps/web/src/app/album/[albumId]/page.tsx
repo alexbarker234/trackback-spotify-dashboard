@@ -4,12 +4,18 @@ import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
+import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { TopArtist } from "@/types";
-import { getCumulativeStreamData, getDailyStreamData, getTopTracksForAlbum } from "@workspace/core";
+import {
+  getCumulativeStreamData,
+  getDailyStreamData,
+  getTopTracksForAlbum,
+  getYearlyPercentageData
+} from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -240,16 +246,25 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
 
   const { albumId } = await params;
 
-  const [albumData, stats, topTracks, topArtists, recentListens, dailyStreamData, cumulativeStreamData] =
-    await Promise.all([
-      getAlbumData(albumId),
-      getAlbumStats(albumId),
-      getTopTracksForAlbum(albumId),
-      getTopArtists(albumId),
-      getRecentListens(albumId),
-      getDailyStreamData({ albumId }),
-      getCumulativeStreamData({ albumId })
-    ]);
+  const [
+    albumData,
+    stats,
+    topTracks,
+    topArtists,
+    recentListens,
+    dailyStreamData,
+    cumulativeStreamData,
+    yearlyPercentageData
+  ] = await Promise.all([
+    getAlbumData(albumId),
+    getAlbumStats(albumId),
+    getTopTracksForAlbum(albumId),
+    getTopArtists(albumId),
+    getRecentListens(albumId),
+    getDailyStreamData({ albumId }),
+    getCumulativeStreamData({ albumId }),
+    getYearlyPercentageData({ albumId })
+  ]);
 
   if (!albumData) {
     notFound();
@@ -369,9 +384,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
 
         {/* Daily Stream Chart */}
         {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
-
         {/* Cumulative Stream Chart */}
         {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
+        {/* Yearly Percentage Chart */}
+        {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={album.name} />}
 
         {/* Top Tracks */}
         {topTracks.length > 0 && (

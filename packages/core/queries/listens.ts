@@ -236,3 +236,78 @@ export async function getYearlyStreamData(options: GetDailyStreamDataOptions = {
     return [];
   }
 }
+
+type GetYearlyPercentageDataOptions = {
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
+};
+
+export async function getYearlyPercentageData(options: GetYearlyPercentageDataOptions) {
+  const { artistId, albumId, trackIsrc } = options;
+
+  try {
+    // Get total listens per year
+    const totalListensPerYear = await db
+      .select({
+        year: sql<string>`to_char(${listen.playedAt}, 'YYYY')`.as("year"),
+        totalListens: sql<number>`count(*)`.as("totalListens")
+      })
+      .from(listen)
+      .where(gte(listen.durationMS, 30000))
+      .groupBy(sql`to_char(${listen.playedAt}, 'YYYY')`)
+      .orderBy(sql`to_char(${listen.playedAt}, 'YYYY')`);
+
+    const whereConditions = [gte(listen.durationMS, 30000)];
+
+    if (artistId) {
+      whereConditions.push(eq(trackArtist.artistId, artistId));
+    } else if (albumId) {
+      whereConditions.push(eq(albumTrack.albumId, albumId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
+    // Get listens for the specific item per year
+    const itemListensPerYear = await db
+      .select({
+        year: sql<string>`to_char(${listen.playedAt}, 'YYYY')`.as("year"),
+        itemListens: sql<number>`count(*)`.as("itemListens")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(...whereConditions))
+      .groupBy(sql`to_char(${listen.playedAt}, 'YYYY')`)
+      .orderBy(sql`to_char(${listen.playedAt}, 'YYYY')`);
+
+    // Create a map for quick lookup
+    const totalMap = new Map(totalListensPerYear.map((item) => [item.year, Number(item.totalListens)]));
+    const itemMap = new Map(itemListensPerYear.map((item) => [item.year, Number(item.itemListens)]));
+
+    // Combine data and calculate percentages
+    const allYears = new Set([...totalMap.keys(), ...itemMap.keys()]);
+    const result = Array.from(allYears)
+      .map((year) => {
+        const total = totalMap.get(year) || 0;
+        const item = itemMap.get(year) || 0;
+        const other = total - item;
+
+        return {
+          year,
+          itemPercentage: total > 0 ? (item / total) * 100 : 0,
+          otherPercentage: total > 0 ? (other / total) * 100 : 0,
+          itemListens: item,
+          otherListens: other,
+          totalListens: total
+        };
+      })
+      .sort((a, b) => a.year.localeCompare(b.year));
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching yearly percentage data:", error);
+    return [];
+  }
+}
