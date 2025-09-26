@@ -1,8 +1,11 @@
+import BackNav from "@/components/BackNav";
+import ListenCard from "@/components/Cards/ListenCard";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
-import { albumTrack, and, db, desc, eq, gte, listen, track } from "@workspace/database";
+import { Listen } from "@/types";
+import { album, albumTrack, and, db, desc, eq, gte, listen, track } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -146,17 +149,22 @@ async function getTrackStats(isrc: string): Promise<TrackStats> {
   }
 }
 
-async function getRecentListens(isrc: string, limit: number = 10) {
+async function getRecentListens(isrc: string, limit: number = 10): Promise<Listen[]> {
   try {
     const recentListens = await db
       .select({
         id: listen.id,
         durationMS: listen.durationMS,
-        playedAt: listen.playedAt
+        playedAt: listen.playedAt,
+        trackName: track.name,
+        trackIsrc: track.isrc,
+        imageUrl: album.imageUrl,
+        trackDurationMS: track.durationMS
       })
       .from(listen)
       .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
       .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
       .where(and(eq(track.isrc, isrc), gte(listen.durationMS, 30000)))
       .orderBy(desc(listen.playedAt))
       .limit(limit);
@@ -194,6 +202,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
   return (
     <div className="flex-1 p-8">
       <div className="mx-auto max-w-4xl">
+        <BackNav />
         {/* Track Header */}
         <div className="mb-8 flex gap-4">
           <div>
@@ -329,24 +338,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
             <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
             <div className="space-y-2">
               {recentListens.map((listen) => (
-                <div key={listen.id} className="rounded-lg bg-zinc-800 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-zinc-100">
-                        <LocalDate date={listen.playedAt} />
-                      </p>
-                      <p className="text-sm text-zinc-400">
-                        <LocalTime date={listen.playedAt} />
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-zinc-100">{formatTime(listen.durationMS)}</p>
-                      <p className="text-sm text-zinc-400">
-                        {((listen.durationMS / track.durationMS) * 100).toFixed(1)}% complete
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <ListenCard key={listen.id} listen={listen} />
               ))}
             </div>
           </div>

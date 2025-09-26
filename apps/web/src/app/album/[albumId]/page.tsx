@@ -1,7 +1,13 @@
+import BackNav from "@/components/BackNav";
+import ArtistCard from "@/components/Cards/ArtistCard";
+import ListenCard from "@/components/Cards/ListenCard";
+import TrackCard from "@/components/Cards/TrackCard";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
+import { TopArtist } from "@/types";
+import { getTopTracksForAlbum } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -21,22 +27,6 @@ interface AlbumStats {
   avgDuration: number;
   uniqueTracks: number;
   uniqueArtists: number;
-}
-
-interface TopTrack {
-  trackName: string;
-  trackIsrc: string;
-  listenCount: number;
-  totalDuration: number;
-  imageUrl: string | null;
-}
-
-interface TopArtist {
-  artistName: string;
-  artistId: string;
-  artistImageUrl: string | null;
-  listenCount: number;
-  totalDuration: number;
 }
 
 async function getAlbumData(albumId: string) {
@@ -171,32 +161,6 @@ async function getAlbumStats(albumId: string): Promise<AlbumStats> {
   }
 }
 
-async function getTopTracks(albumId: string, limit: number = 10): Promise<TopTrack[]> {
-  try {
-    const topTracks = await db
-      .select({
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration"),
-        imageUrl: album.imageUrl
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
-      .groupBy(track.isrc, track.name, album.imageUrl)
-      .orderBy(desc(sql<number>`count(*)`))
-      .limit(limit);
-
-    return topTracks;
-  } catch (error) {
-    console.error("Error fetching top tracks:", error);
-    return [];
-  }
-}
-
 async function getTopArtists(albumId: string, limit: number = 10): Promise<TopArtist[]> {
   try {
     const topArtists = await db
@@ -245,11 +209,12 @@ async function getRecentListens(albumId: string, limit: number = 10) {
         playedAt: listen.playedAt,
         trackName: track.name,
         trackIsrc: track.isrc,
-        imageUrl: album.imageUrl
+        imageUrl: album.imageUrl,
+        trackDurationMS: track.durationMS
       })
       .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .innerJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .innerJoin(track, eq(albumTrack.trackIsrc, track.isrc))
       .leftJoin(album, eq(albumTrack.albumId, album.id))
       .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
       .orderBy(desc(listen.playedAt))
@@ -276,7 +241,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
   const [albumData, stats, topTracks, topArtists, recentListens] = await Promise.all([
     getAlbumData(albumId),
     getAlbumStats(albumId),
-    getTopTracks(albumId),
+    getTopTracksForAlbum(albumId),
     getTopArtists(albumId),
     getRecentListens(albumId)
   ]);
@@ -290,6 +255,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
   return (
     <div className="flex-1 p-8">
       <div className="mx-auto max-w-4xl">
+        <BackNav />
         {/* Album Header */}
         <div className="mb-8 flex gap-4">
           <div>{album.imageUrl && <img src={album.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
@@ -399,36 +365,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
         {/* Top Tracks */}
         {topTracks.length > 0 && (
           <div className="mb-8">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks</h3>
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks on this album</h3>
             <div className="space-y-2">
               {topTracks.map((track, index) => (
-                <div key={track.trackIsrc} className="rounded-lg bg-zinc-800 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <span className="w-16 text-2xl font-bold text-zinc-400">#{index + 1}</span>
-                      <div className="flex items-center gap-4">
-                        {track.imageUrl && (
-                          <img
-                            src={track.imageUrl}
-                            alt={`${track.trackName} album cover`}
-                            className="h-16 w-16 rounded-lg object-cover"
-                          />
-                        )}
-                        <div>
-                          <Link
-                            href={`/track/${track.trackIsrc}`}
-                            className="text-zinc-100 transition-colors hover:text-zinc-300"
-                          >
-                            {track.trackName}
-                          </Link>
-                          <p className="text-sm text-zinc-400">
-                            {track.listenCount} listens • {formatDuration(track.totalDuration)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
               ))}
             </div>
           </div>
@@ -437,34 +377,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
         {/* Top Artists */}
         {topArtists.length > 0 && (
           <div className="mb-8">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Artists</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Artists on this album</h3>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {topArtists.map((artist, index) => (
-                <div key={artist.artistId} className="rounded-lg bg-zinc-800 p-4">
-                  <div className="flex gap-4">
-                    <div className="text-lg font-bold text-zinc-400">#{index + 1}</div>
-                    {artist.artistImageUrl && (
-                      <img
-                        src={artist.artistImageUrl}
-                        alt={`${artist.artistName} artist image`}
-                        className="h-16 w-16 rounded-lg object-cover"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/artist/${artist.artistId}`}
-                          className="font-medium text-zinc-100 transition-colors hover:text-zinc-300"
-                        >
-                          {artist.artistName}
-                        </Link>
-                      </div>
-                      <p className="text-sm text-zinc-400">
-                        {artist.listenCount} listens • {formatDuration(artist.totalDuration)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <ArtistCard key={artist.artistId} artist={artist} rank={index + 1} />
               ))}
             </div>
           </div>
@@ -473,36 +389,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
         {/* Recent Listens */}
         {recentListens.length > 0 && (
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
+            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Album Listens</h3>
             <div className="space-y-2">
               {recentListens.map((listen) => (
-                <div key={listen.id} className="rounded-lg bg-zinc-800 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {listen.imageUrl && (
-                        <img
-                          src={listen.imageUrl}
-                          alt={`${listen.trackName} album cover`}
-                          className="h-16 w-16 rounded-lg object-cover"
-                        />
-                      )}
-                      <div>
-                        <Link
-                          href={`/track/${listen.trackIsrc}`}
-                          className="text-zinc-100 transition-colors hover:text-zinc-300"
-                        >
-                          {listen.trackName}
-                        </Link>
-                        <p className="text-sm text-zinc-400">
-                          <LocalDate date={listen.playedAt} /> • <LocalTime date={listen.playedAt} />
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-zinc-100">{formatTime(listen.durationMS)}</p>
-                    </div>
-                  </div>
-                </div>
+                <ListenCard key={listen.id} listen={listen} />
               ))}
             </div>
           </div>
