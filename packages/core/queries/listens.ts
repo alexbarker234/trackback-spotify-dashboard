@@ -305,7 +305,30 @@ export async function getYearlyPercentageData(options: GetYearlyPercentageDataOp
       })
       .sort((a, b) => a.year.localeCompare(b.year));
 
-    return result;
+    // Remove years with no listens from both ends
+    const trimmedResult = [...result];
+
+    // Remove trailing years with no listens to the item
+    while (trimmedResult.length > 0) {
+      const lastYear = trimmedResult[trimmedResult.length - 1];
+      if (lastYear && lastYear.itemListens === 0) {
+        trimmedResult.pop();
+      } else {
+        break;
+      }
+    }
+
+    // Remove leading years with no listens to the item
+    while (trimmedResult.length > 0) {
+      const firstYear = trimmedResult[0];
+      if (firstYear && firstYear.itemListens === 0) {
+        trimmedResult.shift();
+      } else {
+        break;
+      }
+    }
+
+    return trimmedResult;
   } catch (error) {
     console.error("Error fetching yearly percentage data:", error);
     return [];
