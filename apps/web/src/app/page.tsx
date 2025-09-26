@@ -1,8 +1,11 @@
+import MonthlyStreamChart from "@/components/charts/MonthlyStreamChart";
+import YearlyStreamChart from "@/components/charts/YearlyStreamChart";
 import ItemCard from "@/components/ItemCard";
 import ItemCarousel from "@/components/ItemCarousel";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
+import { getMonthlyStreamData, getYearlyStreamData } from "@workspace/core/queries/listens";
 import {
   album,
   albumArtist,
@@ -166,11 +169,13 @@ export default async function Home() {
     redirect("/login");
   }
 
-  const [listens, topTracks, topArtists, topAlbums] = await Promise.all([
+  const [listens, topTracks, topArtists, topAlbums, monthlyStreamData, yearlyStreamData] = await Promise.all([
     getListens(),
     getTopTracks(),
     getTopArtists(),
-    getTopAlbums()
+    getTopAlbums(),
+    getMonthlyStreamData(),
+    getYearlyStreamData()
   ]);
 
   return (
@@ -257,6 +262,12 @@ export default async function Home() {
             </ItemCarousel>
           </div>
         )}
+
+        {/* Stream Charts Section */}
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {monthlyStreamData.length > 0 && <MonthlyStreamChart data={monthlyStreamData} />}
+          {yearlyStreamData.length > 0 && <YearlyStreamChart data={yearlyStreamData} />}
+        </div>
 
         {/* Recent Listens Section */}
         <div>

@@ -142,3 +142,97 @@ export async function getCumulativeStreamData(options: GetDailyStreamDataOptions
     return [];
   }
 }
+
+export async function getMonthlyStreamData(options: GetDailyStreamDataOptions = {}) {
+  const { artistId, albumId, trackIsrc, days = -1 } = options;
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+    if (artistId) {
+      whereConditions.push(eq(trackArtist.artistId, artistId));
+    } else if (albumId) {
+      whereConditions.push(eq(albumTrack.albumId, albumId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
+    // Only add date filter if days is not -1 (get all data)
+    if (days !== -1) {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    const monthlyStreams = await db
+      .select({
+        month: sql<string>`to_char(${listen.playedAt}, 'Month')`.as("month"),
+        monthNumber: sql<number>`extract(month from ${listen.playedAt})`.as("monthNumber"),
+        streamCount: sql<number>`count(*)`.as("streamCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(...whereConditions))
+      .groupBy(sql`to_char(${listen.playedAt}, 'Month')`, sql`extract(month from ${listen.playedAt})`)
+      .orderBy(sql`extract(month from ${listen.playedAt})`);
+
+    // Convert string values to numbers
+    return monthlyStreams.map((month) => ({
+      ...month,
+      monthNumber: Number(month.monthNumber),
+      streamCount: Number(month.streamCount),
+      totalDuration: Number(month.totalDuration)
+    }));
+  } catch (error) {
+    console.error("Error fetching monthly stream data:", error);
+    return [];
+  }
+}
+
+export async function getYearlyStreamData(options: GetDailyStreamDataOptions = {}) {
+  const { artistId, albumId, trackIsrc, days = -1 } = options;
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+    if (artistId) {
+      whereConditions.push(eq(trackArtist.artistId, artistId));
+    } else if (albumId) {
+      whereConditions.push(eq(albumTrack.albumId, albumId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
+    // Only add date filter if days is not -1 (get all data)
+    if (days !== -1) {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    const yearlyStreams = await db
+      .select({
+        year: sql<string>`to_char(${listen.playedAt}, 'YYYY')`.as("year"),
+        streamCount: sql<number>`count(*)`.as("streamCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(...whereConditions))
+      .groupBy(sql`to_char(${listen.playedAt}, 'YYYY')`)
+      .orderBy(sql`to_char(${listen.playedAt}, 'YYYY')`);
+
+    // Convert string values to numbers
+    return yearlyStreams.map((year) => ({
+      ...year,
+      streamCount: Number(year.streamCount),
+      totalDuration: Number(year.totalDuration)
+    }));
+  } catch (error) {
+    console.error("Error fetching yearly stream data:", error);
+    return [];
+  }
+}
