@@ -2,12 +2,13 @@ import BackNav from "@/components/BackNav";
 import ArtistCard from "@/components/cards/ArtistCard";
 import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
+import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { TopArtist } from "@/types";
-import { getTopTracksForAlbum } from "@workspace/core";
+import { getDailyStreamData, getTopTracksForAlbum } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -238,12 +239,13 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
 
   const { albumId } = await params;
 
-  const [albumData, stats, topTracks, topArtists, recentListens] = await Promise.all([
+  const [albumData, stats, topTracks, topArtists, recentListens, dailyStreamData] = await Promise.all([
     getAlbumData(albumId),
     getAlbumStats(albumId),
     getTopTracksForAlbum(albumId),
     getTopArtists(albumId),
-    getRecentListens(albumId)
+    getRecentListens(albumId),
+    getDailyStreamData({ albumId })
   ]);
 
   if (!albumData) {
@@ -361,6 +363,9 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
             </div>
           </div>
         </div>
+
+        {/* Daily Stream Chart */}
+        {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
 
         {/* Top Tracks */}
         {topTracks.length > 0 && (

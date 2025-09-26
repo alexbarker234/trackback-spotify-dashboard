@@ -8,7 +8,7 @@ import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { ArtistStats, TopAlbum } from "@/types";
-import { getRecentListensForArtist, getTopTracksForArtist } from "@workspace/core";
+import { getDailyStreamData, getRecentListensForArtist, getTopTracksForArtist } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -173,38 +173,6 @@ async function getTopAlbums(artistId: string, limit: number = 10): Promise<TopAl
   }
 }
 
-async function getDailyStreamData(artistId: string, days: number = -1) {
-  try {
-    const whereConditions = [eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)];
-
-    // Only add date filter if days is not -1 (get all data)
-    if (days !== -1) {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-      whereConditions.push(gte(listen.playedAt, startDate));
-    }
-
-    const dailyStreams = await db
-      .select({
-        date: sql<string>`date(${listen.playedAt})`.as("date"),
-        streamCount: sql<number>`count(*)`.as("streamCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .where(and(...whereConditions))
-      .groupBy(sql`date(${listen.playedAt})`)
-      .orderBy(sql`date(${listen.playedAt})`);
-
-    return dailyStreams;
-  } catch (error) {
-    console.error("Error fetching daily stream data:", error);
-    return [];
-  }
-}
-
 export default async function ArtistPage({ params }: { params: Promise<{ artistId: string }> }) {
   const session = await auth.api.getSession({
     headers: await headers()
@@ -222,7 +190,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
     getTopTracksForArtist(artistId),
     getTopAlbums(artistId),
     getRecentListensForArtist(artistId),
-    getDailyStreamData(artistId)
+    getDailyStreamData({ artistId })
   ]);
 
   if (!artistData) {

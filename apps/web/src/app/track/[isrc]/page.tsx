@@ -1,11 +1,13 @@
 import BackNav from "@/components/BackNav";
 import AlbumGrid from "@/components/cards/AlbumGrid";
 import ListenCard from "@/components/cards/ListenCard";
+import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import { auth } from "@/lib/auth";
 import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { Listen, TopAlbum } from "@/types";
+import { getDailyStreamData } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -210,11 +212,12 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
   const { isrc } = await params;
 
-  const [trackData, stats, recentListens, topAlbums] = await Promise.all([
+  const [trackData, stats, recentListens, topAlbums, dailyStreamData] = await Promise.all([
     getTrackData(isrc),
     getTrackStats(isrc),
     getRecentListens(isrc),
-    getTopAlbums(isrc)
+    getTopAlbums(isrc),
+    getDailyStreamData({ trackIsrc: isrc })
   ]);
 
   if (!trackData) {
@@ -334,6 +337,9 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
             </div>
           </div>
         </div>
+
+        {/* Daily Stream Chart */}
+        {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
 
         {/* Albums */}
         <AlbumGrid albums={topAlbums} />
