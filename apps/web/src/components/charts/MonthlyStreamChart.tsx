@@ -59,7 +59,7 @@ export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
 
   return (
     <div className="rounded-lg bg-zinc-800 p-6">
-      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Monthly Streams</h3>
+      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Streams by month</h3>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
