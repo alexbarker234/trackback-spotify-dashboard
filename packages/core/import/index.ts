@@ -75,14 +75,20 @@ export async function processSpotifyStreamingHistory(streamingHistory: SpotifySt
     }
 
     // Delete old listens
-    const latestImportedDate = listens.sort((a, b) => a.playedAt.getTime() - b.playedAt.getTime())[0]?.playedAt;
+    const latestImportedDate = listens.sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime())[0]?.playedAt;
     if (latestImportedDate) {
       await db.delete(listen).where(lte(listen.playedAt, latestImportedDate));
     }
+    console.log(`Latest imported date: ${latestImportedDate}`);
 
-    // Insert listens into database
+    // Insert listens into database in batches of 10,000
     console.log(`Inserting ${listens.length} listens`);
-    await db.insert(listen).values(listens);
+    const BATCH_SIZE = 10000;
+    for (let i = 0; i < listens.length; i += BATCH_SIZE) {
+      const batch = listens.slice(i, i + BATCH_SIZE);
+      await db.insert(listen).values(batch);
+      console.log(`Inserted batch ${i / BATCH_SIZE + 1}: ${batch.length} listens`);
+    }
 
     // Finish
     console.log(`Successfully processed ${results.processed} listens, skipped ${results.skipped} items`);

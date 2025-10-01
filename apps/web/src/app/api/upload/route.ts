@@ -41,7 +41,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Validate file types
-    console.log("files", JSON.stringify(files));
     const invalidFiles = files.filter((file) => !file.name.endsWith(".json"));
     if (invalidFiles.length > 0) {
       return NextResponse.json(
@@ -58,13 +57,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let totalProcessed = 0;
     let totalSkipped = 0;
     let totalErrors = 0;
+    const allStreamingHistory: SpotifyStreamingHistoryItem[] = [];
 
-    // Process each file
+    // Parse all files first
     for (const file of files) {
       const fileStartTime = performance.now();
 
       try {
-        console.log(`Processing file: ${file.name}`);
+        console.log(`Parsing file: ${file.name}`);
 
         // Read file content
         const fileContent = await file.text();
@@ -103,27 +103,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           continue;
         }
 
-        // Process the streaming history
-        const results = await processSpotifyStreamingHistory(streamingHistory);
+        // Add to combined streaming history
+        allStreamingHistory.push(...streamingHistory);
 
         const fileEndTime = performance.now();
         const processingTimeMs = fileEndTime - fileStartTime;
 
         fileResults.push({
           filename: file.name,
-          processed: results.processed,
-          skipped: results.skipped,
-          errors: results.errors,
+          processed: streamingHistory.length,
+          skipped: 0,
+          errors: [],
           processingTimeMs
         });
 
-        totalProcessed += results.processed;
-        totalSkipped += results.skipped;
-        totalErrors += results.errors.length;
-
-        console.log(
-          `Completed ${file.name}: ${results.processed} processed, ${results.skipped} skipped, ${results.errors.length} errors in ${processingTimeMs.toFixed(2)}ms`
-        );
+        console.log(`Parsed ${file.name}: ${streamingHistory.length} items in ${processingTimeMs.toFixed(2)}ms`);
       } catch (error) {
         const fileEndTime = performance.now();
         const processingTimeMs = fileEndTime - fileStartTime;
@@ -132,11 +126,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           filename: file.name,
           processed: 0,
           skipped: 0,
-          errors: [`File processing failed: ${error instanceof Error ? error.message : "Unknown error"}`],
+          errors: [`File parsing failed: ${error instanceof Error ? error.message : "Unknown error"}`],
           processingTimeMs
         });
         totalErrors++;
-        console.error(`Error processing file ${file.name}:`, error);
+        console.error(`Error parsing file ${file.name}:`, error);
+      }
+    }
+
+    // Process all streaming history together
+    if (allStreamingHistory.length > 0) {
+      console.log(`Processing ${allStreamingHistory.length} total streaming history items from ${files.length} files`);
+      const processStartTime = performance.now();
+
+      try {
+        const results = await processSpotifyStreamingHistory(allStreamingHistory);
+
+        const processEndTime = performance.now();
+        const processingTimeMs = processEndTime - processStartTime;
+
+        totalProcessed = results.processed;
+        totalSkipped = results.skipped;
+        totalErrors += results.errors.length;
+
+        for (const error of results.errors) {
+          console.error(error);
+        }
+
+        console.log(
+          `Processing completed: ${results.processed} processed, ${results.skipped} skipped, ${results.errors.length} errors in ${processingTimeMs.toFixed(2)}ms`
+        );
+      } catch (error) {
+        console.error("Error processing streaming history:", error);
+        totalErrors++;
       }
     }
 
@@ -145,7 +167,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const response: UploadResponse = {
       success: true,
-      message: `Successfully processed ${files.length} file(s)`,
+      message: `Successfully parsed ${files.length} file(s) and processed ${allStreamingHistory.length} streaming history items`,
       results: {
         totalFiles: files.length,
         totalProcessed,
@@ -157,7 +179,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     console.log(`Upload processing completed in ${totalProcessingTimeMs.toFixed(2)}ms`);
-    console.log(`Total: ${totalProcessed} processed, ${totalSkipped} skipped, ${totalErrors} errors`);
+    console.log(
+      `Files parsed: ${files.length}, Total items: ${allStreamingHistory.length}, Processed: ${totalProcessed}, Skipped: ${totalSkipped}, Errors: ${totalErrors}`
+    );
 
     return NextResponse.json(response);
   } catch (error) {
