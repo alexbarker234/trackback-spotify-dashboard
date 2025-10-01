@@ -61,6 +61,11 @@ export async function spotifyApiRequest<T>(endpoint: string, accessToken: string
       if (response.status === 401) {
         throw new Error("Unauthorized - token may be expired");
       }
+      if (response.status === 429) {
+        console.log("Rate limited by Spotify API. Waiting 30 seconds before retry...");
+        await new Promise((resolve) => setTimeout(resolve, 30000));
+        return spotifyApiRequest<T>(endpoint, accessToken);
+      }
       throw new Error(`Spotify API error: ${response.status} ${response.statusText}`);
     }
 
