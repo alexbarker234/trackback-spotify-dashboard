@@ -70,7 +70,7 @@ export async function fetchRecentlyPlayedTracksService(): Promise<void> {
       const existingPlayedAtSet = await getExistingListensByPlayedAt(playedAtDates);
 
       // Filter out tracks that are already saved
-      const newTracksData = allTracksData.filter((track) => true);
+      const newTracksData = allTracksData.filter((track) => !existingPlayedAtSet.has(track.playedAt.toISOString()));
 
       console.log(
         `Filtered out ${allTracksData.length - newTracksData.length} duplicate tracks, ${newTracksData.length} new tracks to save`
