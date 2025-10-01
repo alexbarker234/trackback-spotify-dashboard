@@ -7,9 +7,12 @@ import {
   ArtistInsert,
   db,
   eq,
+  inArray,
   Listen,
   listen,
   ListenInsert,
+  SQL,
+  sql,
   track,
   trackArtist,
   TrackArtistInsert,
@@ -175,6 +178,29 @@ export async function getArtistsNeedingImages() {
  */
 export async function updateArtistImage(artistId: string, imageUrl: string | null): Promise<void> {
   await db.update(artist).set({ imageUrl }).where(eq(artist.id, artistId));
+}
+
+/**
+ * Updates multiple artist images in bulk
+ */
+export async function updateArtistImagesBulk(
+  updates: Array<{ artistId: string; imageUrl: string | null }>
+): Promise<void> {
+  if (updates.length === 0) return;
+
+  const artistIds: string[] = [];
+  const sqlChunks: SQL[] = [];
+
+  sqlChunks.push(sql`(case`);
+  for (const update of updates) {
+    sqlChunks.push(sql`when ${artist.id} = ${update.artistId} then ${update.imageUrl}`);
+    artistIds.push(update.artistId);
+  }
+  sqlChunks.push(sql`end)`);
+
+  const finalSql = sql.join(sqlChunks, sql.raw(" "));
+
+  await db.update(artist).set({ imageUrl: finalSql }).where(inArray(artist.id, artistIds));
 }
 
 /**

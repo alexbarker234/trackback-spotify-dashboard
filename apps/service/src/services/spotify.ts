@@ -110,3 +110,14 @@ export async function fetchMultipleTracks(
   const ids = trackIds.join(",");
   return spotifyApiRequest<{ tracks: SpotifyTrack[] }>(`/tracks?ids=${ids}`, accessToken);
 }
+
+/**
+ * Fetches multiple artists in a single request (up to 50 artists)
+ */
+export async function fetchMultipleArtists(
+  artistIds: string[],
+  accessToken: string
+): Promise<{ artists: SpotifyArtistResponse[] }> {
+  const ids = artistIds.join(",");
+  return spotifyApiRequest<{ artists: SpotifyArtistResponse[] }>(`/artists?ids=${ids}`, accessToken);
+}
