@@ -1,8 +1,9 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import { faSpotify } from "@fortawesome/free-brands-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
-import { FaSpotify } from "react-icons/fa";
 
 export default function LoginButton() {
   const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ export default function LoginButton() {
         <span>Signing in...</span>
       ) : (
         <>
-          <FaSpotify />
+          <FontAwesomeIcon icon={faSpotify} />
           <span>Sign in with Spotify</span>
         </>
       )}

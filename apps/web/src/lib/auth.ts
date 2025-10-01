@@ -9,6 +9,7 @@ const scopes = [
   "user-read-private",
   "user-read-email",
   "user-top-read",
+  "user-read-currently-playing",
   "playlist-read-private",
   "playlist-read-collaborative",
   "playlist-modify-public",
@@ -72,5 +73,6 @@ export const auth = betterAuth({
     }),
     nextCookies()
   ],
-  baseURL: process.env.BASE_URL
+  baseURL: process.env.BASE_URL,
+  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(",") || []
 });

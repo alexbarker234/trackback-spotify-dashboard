@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils/cn";
+import { IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
-import { IconType } from "react-icons";
 
 interface BaseButtonProps {
   label: string;
-  icon?: IconType;
+  icon?: IconDefinition;
   variant?: "primary" | "secondary" | "danger" | "success" | "ghost";
   disabled?: boolean;
   loading?: boolean;
@@ -29,7 +30,7 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 
 export default function Button({
   label,
-  icon: Icon,
+  icon,
   type = "button",
   variant = "primary",
   disabled = false,
@@ -44,7 +45,7 @@ export default function Button({
     "px-4 py-2 rounded-lg transition-colors flex items-center disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed justify-center";
 
   const variantClasses = {
-    primary: "bg-purple-600 hover:bg-purple-700 text-white",
+    primary: "bg-spotify-green hover:bg-spotify-green/80 text-white",
     secondary: "bg-zinc-600 hover:bg-zinc-700 text-white",
     danger: "bg-red-600 hover:bg-red-700 text-white",
     success: "bg-green-600 hover:bg-green-700 text-white",
@@ -56,7 +57,7 @@ export default function Button({
   if (href) {
     return (
       <Link href={href} title={title} className={cn(baseClasses, variantClasses[variant], className)}>
-        {Icon && <Icon className={`${displayLabel ? "mr-2" : ""}`} />}
+        {icon && <FontAwesomeIcon icon={icon} className={`${displayLabel ? "mr-2" : ""}`} />}
         {displayLabel}
       </Link>
     );
@@ -70,7 +71,7 @@ export default function Button({
       title={title}
       className={cn(baseClasses, variantClasses[variant], className)}
     >
-      {Icon && <Icon className={`${displayLabel ? "mr-2" : ""}`} />}
+      {icon && <FontAwesomeIcon icon={icon} className={`${displayLabel ? "mr-2" : ""}`} />}
       {displayLabel}
     </button>
   );

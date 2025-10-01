@@ -1,5 +1,8 @@
 # Spotify Dashboard
 
+## TODO
+- Deduplicate albums
+
 #### Start packages
 
 1. Run the commannds

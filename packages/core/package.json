@@ -1,19 +1,19 @@
 {
-    "name": "@workspace/core",
-    "version": "0.0.0",
-    "private": true,
-    "main": "index.ts",
-    "scripts": {
-        "dev": "tsc --watch",
-        "build": "tsc",
-        "lint": "eslint . --ext .ts,.tsx",
-        "lint:fix": "eslint . --ext .ts,.tsx --fix"
-    },
-    "dependencies": {
-        "@workspace/database": "workspace:*"
-    },
-    "devDependencies": {
-        "@workspace/eslint-config": "workspace:*",
-        "typescript": "^5.8.3"
-    }
+  "name": "@workspace/core",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix"
+  },
+  "dependencies": {
+    "@workspace/database": "workspace:*"
+  },
+  "devDependencies": {
+    "@workspace/eslint-config": "workspace:*",
+    "typescript": "^5.8.3"
+  }
 }

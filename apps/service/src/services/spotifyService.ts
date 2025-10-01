@@ -1,27 +1,76 @@
+import { Listen } from "@workspace/database";
 import {
   getArtistsNeedingImages,
-  getSpotifyUser,
-  getUserAccessToken,
-  saveTrackData,
-  updateArtistImage
-} from "./database";
-import { fetchArtistData, fetchRecentlyPlayedTracks } from "./spotify";
+  getExistingListensByPlayedAt,
+  getListensWithoutAlbumTrack,
+  saveBatchTrackDataToDatabase,
+  saveListens,
+  updateArtistImagesBulk
+} from "../database";
+
+import { getSpotifyUser, getUserAccessToken } from "@/database/user";
+import { fetchMultipleArtists, fetchMultipleTracks, fetchRecentlyPlayedTracks } from "./spotify";
 
 /**
- * Updates artist data with images from Spotify API
+ * Updates artist data with images from Spotify API using bulk fetching
  */
 async function updateArtistData(accessToken: string): Promise<void> {
   try {
     const artists = await getArtistsNeedingImages();
 
-    for (const artistData of artists) {
+    if (artists.length === 0) {
+      console.log("No artists need image updates");
+      return;
+    }
+
+    console.log(`Found ${artists.length} artists needing image updates`);
+
+    // Process artists in batches of 50 (Spotify API limit)
+    const batchSize = 50;
+    const artistIds = artists.map((artist) => artist.id);
+
+    for (let i = 0; i < artistIds.length; i += batchSize) {
+      const batch = artistIds.slice(i, i + batchSize);
+
       try {
-        const artistResponse = await fetchArtistData(artistData.id, accessToken);
-        await updateArtistImage(artistData.id, artistResponse.images[0]?.url || null);
+        console.log(
+          `Processing artist batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(artistIds.length / batchSize)} (${batch.length} artists)`
+        );
+
+        // Fetch artist data from Spotify in bulk
+        const spotifyArtistsResponse = await fetchMultipleArtists(batch, accessToken);
+        const spotifyArtists = spotifyArtistsResponse.artists.filter((artist) => artist !== null);
+
+        // Prepare updates for database
+        const updates = spotifyArtists.map((artist) => ({
+          artistId: artist.id,
+          imageUrl: artist.images[0]?.url || null
+        }));
+
+        // For all null images, set it to an empty string
+        updates.forEach((update) => {
+          if (update.imageUrl === null) {
+            update.imageUrl = "";
+          }
+        });
+
+        // Update artist images in bulk
+        if (updates.length > 0) {
+          await updateArtistImagesBulk(updates);
+          console.log(`Updated ${updates.length} artist images`);
+        }
+
+        // Add a small delay to respect rate limits
+        if (i + batchSize < artistIds.length) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
       } catch (error) {
-        console.error(`Error updating artist ${artistData.id}:`, error);
+        console.error(`Error processing artist batch starting at index ${i}:`, error);
+        // Continue with next batch
       }
     }
+
+    console.log("Successfully updated artist data");
   } catch (error) {
     console.error("Error updating artist data:", error);
   }
@@ -51,14 +100,32 @@ export async function fetchRecentlyPlayedTracksService(): Promise<void> {
 
     try {
       // Fetch recently played tracks
-      const afterTimestamp = Math.floor((Date.now() - 2 * 60 * 1000) / 1000);
-      const recentlyPlayed = await fetchRecentlyPlayedTracks(accessToken, afterTimestamp);
+      const recentlyPlayed = await fetchRecentlyPlayedTracks(accessToken);
 
       console.log(`Found ${recentlyPlayed.items.length} recent tracks for user ${spotifyUser.userId}`);
 
-      // Save each track
-      for (const item of recentlyPlayed.items) {
-        await saveTrackData(item.track, new Date(item.played_at));
+      // Prepare all tracks for bulk save
+      const allTracksData = recentlyPlayed.items.map((item) => ({
+        trackData: item.track,
+        playedAt: new Date(item.played_at)
+      }));
+
+      // Check for existing listens to avoid duplicates
+      const playedAtDates = allTracksData.map((track) => track.playedAt);
+      const existingPlayedAtSet = await getExistingListensByPlayedAt(playedAtDates);
+
+      // Filter out tracks that are already saved
+      const newTracksData = allTracksData.filter((track) => !existingPlayedAtSet.has(track.playedAt.toISOString()));
+
+      console.log(
+        `Filtered out ${allTracksData.length - newTracksData.length} duplicate tracks, ${newTracksData.length} new tracks to save`
+      );
+
+      // Save only new tracks in bulk
+      if (newTracksData.length > 0) {
+        await saveListens(newTracksData);
+      } else {
+        console.log("No new tracks to save");
       }
 
       // Update artist data
@@ -70,5 +137,80 @@ export async function fetchRecentlyPlayedTracksService(): Promise<void> {
     console.log(`[${new Date().toISOString()}] ✅ Successfully processed recently played tracks`);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] ❌ Error fetching recently played tracks:`, error);
+  }
+}
+
+export async function populateImportedListensService(): Promise<void> {
+  try {
+    console.log(`[${new Date().toISOString()}] 🔍 Finding listens that don't have albumTrack entries...`);
+
+    // Get all listens that don't have corresponding albumTrack entries
+    const listensWithoutAlbumTrack = await getListensWithoutAlbumTrack();
+
+    if (listensWithoutAlbumTrack.length === 0) {
+      console.log("No listens need albumTrack entries");
+      return;
+    }
+
+    console.log(`Found ${listensWithoutAlbumTrack.length} listens without albumTrack entries`);
+
+    // Get Spotify user and access token
+    const spotifyUser = await getSpotifyUser();
+    if (!spotifyUser) {
+      console.log("No Spotify user found in database");
+      return;
+    }
+
+    const accessToken = await getUserAccessToken(spotifyUser.userId);
+    if (!accessToken) {
+      console.log("No valid access token available");
+      return;
+    }
+
+    // Group listens by track ID to minimize API calls
+    const listensByTrackId = new Map<string, Listen[]>();
+    for (const listen of listensWithoutAlbumTrack) {
+      if (!listensByTrackId.has(listen.trackId)) {
+        listensByTrackId.set(listen.trackId, []);
+      }
+      listensByTrackId.get(listen.trackId)!.push(listen);
+    }
+
+    console.log(`Processing ${listensByTrackId.size} unique tracks`);
+
+    // Process tracks in batches of 50 (Spotify API limit)
+    const trackIds = Array.from(listensByTrackId.keys());
+    const batchSize = 50;
+
+    for (let i = 0; i < trackIds.length; i += batchSize) {
+      const batch = trackIds.slice(i, i + batchSize);
+
+      try {
+        console.log(
+          `Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(trackIds.length / batchSize)} (${batch.length} tracks)`
+        );
+
+        // Fetch track data from Spotify
+        const spotifyTracksResponse = await fetchMultipleTracks(batch, accessToken);
+        const spotifyTracks = spotifyTracksResponse.tracks.filter((track) => track !== null);
+
+        // Save all track, artist, and album data to database in bulk
+        await saveBatchTrackDataToDatabase(spotifyTracks);
+
+        // Add a small delay to respect rate limits
+        if (i + batchSize < trackIds.length) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        console.error(`Error processing batch starting at index ${i}:`, error);
+        // Continue with next batch
+      }
+    }
+
+    console.log(
+      `[${new Date().toISOString()}] ✅ Successfully processed ${trackIds.length} tracks, saved track/artist/album data`
+    );
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] ❌ Error populating imported listens:`, error);
   }
 }
