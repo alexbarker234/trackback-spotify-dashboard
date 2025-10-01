@@ -1,28 +1,28 @@
 {
-    "name": "club-test",
-    "version": "0.0.1",
-    "private": true,
-    "scripts": {
-        "start": "turbo run start --env-mode=loose",
-        "build": "turbo run build --env-mode=loose",
-        "dev": "turbo run dev --env-mode=loose",
-        "dev:packages": "turbo run dev --env-mode=loose --filter=./packages/*",
-        "lint": "turbo lint",
-        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-        "db:check": "turbo run db:check --env-mode=loose",
-        "db:generate": "turbo run db:generate --env-mode=loose",
-        "db:migrate": "turbo run db:migrate --env-mode=loose",
-        "db:studio": "turbo run db:studio --env-mode=loose",
-        "db:up": "cd packages/database && docker-compose up"
-    },
-    "devDependencies": {
-        "@workspace/eslint-config": "workspace:*",
-        "prettier": "^3.6.2",
-        "turbo": "^2.5.5",
-        "typescript": "5.8.3"
-    },
-    "packageManager": "pnpm@9.15.9",
-    "engines": {
-        "node": ">=20"
-    }
+  "name": "trackback",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "turbo run start --env-mode=loose",
+    "build": "turbo run build --env-mode=loose",
+    "dev": "turbo run dev --env-mode=loose",
+    "dev:packages": "turbo run dev --env-mode=loose --filter=./packages/*",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "db:check": "turbo run db:check --env-mode=loose",
+    "db:generate": "turbo run db:generate --env-mode=loose",
+    "db:migrate": "turbo run db:migrate --env-mode=loose",
+    "db:studio": "turbo run db:studio --env-mode=loose",
+    "db:up": "cd packages/database && docker-compose up"
+  },
+  "devDependencies": {
+    "@workspace/eslint-config": "workspace:*",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.5",
+    "typescript": "5.8.3"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  }
 }

@@ -2,8 +2,9 @@
 
 import ErrorPage from "@/components/ErrorPage";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error");
 
@@ -13,4 +14,12 @@ export default function AuthErrorPage() {
   }
 
   return <ErrorPage errorMessage={errorDescription} reset={() => {}} allowTryAgain={false} />;
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthErrorContent />
+    </Suspense>
+  );
 }

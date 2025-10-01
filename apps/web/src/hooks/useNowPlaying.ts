@@ -1,29 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-interface SpotifyCurrentlyPlayingResponse {
-  is_playing: boolean;
-  item: {
-    id: string;
-    name: string;
-    duration_ms: number;
-    external_ids?: {
-      isrc?: string;
-    };
-    artists: Array<{
-      id: string;
-      name: string;
-    }>;
-    album: {
-      id: string;
-      name: string;
-      images: Array<{
-        url: string;
-      }>;
-    };
-  } | null;
-  currently_playing_type: string;
-  timestamp: number;
-}
+import { SpotifyCurrentlyPlayingResponse } from "@workspace/core/types/spotifyTypes";
 
 const fetchNowPlaying = async (): Promise<SpotifyCurrentlyPlayingResponse> => {
   const response = await fetch("/api/now-playing");
@@ -37,10 +13,9 @@ export const useNowPlaying = () => {
   return useQuery({
     queryKey: ["nowPlaying"],
     queryFn: fetchNowPlaying,
-    refetchInterval: 10000, // Refetch every 10 seconds
-    refetchIntervalInBackground: true, // Continue refetching even when tab is not active
-    staleTime: 5000, // Consider data stale after 5 seconds
-    retry: 3, // Retry failed requests up to 3 times
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000) // Exponential backoff
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
+    retry: 3
   });
 };
