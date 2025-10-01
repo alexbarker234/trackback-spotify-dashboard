@@ -4,6 +4,7 @@ import ItemCard from "@/components/ItemCard";
 import ItemCarousel from "@/components/ItemCarousel";
 import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
+import NowPlaying from "@/components/NowPlaying";
 import { auth } from "@/lib/auth";
 import { getMonthlyStreamData, getYearlyStreamData } from "@workspace/core/queries/listens";
 import {
@@ -198,6 +199,10 @@ export default async function Home() {
           </div>
         </div>
       )}
+
+      {/* Now Playing Section */}
+      <NowPlaying />
+
       <div className="mx-auto my-4 flex w-full max-w-7xl flex-1 flex-col p-4">
         {/* Top Tracks Section */}
         {topTracks.length > 0 && (

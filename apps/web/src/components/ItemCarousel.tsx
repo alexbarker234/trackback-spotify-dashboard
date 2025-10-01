@@ -113,7 +113,7 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
         </div>
 
         {/* Navigation controls */}
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-shrink-0 items-center space-x-2">
           <button
             onClick={scrollLeft}
             disabled={!canScrollLeft}
