@@ -1,16 +1,15 @@
 {
-    "$schema": "https://railway.app/railway.schema.json",
-    "build": {
-        "builder": "NIXPACKS",
-        "watchPatterns": ["/apps/bot", "/packages/database", "/package.json"],
-        "buildCommand": "pnpm run build --filter database"
-    },
-    "deploy": {
-        "numReplicas": 1,
-        "preDeployCommand": "pnpm run db:migrate --filter database",
-        "startCommand": "pnpm run start --filter bot",
-        "sleepApplication": false,
-        "restartPolicyType": "ON_FAILURE",
-        "restartPolicyMaxRetries": 2
-    }
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "watchPatterns": ["/apps/service", "/packages/database", "/package.json"]
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "preDeployCommand": "pnpm run db:migrate --filter database",
+    "startCommand": "pnpm run start --filter service",
+    "sleepApplication": false,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 2
+  }
 }
