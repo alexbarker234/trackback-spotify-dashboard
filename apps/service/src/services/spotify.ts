@@ -11,7 +11,7 @@ import {
  */
 export async function refreshAccessToken(
   refreshToken: string
-): Promise<{ accessToken: string; expiresIn: number } | null> {
+): Promise<{ accessToken: string; expiresIn: number; refreshToken?: string } | null> {
   try {
     console.log("Refreshing access token...");
     const response = await fetch(SPOTIFY_CONFIG.TOKEN_URL, {
@@ -36,7 +36,8 @@ export async function refreshAccessToken(
 
     return {
       accessToken: data.access_token,
-      expiresIn: data.expires_in
+      expiresIn: data.expires_in,
+      refreshToken: data.refresh_token
     };
   } catch (error) {
     console.error("Error refreshing access token:", error);
@@ -65,7 +66,7 @@ export async function spotifyApiRequest<T>(endpoint: string, accessToken: string
 
     return await response.json();
   } catch (error) {
-    console.error("Spotify API request failed:", error);
+    console.error(`Spotify API request failed for ${SPOTIFY_CONFIG.API_BASE}${endpoint}:`, error);
     throw error;
   }
 }
@@ -75,13 +76,9 @@ export async function spotifyApiRequest<T>(endpoint: string, accessToken: string
  */
 export async function fetchRecentlyPlayedTracks(
   accessToken: string,
-  afterTimestamp: number,
   limit: number = 50
 ): Promise<SpotifyRecentlyPlayedResponse> {
-  return spotifyApiRequest<SpotifyRecentlyPlayedResponse>(
-    `/me/player/recently-played?limit=${limit}&after=${afterTimestamp}`,
-    accessToken
-  );
+  return spotifyApiRequest<SpotifyRecentlyPlayedResponse>(`/me/player/recently-played?limit=${limit}`, accessToken);
 }
 
 /**

@@ -1,5 +1,4 @@
 import {
-  account,
   album,
   AlbumInsert,
   albumTrack,
@@ -17,62 +16,6 @@ import {
   TrackInsert
 } from "@workspace/database";
 import { SpotifyTrack } from "../types/spotify";
-import { refreshAccessToken } from "./spotify";
-
-/**
- * Gets access token for a user, refreshing if necessary
- */
-export async function getUserAccessToken(userId: string): Promise<string | null> {
-  try {
-    const userAccount = await getSpotifyUser();
-
-    if (!userAccount) {
-      console.log(`No Spotify account found for user ${userId}`);
-      return null;
-    }
-
-    // Check if token is expired
-    if (userAccount.accessTokenExpiresAt && userAccount.accessTokenExpiresAt < new Date()) {
-      console.log(`Access token expired for user ${userId}, refreshing...`);
-
-      if (!userAccount.refreshToken) {
-        console.log(`No refresh token available for user ${userId}`);
-        return null;
-      }
-
-      const refreshResult = await refreshAccessToken(userAccount.refreshToken);
-
-      if (!refreshResult) {
-        console.log(`Failed to refresh token for user ${userId}`);
-        return null;
-      }
-
-      // Update the database with new token
-      const newExpiresAt = new Date(Date.now() + refreshResult.expiresIn * 1000);
-      await db
-        .update(account)
-        .set({
-          accessToken: refreshResult.accessToken,
-          accessTokenExpiresAt: newExpiresAt,
-          updatedAt: new Date()
-        })
-        .where(eq(account.id, userAccount.id));
-
-      return refreshResult.accessToken;
-    }
-
-    return userAccount.accessToken || null;
-  } catch (error) {
-    console.error(`Error getting access token for user ${userId}:`, error);
-    return null;
-  }
-}
-
-export async function getSpotifyUser() {
-  return db.query.account.findFirst({
-    where: (account, { eq }) => eq(account.providerId, "spotify")
-  });
-}
 
 interface TrackListenData {
   trackData: SpotifyTrack;
@@ -200,8 +143,18 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
       await db.insert(listen).values(listensToInsert);
     }
 
+    // Calculate duration statistics
+    const totalOriginalDuration = tracksData.reduce((sum, track) => sum + track.trackData.duration_ms, 0);
+    const totalActualDuration = tracksData.reduce((sum, track) => sum + track.trackData.duration_ms, 0);
+    const skippedDuration = totalOriginalDuration - totalActualDuration;
+    const skippedPercentage =
+      totalOriginalDuration > 0 ? ((skippedDuration / totalOriginalDuration) * 100).toFixed(1) : 0;
+
     console.log(
       `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${listensToInsert.length} listens`
+    );
+    console.log(
+      `Duration: ${(totalActualDuration / 1000 / 60).toFixed(1)}min actual vs ${(totalOriginalDuration / 1000 / 60).toFixed(1)}min original (${skippedPercentage}% skipped)`
     );
   } catch (error) {
     console.error("Error saving track data in bulk:", error);
@@ -260,6 +213,19 @@ export async function getListensWithoutAlbumTrack(): Promise<Listen[]> {
     where: (listen, { notExists }) =>
       notExists(db.select().from(albumTrack).where(eq(albumTrack.trackId, listen.trackId)))
   });
+}
+
+/**
+ * Checks for existing listens by playedAt timestamps
+ */
+export async function getExistingListensByPlayedAt(playedAtDates: Date[]): Promise<Set<string>> {
+  if (playedAtDates.length === 0) return new Set();
+
+  const existingListens = await db.query.listen.findMany({
+    where: (listen, { inArray }) => inArray(listen.playedAt, playedAtDates)
+  });
+
+  return new Set(existingListens.map((l) => l.playedAt.toISOString()));
 }
 
 /**

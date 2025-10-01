@@ -1,13 +1,14 @@
 import { Listen } from "@workspace/database";
 import {
   getArtistsNeedingImages,
+  getExistingListensByPlayedAt,
   getListensWithoutAlbumTrack,
-  getSpotifyUser,
-  getUserAccessToken,
   saveBatchTrackDataToDatabase,
   saveListens,
   updateArtistImage
-} from "./database";
+} from "../database";
+
+import { getSpotifyUser, getUserAccessToken } from "@/database/user";
 import { fetchArtistData, fetchMultipleTracks, fetchRecentlyPlayedTracks } from "./spotify";
 
 /**
@@ -54,19 +55,33 @@ export async function fetchRecentlyPlayedTracksService(): Promise<void> {
 
     try {
       // Fetch recently played tracks
-      const afterTimestamp = Math.floor((Date.now() - 2 * 60 * 1000) / 1000);
-      const recentlyPlayed = await fetchRecentlyPlayedTracks(accessToken, afterTimestamp);
+      const recentlyPlayed = await fetchRecentlyPlayedTracks(accessToken);
 
       console.log(`Found ${recentlyPlayed.items.length} recent tracks for user ${spotifyUser.userId}`);
 
       // Prepare all tracks for bulk save
-      const tracksData = recentlyPlayed.items.map((item) => ({
+      const allTracksData = recentlyPlayed.items.map((item) => ({
         trackData: item.track,
         playedAt: new Date(item.played_at)
       }));
 
-      // Save all tracks in bulk
-      await saveListens(tracksData);
+      // Check for existing listens to avoid duplicates
+      const playedAtDates = allTracksData.map((track) => track.playedAt);
+      const existingPlayedAtSet = await getExistingListensByPlayedAt(playedAtDates);
+
+      // Filter out tracks that are already saved
+      const newTracksData = allTracksData.filter((track) => true);
+
+      console.log(
+        `Filtered out ${allTracksData.length - newTracksData.length} duplicate tracks, ${newTracksData.length} new tracks to save`
+      );
+
+      // Save only new tracks in bulk
+      if (newTracksData.length > 0) {
+        await saveListens(newTracksData);
+      } else {
+        console.log("No new tracks to save");
+      }
 
       // Update artist data
       await updateArtistData(accessToken);
