@@ -4,10 +4,9 @@ import ListenCard from "@/components/cards/ListenCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
-import LocalDate from "@/components/LocalDate";
-import LocalTime from "@/components/LocalTime";
+import StatGrid from "@/components/StatGrid";
 import { auth } from "@/lib/auth";
-import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
+import { formatTime } from "@/lib/utils/timeUtils";
 import { Listen, TopAlbum } from "@/types";
 import { getCumulativeStreamData, getDailyStreamData, getYearlyPercentageData } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
@@ -253,95 +252,12 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
                 </Link>
               ))}
             </div>
-            <div className="text-sm text-zinc-400">
-              Duration: {formatTime(track.durationMS)} • ISRC: {track.isrc}
-            </div>
+            <div className="text-sm text-zinc-400">Duration: {formatTime(track.durationMS)}</div>
           </div>
         </div>
 
         {/* Statistics Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Listens */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">Total Listens</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.totalListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.totalDuration)} total time</p>
-          </div>
-
-          {/* This Year */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Year</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.yearListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.yearDuration)} total time</p>
-          </div>
-
-          {/* This Month */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Month</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.monthListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.monthDuration)} total time</p>
-          </div>
-
-          {/* This Week */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Week</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.weekListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.weekDuration)} total time</p>
-          </div>
-        </div>
-
-        {/* Additional Stats */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Listen History */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen History</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-zinc-400">First Listen:</span>
-                <span className="text-zinc-100">
-                  {stats.firstListen ? (
-                    <>
-                      <LocalDate date={stats.firstListen} />
-                      <br />
-                      <LocalTime date={stats.firstListen} />
-                    </>
-                  ) : (
-                    "Never"
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Last Listen:</span>
-                <span className="text-zinc-100">
-                  {stats.lastListen ? (
-                    <>
-                      <LocalDate date={stats.lastListen} />
-                      <br />
-                      <LocalTime date={stats.lastListen} />
-                    </>
-                  ) : (
-                    "Never"
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Listen Quality */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen Quality</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Average Duration:</span>
-                <span className="text-zinc-100">{formatTime(stats.avgDuration)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Completion Rate:</span>
-                <span className="text-zinc-100">{stats.completionRate.toFixed(1)}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatGrid stats={stats} />
 
         {/* Daily Stream Chart */}
         {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
