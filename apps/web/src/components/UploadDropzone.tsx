@@ -244,9 +244,13 @@ export default function UploadDropzone() {
                   <div className="flex min-w-0 flex-1 items-center space-x-3">
                     {getStatusIcon(file.status)}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-100">{file.file.name}</p>
+                      {/* File name and file size */}
+                      <div className="mr-4 flex justify-between truncate text-sm font-medium text-zinc-100">
+                        <p>{file.file.name}</p>
+                        <p className="text-zinc-400">{formatFileSize(file.file.size)}</p>
+                      </div>
+                      {/* Progress */}
                       <div className="flex items-center space-x-4 text-xs text-zinc-400">
-                        <span>{formatFileSize(file.file.size)}</span>
                         {file.status === "uploading" && file.progress !== undefined && <span>{file.progress}%</span>}
                       </div>
                       {file.status === "uploading" && file.progress !== undefined && (
@@ -263,7 +267,7 @@ export default function UploadDropzone() {
                     <button
                       onClick={() => handleRemoveFile(file.id)}
                       disabled={isUploading}
-                      className="text-zinc-400 hover:text-red-400 disabled:opacity-50"
+                      className="cursor-pointer text-zinc-400 transition-colors hover:text-red-400 disabled:opacity-50"
                     >
                       <FontAwesomeIcon icon={faX} className="h-4 w-4" />
                     </button>
