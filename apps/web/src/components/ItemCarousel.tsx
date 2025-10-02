@@ -114,28 +114,30 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
 
         {/* Navigation controls */}
         <div className="flex flex-shrink-0 items-center space-x-2">
-          <button
-            onClick={scrollLeft}
-            disabled={!canScrollLeft}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${
-              canScrollLeft
-                ? "bg-zinc-700 text-zinc-100 hover:bg-zinc-600"
-                : "cursor-not-allowed bg-zinc-800 text-zinc-500"
-            }`}
-          >
-            <FontAwesomeIcon icon={faChevronLeft} className="h-4 w-4" />
-          </button>
-          <button
-            onClick={scrollRight}
-            disabled={!canScrollRight}
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${
-              canScrollRight
-                ? "bg-zinc-700 text-zinc-100 hover:bg-zinc-600"
-                : "cursor-not-allowed bg-zinc-800 text-zinc-500"
-            }`}
-          >
-            <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4" />
-          </button>
+          <div className="hidden items-center space-x-2 sm:flex">
+            <button
+              onClick={scrollLeft}
+              disabled={!canScrollLeft}
+              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${
+                canScrollLeft
+                  ? "bg-zinc-700 text-zinc-100 hover:bg-zinc-600"
+                  : "cursor-not-allowed bg-zinc-800 text-zinc-500"
+              }`}
+            >
+              <FontAwesomeIcon icon={faChevronLeft} className="h-4 w-4" />
+            </button>
+            <button
+              onClick={scrollRight}
+              disabled={!canScrollRight}
+              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${
+                canScrollRight
+                  ? "bg-zinc-700 text-zinc-100 hover:bg-zinc-600"
+                  : "cursor-not-allowed bg-zinc-800 text-zinc-500"
+              }`}
+            >
+              <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4" />
+            </button>
+          </div>
           {viewMoreUrl && (
             <Link href={viewMoreUrl} className="text-sm text-zinc-400 transition-colors hover:text-zinc-300">
               View More
@@ -145,7 +147,7 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
       </div>
 
       {/* Container with hidden overflow */}
-      <div ref={containerRef} className="overflow-hidden">
+      <div ref={containerRef} className="overflow-scroll sm:overflow-hidden">
         {/* Content with transform */}
         <div
           ref={contentRef}
