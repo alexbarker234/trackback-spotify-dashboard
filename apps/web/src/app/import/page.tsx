@@ -1,4 +1,4 @@
-import UploadDropzone from "@/components/UploadDropzone";
+import UploadArea from "@/components/upload/UploadArea";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -14,7 +14,7 @@ export default async function ImportPage() {
 
   return (
     <div>
-      <UploadDropzone />
+      <UploadArea />
     </div>
   );
 }
