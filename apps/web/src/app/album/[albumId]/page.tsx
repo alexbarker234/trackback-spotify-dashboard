@@ -1,14 +1,12 @@
-import BackNav from "@/components/BackNav";
 import ArtistCard from "@/components/cards/ArtistCard";
 import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
-import LocalDate from "@/components/LocalDate";
-import LocalTime from "@/components/LocalTime";
+import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
+import StatGrid, { Stats } from "@/components/StatGrid";
 import { auth } from "@/lib/auth";
-import { formatDuration, formatTime } from "@/lib/utils/timeUtils";
 import { TopArtist } from "@/types";
 import {
   getCumulativeStreamData,
@@ -20,22 +18,6 @@ import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArt
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-
-interface AlbumStats {
-  totalListens: number;
-  totalDuration: number;
-  yearListens: number;
-  yearDuration: number;
-  monthListens: number;
-  monthDuration: number;
-  weekListens: number;
-  weekDuration: number;
-  firstListen: Date | null;
-  lastListen: Date | null;
-  avgDuration: number;
-  uniqueTracks: number;
-  uniqueArtists: number;
-}
 
 async function getAlbumData(albumId: string) {
   try {
@@ -83,7 +65,7 @@ async function getAlbumData(albumId: string) {
   }
 }
 
-async function getAlbumStats(albumId: string): Promise<AlbumStats> {
+async function getAlbumStats(albumId: string): Promise<Stats> {
   try {
     const now = new Date();
     const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
@@ -121,18 +103,8 @@ async function getAlbumStats(albumId: string): Promise<AlbumStats> {
 
     const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
 
-    // Get unique tracks and artists
-    const uniqueTracks = new Set(allListens.map((l) => l.trackIsrc)).size;
-
-    // Get unique artists for this album
-    const artistTracks = await db
-      .select({ artistId: trackArtist.artistId })
-      .from(albumTrack)
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .where(eq(albumTrack.albumId, albumId));
-
-    const uniqueArtists = new Set(artistTracks.map((at) => at.artistId)).size;
+    // TODO
+    const completionRate = 0;
 
     return {
       totalListens,
@@ -146,8 +118,7 @@ async function getAlbumStats(albumId: string): Promise<AlbumStats> {
       firstListen,
       lastListen,
       avgDuration,
-      uniqueTracks,
-      uniqueArtists
+      completionRate
     };
   } catch (error) {
     console.error("Error fetching album stats:", error);
@@ -163,8 +134,7 @@ async function getAlbumStats(albumId: string): Promise<AlbumStats> {
       firstListen: null,
       lastListen: null,
       avgDuration: 0,
-      uniqueTracks: 0,
-      uniqueArtists: 0
+      completionRate: 0
     };
   }
 }
@@ -273,158 +243,74 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
   const { album, artists } = albumData;
 
   return (
-    <div className="flex-1 p-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-5">
-        <BackNav />
-        {/* Album Header */}
-        <div className="flex gap-4">
-          <div>{album.imageUrl && <img src={album.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
-          <div>
-            <h1 className="mb-2 text-4xl font-bold text-zinc-100">{album.name}</h1>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {artists.map((artist) => (
-                <Link
-                  key={artist.id}
-                  href={`/artist/${artist.id}`}
-                  className="text-lg text-zinc-300 transition-colors hover:text-zinc-400"
-                >
-                  {artist.name}
-                </Link>
-              ))}
-            </div>
-            <div className="text-sm text-zinc-400">
-              {stats.uniqueTracks} tracks • {stats.uniqueArtists} artists
-            </div>
+    <ItemPageSkeleton>
+      {/* Album Header */}
+      <div className="flex gap-4">
+        <div>{album.imageUrl && <img src={album.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
+        <div>
+          <h1 className="mb-2 text-4xl font-bold text-zinc-100">{album.name}</h1>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {artists.map((artist) => (
+              <Link
+                key={artist.id}
+                href={`/artist/${artist.id}`}
+                className="text-lg text-zinc-300 transition-colors hover:text-zinc-400"
+              >
+                {artist.name}
+              </Link>
+            ))}
+          </div>
+          <div className="text-sm text-zinc-400">
+            {/* {stats.uniqueTracks} tracks • {stats.uniqueArtists} artists */}
           </div>
         </div>
-
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Listens */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">Total Listens</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.totalListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.totalDuration)} total time</p>
-          </div>
-
-          {/* This Year */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Year</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.yearListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.yearDuration)} total time</p>
-          </div>
-
-          {/* This Month */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Month</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.monthListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.monthDuration)} total time</p>
-          </div>
-
-          {/* This Week */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-2 text-sm font-medium text-zinc-400">This Week</h3>
-            <p className="text-3xl font-bold text-zinc-100">{stats.weekListens.toLocaleString()}</p>
-            <p className="text-sm text-zinc-500">{formatDuration(stats.weekDuration)} total time</p>
-          </div>
-        </div>
-
-        {/* Additional Stats */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Listen History */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen History</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-zinc-400">First Listen:</span>
-                <span className="text-right text-zinc-100">
-                  {stats.firstListen ? (
-                    <>
-                      <LocalDate date={stats.firstListen} />
-                      <br />
-                      <LocalTime date={stats.firstListen} />
-                    </>
-                  ) : (
-                    "Never"
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Last Listen:</span>
-                <span className="text-right text-zinc-100">
-                  {stats.lastListen ? (
-                    <>
-                      <LocalDate date={stats.lastListen} />
-                      <br />
-                      <LocalTime date={stats.lastListen} />
-                    </>
-                  ) : (
-                    "Never"
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Listen Quality */}
-          <div className="rounded-lg bg-zinc-800 p-6">
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen Quality</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Average Duration:</span>
-                <span className="text-zinc-100">{formatTime(stats.avgDuration)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Unique Tracks:</span>
-                <span className="text-zinc-100">{stats.uniqueTracks}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Daily Stream Chart */}
-        {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
-        {/* Cumulative Stream Chart */}
-        {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
-        {/* Yearly Percentage Chart */}
-        {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={album.name} />}
-
-        {/* Top Tracks */}
-        {topTracks.length > 0 && (
-          <div>
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks on this album</h3>
-            <div className="space-y-2">
-              {topTracks.map((track, index) => (
-                <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Top Artists */}
-        {topArtists.length > 0 && (
-          <div>
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Artists on this album</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {topArtists.map((artist, index) => (
-                <ArtistCard key={artist.artistId} artist={artist} rank={index + 1} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent Listens */}
-        {recentListens.length > 0 && (
-          <div>
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Album Listens</h3>
-            <div className="space-y-2">
-              {recentListens.map((listen) => (
-                <ListenCard key={listen.id} listen={listen} />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
-    </div>
+
+      {/* Statistics Grid */}
+      <StatGrid stats={stats} />
+
+      {/* Daily Stream Chart */}
+      {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
+      {/* Cumulative Stream Chart */}
+      {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
+      {/* Yearly Percentage Chart */}
+      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={album.name} />}
+
+      {/* Top Tracks */}
+      {topTracks.length > 0 && (
+        <div>
+          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks on this album</h3>
+          <div className="space-y-2">
+            {topTracks.map((track, index) => (
+              <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top Artists */}
+      {topArtists.length > 0 && (
+        <div>
+          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Artists on this album</h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {topArtists.map((artist, index) => (
+              <ArtistCard key={artist.artistId} artist={artist} rank={index + 1} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Listens */}
+      {recentListens.length > 0 && (
+        <div>
+          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Album Listens</h3>
+          <div className="space-y-2">
+            {recentListens.map((listen) => (
+              <ListenCard key={listen.id} listen={listen} />
+            ))}
+          </div>
+        </div>
+      )}
+    </ItemPageSkeleton>
   );
 }

@@ -1,9 +1,9 @@
-import BackNav from "@/components/BackNav";
 import AlbumGrid from "@/components/cards/AlbumGrid";
 import ListenCard from "@/components/cards/ListenCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
+import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import StatGrid from "@/components/StatGrid";
 import { auth } from "@/lib/auth";
 import { formatTime } from "@/lib/utils/timeUtils";
@@ -231,57 +231,53 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
   const { track, artists } = trackData;
 
   return (
-    <div className="flex-1 p-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-5">
-        <BackNav />
-        {/* Track Header */}
-        <div className="flex gap-4">
-          <div>
-            <img src={track.imageUrl} className="h-32 w-32 rounded-lg object-cover" />
+    <ItemPageSkeleton>
+      {/* Track Header */}
+      <div className="flex gap-4">
+        <div>
+          <img src={track.imageUrl} className="h-32 w-32 rounded-lg object-cover" />
+        </div>
+        <div>
+          <h1 className="mb-2 text-4xl font-bold text-zinc-100">{track.name}</h1>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {artists.map((artist) => (
+              <Link
+                key={artist.id}
+                href={`/artist/${artist.id}`}
+                className="text-lg text-zinc-300 transition-colors hover:text-zinc-400"
+              >
+                {artist.name}
+              </Link>
+            ))}
           </div>
-          <div>
-            <h1 className="mb-2 text-4xl font-bold text-zinc-100">{track.name}</h1>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {artists.map((artist) => (
-                <Link
-                  key={artist.id}
-                  href={`/artist/${artist.id}`}
-                  className="text-lg text-zinc-300 transition-colors hover:text-zinc-400"
-                >
-                  {artist.name}
-                </Link>
-              ))}
-            </div>
-            <div className="text-sm text-zinc-400">Duration: {formatTime(track.durationMS)}</div>
+          <div className="text-sm text-zinc-400">Duration: {formatTime(track.durationMS)}</div>
+        </div>
+      </div>
+
+      {/* Statistics Grid */}
+      <StatGrid stats={stats} />
+
+      {/* Daily Stream Chart */}
+      {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
+      {/* Cumulative Stream Chart */}
+      {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
+      {/* Yearly Percentage Chart */}
+      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={track.name} />}
+
+      {/* Albums */}
+      <AlbumGrid albums={topAlbums} />
+
+      {/* Recent Listens */}
+      {recentListens.length > 0 && (
+        <div>
+          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
+          <div className="space-y-2">
+            {recentListens.map((listen) => (
+              <ListenCard key={listen.id} listen={listen} />
+            ))}
           </div>
         </div>
-
-        {/* Statistics Grid */}
-        <StatGrid stats={stats} />
-
-        {/* Daily Stream Chart */}
-        {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
-
-        {/* Cumulative Stream Chart */}
-        {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
-        {/* Yearly Percentage Chart */}
-        {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={track.name} />}
-
-        {/* Albums */}
-        <AlbumGrid albums={topAlbums} />
-
-        {/* Recent Listens */}
-        {recentListens.length > 0 && (
-          <div>
-            <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
-            <div className="space-y-2">
-              {recentListens.map((listen) => (
-                <ListenCard key={listen.id} listen={listen} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </ItemPageSkeleton>
   );
 }

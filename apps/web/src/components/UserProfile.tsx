@@ -53,7 +53,7 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
 
   return (
     <Menu as="div" className="relative inline-block text-left">
-      <MenuButton className="flex cursor-pointer items-center gap-3 rounded-lg bg-zinc-800 px-3 py-2 transition-colors hover:bg-zinc-700">
+      <MenuButton className="flex cursor-pointer items-center gap-3 rounded-full bg-zinc-800 px-3 py-2 transition-colors hover:bg-zinc-700">
         <Image
           src={userInfo.avatarURL}
           alt={userInfo.username}

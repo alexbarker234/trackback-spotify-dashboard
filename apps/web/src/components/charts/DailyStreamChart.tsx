@@ -50,6 +50,8 @@ export default function DailyStreamChart({ data }: DailyStreamChartProps) {
     return null;
   };
 
+  // TODO add a moving average line for trends
+
   return (
     <div className="rounded-lg bg-zinc-800 p-6">
       <h3 className="mb-4 text-lg font-semibold text-zinc-100">Daily Streams</h3>
@@ -59,8 +61,8 @@ export default function DailyStreamChart({ data }: DailyStreamChartProps) {
             data={data}
             margin={{
               top: 10,
-              right: 30,
-              left: 0,
+              right: 10,
+              left: -30,
               bottom: 0
             }}
           >

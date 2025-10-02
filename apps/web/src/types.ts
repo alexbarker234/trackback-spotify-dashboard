@@ -1,19 +1,3 @@
-export interface ArtistStats {
-  totalListens: number;
-  totalDuration: number;
-  yearListens: number;
-  yearDuration: number;
-  monthListens: number;
-  monthDuration: number;
-  weekListens: number;
-  weekDuration: number;
-  firstListen: Date | null;
-  lastListen: Date | null;
-  avgDuration: number;
-  uniqueTracks: number;
-  uniqueAlbums: number;
-}
-
 export interface TopTrack {
   trackName: string;
   trackIsrc: string;

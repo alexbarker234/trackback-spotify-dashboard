@@ -70,8 +70,8 @@ export default function CumulativeStreamChart({ data }: CumulativeStreamChartPro
             data={data}
             margin={{
               top: 10,
-              right: 30,
-              left: 0,
+              right: 10,
+              left: -20,
               bottom: 0
             }}
           >

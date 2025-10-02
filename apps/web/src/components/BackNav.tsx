@@ -11,7 +11,7 @@ export default function BackNav() {
     <button
       type="button"
       onClick={() => router.back()}
-      className="mb-4 flex cursor-pointer items-center gap-2 text-zinc-400 transition-colors hover:text-zinc-100"
+      className="flex w-fit cursor-pointer items-center gap-2 px-2 py-1 text-zinc-400 transition-colors hover:text-zinc-100"
     >
       <FontAwesomeIcon icon={faArrowLeft} />
       Back
