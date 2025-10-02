@@ -4,6 +4,11 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
+// The following import prevents a Font Awesome icon server-side rendering bug,
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+config.autoAddCss = false;
+
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],

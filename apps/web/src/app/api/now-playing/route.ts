@@ -14,7 +14,6 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the user's Spotify access token
     const accessToken = await getUserAccessToken(session.user.id);
 
     if (!accessToken) {
