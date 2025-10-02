@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { upload } from "@vercel/blob/client";
 
 interface UploadResponse {
   success: boolean;
@@ -42,23 +43,61 @@ interface FileToUpload {
     errors: string[];
     processingTimeMs: number;
   };
+  blobUrl?: string;
 }
 
 const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) => void): Promise<UploadResponse> => {
-  const formData = new FormData();
-  files.forEach((file) => {
-    formData.append("files", file);
-  });
-  formData.append("stream", "true");
+  const blobUrls: string[] = [];
 
-  const response = await fetch("/api/upload", {
+  // Step 1: Upload files to Vercel Blob
+  onProgress?.({
+    type: "progress",
+    message: "Uploading files to blob storage...",
+    progress: { current: 0, total: files.length, percentage: 0 }
+  });
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+
+    onProgress?.({
+      type: "progress",
+      message: `Uploading ${file.name} to blob storage...`,
+      progress: { current: i + 1, total: files.length, percentage: Math.round(((i + 1) / files.length) * 50) }
+    });
+
+    try {
+      const blob = await upload(`${Date.now()}-${file.name}`, file, {
+        access: "public",
+        contentType: file.type,
+        handleUploadUrl: "/api/upload"
+      });
+
+      blobUrls.push(blob.url);
+      console.log(`Uploaded ${file.name} to blob storage: ${blob.url}`);
+    } catch (error) {
+      console.error(`Failed to upload ${file.name} to blob storage:`, error);
+      throw new Error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
+
+  // Step 2: Process the uploaded blobs
+  onProgress?.({
+    type: "progress",
+    message: "Processing uploaded files...",
+    progress: { current: files.length, total: files.length, percentage: 50 }
+  });
+
+  const response = await fetch("/api/process-blobs?stream=true", {
     method: "POST",
-    body: formData
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ blobUrls })
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || "Upload failed");
+    throw new Error(errorData.message || "Processing failed");
   }
 
   // Handle streaming response
@@ -95,7 +134,7 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
               if (data.type === "complete" && data.data) {
                 finalResult = data.data;
               } else if (data.type === "error" && data.data) {
-                throw new Error(data.data.message || "Upload failed");
+                throw new Error(data.data.message || "Processing failed");
               }
             } catch (parseError) {
               console.warn("Failed to parse SSE data:", parseError);
@@ -108,7 +147,7 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
     }
 
     if (!finalResult) {
-      throw new Error("Upload completed but no result received");
+      throw new Error("Processing completed but no result received");
     }
 
     return finalResult;

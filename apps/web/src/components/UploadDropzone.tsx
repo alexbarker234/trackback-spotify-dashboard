@@ -27,8 +27,9 @@ export default function UploadDropzone() {
   const handleUploadSuccess = (data: UploadResponse) => {
     // Update file statuses based on results
     setFiles((prevFiles) =>
-      prevFiles.map((file) => {
-        const fileResult = data.results.fileResults.find((result) => result.filename === file.file.name);
+      prevFiles.map((file, index) => {
+        // Match by index since blob filenames are generated
+        const fileResult = data.results.fileResults[index];
 
         if (fileResult) {
           return {
@@ -121,6 +122,11 @@ export default function UploadDropzone() {
                   progress: update.progress?.percentage || 0
                 }))
               );
+            }
+
+            // Log progress messages for debugging
+            if (update.message) {
+              console.log(`Upload progress: ${update.message} (${update.progress?.percentage || 0}%)`);
             }
           }
         },
