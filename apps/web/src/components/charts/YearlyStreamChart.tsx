@@ -58,8 +58,8 @@ export default function YearlyStreamChart({ data }: YearlyStreamChartProps) {
             data={data}
             margin={{
               top: 10,
-              right: 30,
-              left: 0,
+              right: 10,
+              left: -10,
               bottom: 0
             }}
           >
