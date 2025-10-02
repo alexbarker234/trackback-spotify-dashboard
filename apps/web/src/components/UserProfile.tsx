@@ -75,16 +75,15 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
         leaveTo="transform opacity-0 scale-95"
       >
         <MenuItems
-          className="absolute right-0 mt-2 w-48 rounded-lg border border-zinc-700 bg-zinc-800 shadow-lg focus:outline-none"
+          anchor="bottom end"
+          className="mt-2 w-48 rounded-lg border border-zinc-700 bg-zinc-800 shadow-lg focus:outline-none"
           modal={false}
         >
-          <>
-            {menuItems.map(({ href, onClick, icon: Icon, label }) => (
-              <MenuItem key={label}>
-                <ProfileMenuItem href={href} onClick={onClick} icon={Icon} label={label} />
-              </MenuItem>
-            ))}
-          </>
+          {menuItems.map(({ href, onClick, icon: Icon, label }) => (
+            <MenuItem key={label}>
+              <ProfileMenuItem href={href} onClick={onClick} icon={Icon} label={label} />
+            </MenuItem>
+          ))}
         </MenuItems>
       </Transition>
     </Menu>
