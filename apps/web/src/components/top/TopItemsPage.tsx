@@ -1,6 +1,8 @@
 "use client";
 
 import { DateRange } from "@/hooks/useDateRange";
+import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ItemCard from "../ItemCard";
 
 export type TopItem = {
@@ -65,7 +67,7 @@ export default function TopItemsPage({
   const canNavigateForward = currentPeriod > 0;
 
   return (
-    <div className="flex-1 p-8">
+    <div className="flex-1 px-2 py-4 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-8 text-4xl font-bold text-zinc-100">{title}</h1>
 
@@ -109,20 +111,22 @@ export default function TopItemsPage({
 
           {/* Navigation Controls */}
           {canNavigateBack && (
-            <div className="flex items-center gap-2">
+            <div className="mx-auto flex items-center gap-2 lg:mx-0">
               <button
                 onClick={onPreviousPeriod}
-                className="cursor-pointer rounded-lg bg-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-600"
+                className="flex w-28 cursor-pointer items-center justify-center rounded-lg bg-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                ← Previous
+                <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+                <span>Previous</span>
               </button>
-              <span className="text-sm text-zinc-400">{getPeriodLabel()}</span>
+              <span className="mx-2 text-sm text-zinc-400">{getPeriodLabel()}</span>
               <button
                 onClick={onNextPeriod}
                 disabled={!canNavigateForward}
-                className="rounded-lg bg-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-28 cursor-pointer items-center justify-center rounded-lg bg-zinc-700 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Next →
+                <span>Next</span>
+                <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
               </button>
             </div>
           )}

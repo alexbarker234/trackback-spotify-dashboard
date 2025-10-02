@@ -3,6 +3,7 @@
 import { useNowPlaying } from "@/hooks/useNowPlaying";
 import Image from "next/image";
 import Link from "next/link";
+import Loading from "./Loading";
 
 export default function NowPlaying() {
   const { data: nowPlaying, isLoading, error } = useNowPlaying();
@@ -44,7 +45,7 @@ export default function NowPlaying() {
     <NowPlayingSkeleton>
       <Link
         href={`/track/${trackIsrc}`}
-        className="flex items-center space-x-4 rounded-lg p-1 transition-colors hover:bg-zinc-700"
+        className="flex items-center space-x-4 rounded-lg p-1 transition-colors hover:bg-zinc-700 sm:px-2"
       >
         {item.album.images[0] && (
           <div className="relative h-16 w-16 flex-shrink-0">
@@ -64,11 +65,7 @@ export default function NowPlaying() {
         </div>
 
         <div className="flex items-center space-x-2 text-zinc-400">
-          <div className="flex space-x-1">
-            <div className="h-1 w-1 animate-pulse rounded-full bg-green-500" />
-            <div className="h-1 w-1 animate-pulse rounded-full bg-green-500" style={{ animationDelay: "0.2s" }} />
-            <div className="h-1 w-1 animate-pulse rounded-full bg-green-500" style={{ animationDelay: "0.4s" }} />
-          </div>
+          <Loading className="h-6 w-6" />
         </div>
       </Link>
     </NowPlayingSkeleton>
@@ -77,11 +74,11 @@ export default function NowPlaying() {
 
 const NowPlayingSkeleton = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col p-4">
-      <div className="rounded-lg bg-zinc-800 p-6">
+    <div className="mx-auto w-full max-w-7xl">
+      <div className="m-4 rounded-lg bg-zinc-800 p-4 sm:p-6">
         <div className="mb-4">
           <h2 className="text-xl font-bold text-zinc-100">Now Playing</h2>
-          <div className="mt-1 h-1 w-12 rounded-full bg-green-500" />
+          <div className="bg-spotify-green mt-1 h-1 w-12 rounded-full" />
         </div>
         {children}
       </div>
