@@ -6,23 +6,11 @@ import LocalDate from "@/components/LocalDate";
 import LocalTime from "@/components/LocalTime";
 import NowPlaying from "@/components/NowPlaying";
 import { auth } from "@/lib/auth";
+import { getTopAlbumsByDateRange } from "@workspace/core/queries/albums";
+import { getTopArtistsByDateRange } from "@workspace/core/queries/artists";
 import { getMonthlyStreamData, getYearlyStreamData } from "@workspace/core/queries/listens";
-import {
-  album,
-  albumArtist,
-  albumTrack,
-  and,
-  artist,
-  count,
-  db,
-  desc,
-  eq,
-  gte,
-  listen,
-  sql,
-  track,
-  trackArtist
-} from "@workspace/database";
+import { getTopTracksByDateRange } from "@workspace/core/queries/tracks";
+import { album, albumTrack, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
@@ -69,98 +57,6 @@ async function getListens() {
   }
 }
 
-async function getTopTracks() {
-  try {
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-
-    const topTracks = await db
-      .select({
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
-        albumName: album.name,
-        albumImageUrl: album.imageUrl,
-        listenCount: count(listen.id),
-        totalMinutes: sql<number>`sum(${listen.durationMS} / 60000)`
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(gte(listen.playedAt, fourWeeksAgo), gte(listen.durationMS, 30000)))
-      .groupBy(track.name, track.isrc, album.name, album.imageUrl)
-      .orderBy(desc(count(listen.id)))
-      .limit(250);
-
-    return topTracks;
-  } catch (error) {
-    console.error("Error fetching top tracks:", error);
-    return [];
-  }
-}
-
-async function getTopArtists() {
-  try {
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-
-    const topArtists = await db
-      .select({
-        artistName: artist.name,
-        artistId: artist.id,
-        artistImageUrl: artist.imageUrl,
-        listenCount: count(listen.id)
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
-      .where(and(gte(listen.playedAt, fourWeeksAgo), gte(listen.durationMS, 30000)))
-      .groupBy(artist.name, artist.id, artist.imageUrl)
-      .orderBy(desc(count(listen.id)))
-      .limit(250);
-
-    return topArtists;
-  } catch (error) {
-    console.error("Error fetching top artists:", error);
-    return [];
-  }
-}
-
-async function getTopAlbums() {
-  try {
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-
-    const topAlbums = await db
-      .select({
-        albumName: album.name,
-        albumId: album.id,
-        albumImageUrl: album.imageUrl,
-        artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
-        listenCount: count(listen.id)
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .leftJoin(albumArtist, eq(albumArtist.albumId, album.id))
-      .leftJoin(artist, eq(albumArtist.artistId, artist.id))
-      .where(and(gte(listen.playedAt, fourWeeksAgo), gte(listen.durationMS, 30000)))
-      .groupBy(album.name, album.id, album.imageUrl)
-      .orderBy(desc(count(listen.id)))
-      .limit(250);
-
-    return topAlbums;
-  } catch (error) {
-    console.error("Error fetching top albums:", error);
-    return [];
-  }
-}
-
 export default async function Home() {
   const session = await auth.api.getSession({
     headers: await headers()
@@ -172,9 +68,9 @@ export default async function Home() {
 
   const [listens, topTracks, topArtists, topAlbums, monthlyStreamData, yearlyStreamData] = await Promise.all([
     getListens(),
-    getTopTracks(),
-    getTopArtists(),
-    getTopAlbums(),
+    getTopTracksByDateRange({ dateRange: "4weeks", offset: 0, limit: 250 }),
+    getTopArtistsByDateRange({ dateRange: "4weeks", offset: 0, limit: 250 }),
+    getTopAlbumsByDateRange({ dateRange: "4weeks", offset: 0, limit: 250 }),
     getMonthlyStreamData(),
     getYearlyStreamData()
   ]);
@@ -212,14 +108,12 @@ export default async function Home() {
                 <ItemCard
                   key={track.trackIsrc}
                   href={`/track/${track.trackIsrc}`}
-                  imageUrl={track.albumImageUrl}
+                  imageUrl={track.imageUrl}
                   number={index + 1}
                   title={track.trackName}
-                  subtitle={
-                    track.artistNames && track.artistNames.length > 0 ? track.artistNames.join(", ") : "Unknown Artist"
-                  }
+                  subtitle={track.artists.map((a) => a.artistName).join(", ")}
                   streams={track.listenCount}
-                  minutes={track.totalMinutes}
+                  minutes={Math.round(track.totalDuration / 60000)}
                 />
               ))}
             </ItemCarousel>
@@ -229,7 +123,11 @@ export default async function Home() {
         {/* Top Artists Section */}
         {topArtists.length > 0 && (
           <div className="mb-8">
-            <ItemCarousel title="Top Artists" subtitle="Your top artists from the past 4 weeks">
+            <ItemCarousel
+              title="Top Artists"
+              subtitle="Your top artists from the past 4 weeks"
+              viewMoreUrl="/top/artists"
+            >
               {topArtists.map((artist, index) => (
                 <ItemCard
                   key={artist.artistId}
@@ -237,7 +135,7 @@ export default async function Home() {
                   imageUrl={artist.artistImageUrl}
                   number={index + 1}
                   title={artist.artistName}
-                  subtitle={artist.listenCount}
+                  subtitle={`${artist.listenCount} streams`}
                   streams={artist.listenCount}
                   minutes={artist.listenCount}
                 />
@@ -249,7 +147,7 @@ export default async function Home() {
         {/* Top Albums Section */}
         {topAlbums.length > 0 && (
           <div className="mb-8">
-            <ItemCarousel title="Top Albums" subtitle="Your top albums from the past 4 weeks">
+            <ItemCarousel title="Top Albums" subtitle="Your top albums from the past 4 weeks" viewMoreUrl="/top/albums">
               {topAlbums.map((album, index) => (
                 <ItemCard
                   key={album.albumId}
@@ -257,9 +155,7 @@ export default async function Home() {
                   imageUrl={album.albumImageUrl}
                   number={index + 1}
                   title={album.albumName}
-                  subtitle={
-                    album.artistNames && album.artistNames.length > 0 ? album.artistNames.join(", ") : "Unknown Artist"
-                  }
+                  subtitle={album.artistNames?.join(", ")}
                   streams={album.listenCount}
                   minutes={album.listenCount}
                 />

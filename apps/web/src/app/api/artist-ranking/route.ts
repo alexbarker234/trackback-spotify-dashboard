@@ -1,8 +1,17 @@
+import { auth } from "@/lib/auth";
 import { albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "4weeks";
     const offset = parseInt(searchParams.get("offset") || "0");

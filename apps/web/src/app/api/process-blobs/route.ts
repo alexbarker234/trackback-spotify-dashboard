@@ -1,6 +1,8 @@
+import { auth } from "@/lib/auth";
 import { del } from "@vercel/blob";
 import { processSpotifyStreamingHistory } from "@workspace/core/import";
 import { SpotifyStreamingHistoryItem } from "@workspace/core/types";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 interface ProcessBlobsRequest {
   blobUrls: string[];
@@ -277,6 +279,14 @@ function createResponse(
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const startTime = performance.now();
 
   try {

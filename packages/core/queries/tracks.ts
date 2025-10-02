@@ -16,6 +16,14 @@ import {
 } from "@workspace/database";
 import { TopTrack } from "../types";
 
+export type DateRange = "4weeks" | "6months" | "lifetime";
+
+export type TopTracksOptions = {
+  dateRange?: DateRange;
+  offset?: number;
+  limit?: number;
+};
+
 type BaseTopTrack = {
   trackName: string;
   trackIsrc: string;
@@ -84,6 +92,58 @@ export async function getTopTracksForArtist(artistId: string, limit: number = 10
 
 export async function getTopTracksForAlbum(albumId: string, limit: number = 10): Promise<TopTrack[]> {
   return getTopTracks({ albumId, limit });
+}
+
+export async function getTopTracksByDateRange(options: TopTracksOptions = {}): Promise<TopTrack[]> {
+  const { dateRange = "4weeks", offset = 0, limit = 250 } = options;
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000), isNotNull(track.name), isNotNull(track.isrc)];
+
+    // Add date filter based on range
+    if (dateRange !== "lifetime") {
+      const startDate = new Date();
+      if (dateRange === "4weeks") {
+        startDate.setDate(startDate.getDate() - (28 + offset * 28));
+      } else if (dateRange === "6months") {
+        startDate.setMonth(startDate.getMonth() - (6 + offset * 6));
+      }
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    const topTracks = await db
+      .select({
+        trackName: track.name,
+        trackIsrc: track.isrc,
+        listenCount: sql<number>`count(*)`.as("listenCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration"),
+        imageUrl: sql<string>`min(${album.imageUrl})`.as("imageUrl")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
+      .where(and(...whereConditions))
+      .groupBy(track.isrc, track.name)
+      .orderBy(desc(sql<number>`count(*)`))
+      .limit(limit);
+
+    // Filter out null values and convert to BaseTopTrack format
+    const validTracks = topTracks
+      .filter((track) => track.trackName && track.trackIsrc)
+      .map((track) => ({
+        trackName: track.trackName!,
+        trackIsrc: track.trackIsrc!,
+        listenCount: track.listenCount,
+        totalDuration: track.totalDuration,
+        imageUrl: track.imageUrl
+      }));
+
+    return populateArtists(validTracks);
+  } catch (error) {
+    console.error("Error fetching top tracks by date range:", error);
+    return [];
+  }
 }
 
 async function populateArtists(topTracks: BaseTopTrack[]): Promise<TopTrack[]> {
