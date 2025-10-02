@@ -95,7 +95,6 @@ export default async function Home() {
           </div>
         </div>
       )}
-
       {/* Now Playing Section */}
       <NowPlaying />
 

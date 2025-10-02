@@ -8,4 +8,17 @@
   --color-spotify-green: var(--spotify-green);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --animate-loader-bounce: loader-bounce 1s ease-in-out infinite;
+
+  @keyframes loader-bounce {
+    0%,
+    100% {
+      height: 50%;
+      top: 50%;
+    }
+    50% {
+      height: 100%;
+      top: 0%;
+    }
+  }
 }
