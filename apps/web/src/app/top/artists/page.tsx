@@ -1,46 +1,16 @@
-"use client";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import TopArtistsPage from "./TopArtistsPage";
 
-import TopItemsPage, { TopItem } from "@/components/top/TopItemsPage";
-import { useDateRange } from "@/hooks/useDateRange";
-import { useTopArtists } from "@/hooks/useTopArtists";
-
-export default function TopArtistsPage() {
-  const {
-    dateRange,
-    currentPeriod,
-    startDate,
-    endDate,
-    handleDateRangeChange,
-    handlePreviousPeriod,
-    handleNextPeriod
-  } = useDateRange();
-
-  const { data, isLoading, error } = useTopArtists({
-    startDate,
-    endDate
+export default async function TopArtistsPageServer() {
+  const session = await auth.api.getSession({
+    headers: await headers()
   });
 
-  // Transform artists data to TopItem format
-  const items: TopItem[] = data.map((artist) => ({
-    id: artist.artistId,
-    name: artist.artistName,
-    imageUrl: artist.artistImageUrl,
-    streams: artist.listenCount,
-    minutes: Math.round(artist.totalDuration / 60000),
-    href: `/artist/${artist.artistId}`
-  }));
+  if (!session?.user) {
+    redirect("/login");
+  }
 
-  return (
-    <TopItemsPage
-      title="Top Artists"
-      items={items}
-      isLoading={isLoading}
-      error={error}
-      dateRange={dateRange}
-      onDateRangeChange={handleDateRangeChange}
-      currentPeriod={currentPeriod}
-      onPreviousPeriod={handlePreviousPeriod}
-      onNextPeriod={handleNextPeriod}
-    />
-  );
+  return <TopArtistsPage />;
 }
