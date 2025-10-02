@@ -3,6 +3,7 @@ import ListenCard from "@/components/cards/ListenCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
+import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import StatGrid from "@/components/StatGrid";
 import { auth } from "@/lib/auth";
@@ -11,7 +12,6 @@ import { Listen, TopAlbum } from "@/types";
 import { getCumulativeStreamData, getDailyStreamData, getYearlyPercentageData } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 interface TrackStats {
@@ -233,26 +233,12 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
   return (
     <ItemPageSkeleton>
       {/* Track Header */}
-      <div className="flex gap-4">
-        <div>
-          <img src={track.imageUrl} className="h-32 w-32 rounded-lg object-cover" />
-        </div>
-        <div>
-          <h1 className="mb-2 text-4xl font-bold text-zinc-100">{track.name}</h1>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {artists.map((artist) => (
-              <Link
-                key={artist.id}
-                href={`/artist/${artist.id}`}
-                className="text-lg text-zinc-300 transition-colors hover:text-zinc-400"
-              >
-                {artist.name}
-              </Link>
-            ))}
-          </div>
-          <div className="text-sm text-zinc-400">Duration: {formatTime(track.durationMS)}</div>
-        </div>
-      </div>
+      <ItemHeader
+        imageUrl={track.imageUrl}
+        name={track.name}
+        artists={artists}
+        subtitle={`Duration: ${formatTime(track.durationMS)}`}
+      />
 
       {/* Statistics Grid */}
       <StatGrid stats={stats} />

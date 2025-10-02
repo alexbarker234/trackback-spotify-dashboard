@@ -4,6 +4,7 @@ import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
+import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import StatGrid, { Stats } from "@/components/StatGrid";
 import { auth } from "@/lib/auth";
@@ -228,15 +229,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
   return (
     <ItemPageSkeleton>
       {/* Artist Header */}
-      <div className="flex gap-4">
-        <div>{artist.imageUrl && <img src={artist.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
-        <div>
-          <h1 className="mb-2 text-4xl font-bold text-zinc-100">{artist.name}</h1>
-          <div className="text-sm text-zinc-400">
-            {stats.uniqueTracks} tracks • {stats.uniqueAlbums} albums
-          </div>
-        </div>
-      </div>
+      <ItemHeader
+        imageUrl={artist.imageUrl}
+        name={artist.name}
+        subtitle={`${stats.uniqueTracks} tracks • ${stats.uniqueAlbums} albums`}
+      />
 
       {/* Statistics Grid */}
       <StatGrid stats={stats} />

@@ -4,6 +4,7 @@ import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
+import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import StatGrid, { Stats } from "@/components/StatGrid";
 import { auth } from "@/lib/auth";
@@ -16,7 +17,6 @@ import {
 } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 async function getAlbumData(albumId: string) {
@@ -65,7 +65,12 @@ async function getAlbumData(albumId: string) {
   }
 }
 
-async function getAlbumStats(albumId: string): Promise<Stats> {
+type AlbumStats = Stats & {
+  uniqueTracks: number;
+  uniqueArtists: number;
+};
+
+async function getAlbumStats(albumId: string): Promise<AlbumStats> {
   try {
     const now = new Date();
     const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
@@ -103,6 +108,19 @@ async function getAlbumStats(albumId: string): Promise<Stats> {
 
     const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
 
+    // Get unique tracks and artists
+    const uniqueTracks = new Set(allListens.map((l) => l.trackIsrc)).size;
+
+    // Get unique artists for this album
+    const artistTracks = await db
+      .select({ artistId: trackArtist.artistId })
+      .from(albumTrack)
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(eq(albumTrack.albumId, albumId));
+
+    const uniqueArtists = new Set(artistTracks.map((at) => at.artistId)).size;
+
     // TODO
     const completionRate = 0;
 
@@ -118,7 +136,9 @@ async function getAlbumStats(albumId: string): Promise<Stats> {
       firstListen,
       lastListen,
       avgDuration,
-      completionRate
+      completionRate,
+      uniqueTracks,
+      uniqueArtists
     };
   } catch (error) {
     console.error("Error fetching album stats:", error);
@@ -134,7 +154,9 @@ async function getAlbumStats(albumId: string): Promise<Stats> {
       firstListen: null,
       lastListen: null,
       avgDuration: 0,
-      completionRate: 0
+      completionRate: 0,
+      uniqueTracks: 0,
+      uniqueArtists: 0
     };
   }
 }
@@ -245,26 +267,11 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
   return (
     <ItemPageSkeleton>
       {/* Album Header */}
-      <div className="flex gap-4">
-        <div>{album.imageUrl && <img src={album.imageUrl} className="h-32 w-32 rounded-lg object-cover" />}</div>
-        <div>
-          <h1 className="mb-2 text-4xl font-bold text-zinc-100">{album.name}</h1>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {artists.map((artist) => (
-              <Link
-                key={artist.id}
-                href={`/artist/${artist.id}`}
-                className="text-lg text-zinc-300 transition-colors hover:text-zinc-400"
-              >
-                {artist.name}
-              </Link>
-            ))}
-          </div>
-          <div className="text-sm text-zinc-400">
-            {/* {stats.uniqueTracks} tracks • {stats.uniqueArtists} artists */}
-          </div>
-        </div>
-      </div>
+      <ItemHeader
+        imageUrl={album.imageUrl}
+        name={album.name}
+        subtitle={`${stats.uniqueTracks} tracks • ${stats.uniqueArtists} artists`}
+      />
 
       {/* Statistics Grid */}
       <StatGrid stats={stats} />
