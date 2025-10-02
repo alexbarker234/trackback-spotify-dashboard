@@ -52,7 +52,7 @@ export async function refreshAccessToken(
 /**
  * Makes an authenticated request to the Spotify API
  */
-export async function spotifyApiRequest<T>(endpoint: string, accessToken: string): Promise<T> {
+export async function spotifyApiRequest<T>(endpoint: string, accessToken: string): Promise<T | null> {
   try {
     const response = await fetch(`${SPOTIFY_CONFIG.API_BASE}${endpoint}`, {
       headers: {
@@ -71,6 +71,11 @@ export async function spotifyApiRequest<T>(endpoint: string, accessToken: string
         return spotifyApiRequest<T>(endpoint, accessToken);
       }
       throw new Error(`Spotify API error: ${response.status} ${response.statusText}`);
+    }
+
+    // No content
+    if (response.status === 204) {
+      return null;
     }
 
     return await response.json();
