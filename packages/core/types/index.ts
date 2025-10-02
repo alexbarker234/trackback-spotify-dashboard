@@ -55,6 +55,7 @@ export interface TopAlbum {
   albumName: string;
   albumId: string;
   albumImageUrl: string | null;
+  artistNames: string[];
   listenCount: number;
   totalDuration: number;
 }

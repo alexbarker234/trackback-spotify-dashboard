@@ -16,11 +16,9 @@ import {
 } from "@workspace/database";
 import { TopTrack } from "../types";
 
-export type DateRange = "4weeks" | "6months" | "lifetime";
-
 export type TopTracksOptions = {
-  dateRange?: DateRange;
-  offset?: number;
+  startDate?: Date;
+  endDate?: Date;
   limit?: number;
 };
 
@@ -95,21 +93,13 @@ export async function getTopTracksForAlbum(albumId: string, limit: number = 10):
 }
 
 export async function getTopTracksByDateRange(options: TopTracksOptions = {}): Promise<TopTrack[]> {
-  const { dateRange = "4weeks", offset = 0, limit = 250 } = options;
+  const { startDate, endDate, limit = 250 } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000), isNotNull(track.name), isNotNull(track.isrc)];
 
-    // Add date filter based on range
-    if (dateRange !== "lifetime") {
-      const startDate = new Date();
-      if (dateRange === "4weeks") {
-        startDate.setDate(startDate.getDate() - (28 + offset * 28));
-      } else if (dateRange === "6months") {
-        startDate.setMonth(startDate.getMonth() - (6 + offset * 6));
-      }
-      whereConditions.push(gte(listen.playedAt, startDate));
-    }
+    if (startDate) whereConditions.push(gte(listen.playedAt, startDate));
+    if (endDate) whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
 
     const topTracks = await db
       .select({

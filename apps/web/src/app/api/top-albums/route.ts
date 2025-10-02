@@ -14,13 +14,16 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const dateRange = searchParams.get("dateRange") as "4weeks" | "6months" | "lifetime" | null;
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
     const limit = parseInt(searchParams.get("limit") || "250");
 
+    const startDate = startDateParam ? new Date(startDateParam) : undefined;
+    const endDate = endDateParam ? new Date(endDateParam) : undefined;
+
     const albums = await getTopAlbumsByDateRange({
-      dateRange: dateRange || "4weeks",
-      offset,
+      startDate,
+      endDate,
       limit
     });
 

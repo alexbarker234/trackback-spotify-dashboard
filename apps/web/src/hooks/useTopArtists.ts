@@ -2,22 +2,21 @@
 
 import { useEffect, useState } from "react";
 
-export type DateRange = "4weeks" | "6months" | "lifetime";
-
 export type TopArtist = {
   artistName: string;
   artistId: string;
   artistImageUrl: string | null;
   listenCount: number;
+  totalDuration: number;
 };
 
 export type UseTopArtistsOptions = {
-  dateRange?: DateRange;
-  offset?: number;
+  startDate?: Date;
+  endDate?: Date;
 };
 
 export function useTopArtists(options: UseTopArtistsOptions = {}) {
-  const { dateRange = "4weeks", offset = 0 } = options;
+  const { startDate, endDate } = options;
   const [data, setData] = useState<TopArtist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +27,13 @@ export function useTopArtists(options: UseTopArtistsOptions = {}) {
         setIsLoading(true);
         setError(null);
 
-        const params = new URLSearchParams({
-          dateRange,
-          offset: offset.toString()
-        });
+        const params = new URLSearchParams();
+        if (startDate) {
+          params.set("startDate", startDate.toISOString());
+        }
+        if (endDate) {
+          params.set("endDate", endDate.toISOString());
+        }
 
         const response = await fetch(`/api/top-artists?${params}`);
 
@@ -49,7 +51,7 @@ export function useTopArtists(options: UseTopArtistsOptions = {}) {
     };
 
     fetchData();
-  }, [dateRange, offset]);
+  }, [startDate, endDate]);
 
   return { data, isLoading, error };
 }

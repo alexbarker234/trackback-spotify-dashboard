@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-export type DateRange = "4weeks" | "6months" | "lifetime";
-
 export type TopTrack = {
   trackName: string;
   trackIsrc: string;
@@ -17,12 +15,12 @@ export type TopTrack = {
 };
 
 export type UseTopTracksOptions = {
-  dateRange?: DateRange;
-  offset?: number;
+  startDate?: Date;
+  endDate?: Date;
 };
 
 export function useTopTracks(options: UseTopTracksOptions = {}) {
-  const { dateRange = "4weeks", offset = 0 } = options;
+  const { startDate, endDate } = options;
   const [data, setData] = useState<TopTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +31,13 @@ export function useTopTracks(options: UseTopTracksOptions = {}) {
         setIsLoading(true);
         setError(null);
 
-        const params = new URLSearchParams({
-          dateRange,
-          offset: offset.toString()
-        });
+        const params = new URLSearchParams();
+        if (startDate) {
+          params.set("startDate", startDate.toISOString());
+        }
+        if (endDate) {
+          params.set("endDate", endDate.toISOString());
+        }
 
         const response = await fetch(`/api/top-tracks?${params}`);
 
@@ -54,7 +55,7 @@ export function useTopTracks(options: UseTopTracksOptions = {}) {
     };
 
     fetchData();
-  }, [dateRange, offset]);
+  }, [startDate, endDate]);
 
   return { data, isLoading, error };
 }

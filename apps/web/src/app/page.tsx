@@ -66,11 +66,14 @@ export default async function Home() {
     redirect("/login");
   }
 
+  const fourWeeksAgo = new Date();
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+
   const [listens, topTracks, topArtists, topAlbums, monthlyStreamData, yearlyStreamData] = await Promise.all([
     getListens(),
-    getTopTracksByDateRange({ dateRange: "4weeks", offset: 0, limit: 250 }),
-    getTopArtistsByDateRange({ dateRange: "4weeks", offset: 0, limit: 250 }),
-    getTopAlbumsByDateRange({ dateRange: "4weeks", offset: 0, limit: 250 }),
+    getTopTracksByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
+    getTopArtistsByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
+    getTopAlbumsByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
     getMonthlyStreamData(),
     getYearlyStreamData()
   ]);

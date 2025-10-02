@@ -2,23 +2,22 @@
 
 import { useEffect, useState } from "react";
 
-export type DateRange = "4weeks" | "6months" | "lifetime";
-
 export type TopAlbum = {
   albumName: string;
   albumId: string;
   albumImageUrl: string | null;
   artistNames: string[];
   listenCount: number;
+  totalDuration: number;
 };
 
 export type UseTopAlbumsOptions = {
-  dateRange?: DateRange;
-  offset?: number;
+  startDate?: Date;
+  endDate?: Date;
 };
 
 export function useTopAlbums(options: UseTopAlbumsOptions = {}) {
-  const { dateRange = "4weeks", offset = 0 } = options;
+  const { startDate, endDate } = options;
   const [data, setData] = useState<TopAlbum[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,10 +28,13 @@ export function useTopAlbums(options: UseTopAlbumsOptions = {}) {
         setIsLoading(true);
         setError(null);
 
-        const params = new URLSearchParams({
-          dateRange,
-          offset: offset.toString()
-        });
+        const params = new URLSearchParams();
+        if (startDate) {
+          params.set("startDate", startDate.toISOString());
+        }
+        if (endDate) {
+          params.set("endDate", endDate.toISOString());
+        }
 
         const response = await fetch(`/api/top-albums?${params}`);
 
@@ -50,7 +52,7 @@ export function useTopAlbums(options: UseTopAlbumsOptions = {}) {
     };
 
     fetchData();
-  }, [dateRange, offset]);
+  }, [startDate, endDate]);
 
   return { data, isLoading, error };
 }
