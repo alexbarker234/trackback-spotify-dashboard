@@ -51,7 +51,6 @@ export default function TopArtistsPage() {
     id: artist.artistId,
     name: artist.artistName,
     imageUrl: artist.artistImageUrl,
-    subtitle: `${artist.listenCount} streams`,
     streams: artist.listenCount,
     minutes: Math.round(artist.totalDuration / 60000),
     href: `/artist/${artist.artistId}`

@@ -1,6 +1,6 @@
 "use client";
 
-import ItemCard from "@/components/ItemCard";
+import ItemCard from "../ItemCard";
 
 export type DateRange = "4weeks" | "6months" | "lifetime";
 
@@ -8,7 +8,7 @@ export type TopItem = {
   id: string;
   name: string;
   imageUrl: string | null;
-  subtitle: string;
+  subtitle?: string;
   streams: number;
   minutes: number;
   href: string;
@@ -124,7 +124,7 @@ export default function TopItemsPage({
             <div className="text-red-400">Error loading data. Please try again.</div>
           </div>
         ) : items && items.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
             {items.map((item, index) => (
               <ItemCard
                 key={item.id}
@@ -135,6 +135,7 @@ export default function TopItemsPage({
                 subtitle={item.subtitle}
                 streams={item.streams}
                 minutes={item.minutes}
+                className="w-auto"
               />
             ))}
           </div>

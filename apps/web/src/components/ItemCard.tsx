@@ -1,12 +1,36 @@
+import { cn } from "@/lib/utils/cn";
 import { faMusic } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 
-export default function ItemCard({ href, imageUrl, number, title, subtitle, streams, minutes }) {
+export type ItemCardProps = {
+  href: string;
+  imageUrl: string | null;
+  number: number;
+  title: string;
+  subtitle: string;
+  streams: number;
+  minutes: number;
+  className?: string;
+};
+
+export default function ItemCard({
+  href,
+  imageUrl,
+  number,
+  title,
+  subtitle,
+  streams,
+  minutes,
+  className
+}: ItemCardProps) {
   return (
     <Link
       href={href}
-      className="flex w-42 shrink-0 grow-0 flex-col space-y-3 rounded-lg bg-zinc-800 p-2 transition-colors hover:bg-zinc-700"
+      className={cn(
+        "flex w-42 shrink-0 grow-0 flex-col space-y-3 rounded-lg bg-zinc-800 p-2 transition-colors hover:bg-zinc-700",
+        className
+      )}
     >
       {imageUrl ? (
         <img src={imageUrl} alt={title} className="aspect-square w-full rounded object-cover" />
