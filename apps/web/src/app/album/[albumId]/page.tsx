@@ -270,6 +270,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
       <ItemHeader
         imageUrl={album.imageUrl}
         name={album.name}
+        artists={artists}
         subtitle={`${stats.uniqueTracks} tracks • ${stats.uniqueArtists} artists`}
       />
 
