@@ -1,4 +1,4 @@
-import { db, ListenInsert, lte } from "@workspace/database";
+import { and, db, gte, ListenInsert, lte } from "@workspace/database";
 import { listen } from "@workspace/database/schema/spotifySchema";
 import { SpotifyStreamingHistoryItem } from "../types";
 
@@ -44,7 +44,10 @@ function processStreamingHistoryItem(item: SpotifyStreamingHistoryItem): ListenI
  * @param streamingHistory - Array of Spotify streaming history items
  * @returns Promise with processing results
  */
-export async function processSpotifyStreamingHistory(streamingHistory: SpotifyStreamingHistoryItem[]): Promise<{
+export async function processSpotifyStreamingHistory(
+  streamingHistory: SpotifyStreamingHistoryItem[],
+  progressCallback?: (message: string, percentage: number) => void
+): Promise<{
   processed: number;
   skipped: number;
   errors: string[];
@@ -74,29 +77,54 @@ export async function processSpotifyStreamingHistory(streamingHistory: SpotifySt
       }
     }
 
-    // Delete old listens
-    const latestImportedDate = listens.sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime())[0]?.playedAt;
-    if (latestImportedDate) {
-      await db.delete(listen).where(lte(listen.playedAt, latestImportedDate));
-    }
-    console.log(`Latest imported date: ${latestImportedDate}`);
+    let minTime = Infinity;
+    let maxTime = -Infinity;
 
-    // Insert listens into database in batches of 10,000
-    console.log(`Inserting ${listens.length} listens`);
-    const BATCH_SIZE = 10000;
-    for (let i = 0; i < listens.length; i += BATCH_SIZE) {
-      const batch = listens.slice(i, i + BATCH_SIZE);
-      await db.insert(listen).values(batch);
-      console.log(`Inserted batch ${i / BATCH_SIZE + 1}: ${batch.length} listens`);
+    for (const listen of listens) {
+      const time = listen.playedAt.getTime();
+      if (time < minTime) minTime = time;
+      if (time > maxTime) maxTime = time;
     }
 
-    // Finish
+    const dateRange = {
+      min: new Date(minTime),
+      max: new Date(maxTime)
+    };
+
+    await db.transaction(async (tx) => {
+      if (dateRange.min && dateRange.max) {
+        console.log(
+          `Deleting existing listens between ${dateRange.min.toISOString()} and ${dateRange.max.toISOString()}`
+        );
+        progressCallback?.("Deleting existing listens...", 10);
+        await tx.delete(listen).where(and(gte(listen.playedAt, dateRange.min), lte(listen.playedAt, dateRange.max)));
+      }
+
+      console.log(`Inserting ${listens.length} listens`);
+      const BATCH_SIZE = 10000;
+      const totalBatches = Math.ceil(listens.length / BATCH_SIZE);
+
+      for (let i = 0; i < listens.length; i += BATCH_SIZE) {
+        const batch = listens.slice(i, i + BATCH_SIZE);
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+
+        progressCallback?.(
+          `Inserting batch ${batchNumber}/${totalBatches} (${batch.length} listens)`,
+          20 + (batchNumber / totalBatches) * 80
+        );
+
+        await tx.insert(listen).values(batch);
+        console.log(`Inserted batch ${batchNumber}: ${batch.length} listens`);
+      }
+    });
+
     console.log(`Successfully processed ${results.processed} listens, skipped ${results.skipped} items`);
     if (results.errors.length > 0) {
       console.log(`Encountered ${results.errors.length} errors during processing`);
     }
   } catch (error) {
     results.errors.push(`Fatal error during processing: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.error(error);
   }
 
   return results;

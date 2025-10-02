@@ -4,6 +4,9 @@ import { SpotifyCurrentlyPlayingResponse } from "@workspace/core/types/spotifyTy
 const fetchNowPlaying = async (): Promise<SpotifyCurrentlyPlayingResponse> => {
   const response = await fetch("/api/now-playing");
   if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
     throw new Error("Failed to fetch now playing data");
   }
   return response.json();

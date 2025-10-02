@@ -6,6 +6,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 
+interface ProgressUpdate {
+  type: "progress" | "complete" | "error";
+  message: string;
+  progress?: {
+    current: number;
+    total: number;
+    percentage: number;
+  };
+  data?: UploadResponse;
+}
+
 export default function UploadDropzone() {
   const [files, setFiles] = useState<FileToUpload[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -99,7 +110,20 @@ export default function UploadDropzone() {
     if (pendingFiles.length > 0) {
       handleUploadStart();
       uploadMutation.mutate(
-        pendingFiles.map((file) => file.file),
+        {
+          files: pendingFiles.map((file) => file.file),
+          onProgress: (update: ProgressUpdate) => {
+            if (update.type === "progress" && update.progress) {
+              // Update progress for all uploading files
+              setFiles((prevFiles) =>
+                prevFiles.map((file) => ({
+                  ...file,
+                  progress: update.progress?.percentage || 0
+                }))
+              );
+            }
+          }
+        },
         {
           onSuccess: handleUploadSuccess,
           onError: handleUploadError
@@ -217,7 +241,16 @@ export default function UploadDropzone() {
                       <p className="truncate text-sm font-medium text-zinc-100">{file.file.name}</p>
                       <div className="flex items-center space-x-4 text-xs text-zinc-400">
                         <span>{formatFileSize(file.file.size)}</span>
+                        {file.status === "uploading" && file.progress !== undefined && <span>{file.progress}%</span>}
                       </div>
+                      {file.status === "uploading" && file.progress !== undefined && (
+                        <div className="mt-1 h-1 w-full rounded-full bg-zinc-700">
+                          <div
+                            className="h-1 rounded-full bg-blue-500 transition-all duration-300"
+                            style={{ width: `${file.progress}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                   {file.status === "pending" && (
