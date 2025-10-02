@@ -1,8 +1,7 @@
 "use client";
 
+import { DateRange } from "@/hooks/useDateRange";
 import ItemCard from "../ItemCard";
-
-export type DateRange = "4weeks" | "6months" | "lifetime";
 
 export type TopItem = {
   id: string;
@@ -52,6 +51,13 @@ export default function TopItemsPage({
       return `${currentPeriod * 6} months ago`;
     }
 
+    if (dateRange === "year") {
+      const currentYear = new Date().getFullYear();
+      const targetYear = currentYear - currentPeriod;
+      if (isCurrentPeriod) return `${currentYear}`;
+      return `${targetYear}`;
+    }
+
     return "";
   };
 
@@ -82,6 +88,14 @@ export default function TopItemsPage({
               }`}
             >
               6 Months
+            </button>
+            <button
+              onClick={() => onDateRangeChange("year")}
+              className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                dateRange === "year" ? "bg-blue-600 text-white" : "bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
+              }`}
+            >
+              Year
             </button>
             <button
               onClick={() => onDateRangeChange("lifetime")}
