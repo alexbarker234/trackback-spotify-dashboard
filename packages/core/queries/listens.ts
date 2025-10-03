@@ -48,9 +48,11 @@ export async function getDailyStreamData(options: GetDailyStreamDataOptions = {}
       whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
     }
 
+    let startDate: Date | null = null;
+
     // Only add date filter if days is not -1 (get all data)
     if (days !== -1) {
-      const startDate = new Date();
+      startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
       whereConditions.push(gte(listen.playedAt, startDate));
     }
@@ -70,11 +72,44 @@ export async function getDailyStreamData(options: GetDailyStreamDataOptions = {}
       .orderBy(sql`date(${listen.playedAt})`);
 
     // Convert string values to numbers
-    return dailyStreams.map((day) => ({
+    const streamData = dailyStreams.map((day) => ({
       ...day,
       streamCount: Number(day.streamCount),
       totalDuration: Number(day.totalDuration)
     }));
+
+    // If no data returned, return empty array
+    if (streamData.length === 0) {
+      return streamData;
+    }
+
+    // Get the first and last dates from the actual data
+    const firstDate = new Date(streamData[0]!.date);
+    const lastDate = new Date(streamData[streamData.length - 1]!.date);
+
+    // Generate complete date range and fill missing days with 0
+    const streamDataMap = new Map(streamData.map((item) => [item.date, item]));
+    const completeData: Array<{
+      date: string;
+      streamCount: number;
+      totalDuration: number;
+    }> = [];
+
+    const currentDate = new Date(firstDate);
+    while (currentDate <= lastDate) {
+      const dateString = currentDate.toISOString().split("T")[0]!;
+      const existingData = streamDataMap.get(dateString);
+
+      completeData.push({
+        date: dateString,
+        streamCount: existingData ? existingData.streamCount : 0,
+        totalDuration: existingData ? existingData.totalDuration : 0
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return completeData;
   } catch (error) {
     console.error("Error fetching daily stream data:", error);
     return [];
