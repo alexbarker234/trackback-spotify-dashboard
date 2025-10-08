@@ -1,5 +1,17 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import withSerwistInit from "@serwist/next";
+import type { NextConfig } from "next";
+
+const revision = crypto.randomUUID();
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/service-worker/app-worker.ts",
+  swDest: "public/sw.js",
+  reloadOnOnline: true,
+  cacheOnNavigation: true,
+  additionalPrecacheEntries: [{ url: "/~offline", revision }]
+});
+
+const nextConfig: NextConfig = {
   // ignore pg-native and cloudflare:sockets
   webpack: (config, { webpack }) => {
     config.plugins.push(
@@ -24,4 +36,4 @@ const nextConfig = {
   }
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

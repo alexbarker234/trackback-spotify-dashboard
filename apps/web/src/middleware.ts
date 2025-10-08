@@ -12,5 +12,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|api|_next/static|_next/image|login|.*\\.png$).*)"]
+  matcher: ["/", "/artist/:path*", "/album/:path*", "/track/:path*", "/import/:path*", "/misc/:path*", "/top/:path*"]
 };
