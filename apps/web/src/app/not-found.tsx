@@ -21,7 +21,6 @@ export default function NotFound() {
       showTryAgain={false}
       showGoHome={true}
       showGoBack={hasBackButton}
-      fullScreen={true}
     />
   );
 }

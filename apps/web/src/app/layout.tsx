@@ -1,5 +1,6 @@
 import { Providers } from "@/app/providers";
-import Header from "@/components/Header";
+import Header from "@/components/navigation/Header";
+import TabsNavigation from "@/components/navigation/TabsNavigation";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
@@ -29,7 +30,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <div className="flex h-full min-h-0 flex-grow flex-col bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
             <Header />
-            <main className="flex min-h-0 w-full flex-grow flex-col overflow-x-hidden">{children}</main>
+            <main className="flex min-h-0 w-full flex-grow flex-col overflow-x-hidden pb-16 sm:pb-0">{children}</main>
+            <TabsNavigation />
           </div>
         </body>
       </Providers>
