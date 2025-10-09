@@ -6,7 +6,7 @@ export default function AlbumCard({ album, rank }: { album: TopAlbum; rank: numb
   return (
     <Link
       href={`/album/${album.albumId}`}
-      className="rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:scale-[1.02] hover:bg-white/10"
+      className="rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
     >
       <div className="flex gap-4">
         <div className="flex items-center text-lg font-bold text-gray-400">#{rank}</div>

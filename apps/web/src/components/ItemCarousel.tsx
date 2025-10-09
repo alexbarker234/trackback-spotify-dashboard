@@ -120,7 +120,7 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
               disabled={!canScrollLeft}
               className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-not-allowed ${
                 canScrollLeft
-                  ? "bg-white/10 text-white hover:scale-110 hover:bg-white/20"
+                  ? "bg-white/10 text-white hover:bg-white/20"
                   : "cursor-not-allowed bg-white/5 text-gray-500"
               }`}
             >
@@ -131,7 +131,7 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
               disabled={!canScrollRight}
               className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-not-allowed ${
                 canScrollRight
-                  ? "bg-white/10 text-white hover:scale-110 hover:bg-white/20"
+                  ? "bg-white/10 text-white hover:bg-white/20"
                   : "cursor-not-allowed bg-white/5 text-gray-500"
               }`}
             >

@@ -28,7 +28,7 @@ export default function ItemCard({
     <Link
       href={href}
       className={cn(
-        "flex w-42 shrink-0 grow-0 flex-col space-y-3 rounded-2xl bg-white/5 p-2 backdrop-blur-sm transition-all hover:scale-[1.02] hover:bg-white/10",
+        "flex w-42 shrink-0 grow-0 flex-col space-y-3 rounded-2xl bg-white/5 p-2 backdrop-blur-sm transition-all hover:bg-white/10",
         className
       )}
     >

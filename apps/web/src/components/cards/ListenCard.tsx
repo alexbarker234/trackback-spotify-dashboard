@@ -8,7 +8,7 @@ export default function ListenCard({ listen }: { listen: Listen }) {
   return (
     <Link
       href={`/track/${listen.trackIsrc}`}
-      className="block rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:scale-[1.02] hover:bg-white/10"
+      className="block rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
