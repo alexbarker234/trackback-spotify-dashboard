@@ -35,3 +35,32 @@ export interface Listen {
   trackIsrc: string;
   imageUrl: string | null;
 }
+
+// Search
+export interface SearchAlbum {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  artists: string[];
+}
+
+export interface SearchTrack {
+  id: string;
+  isrc?: string;
+  name: string;
+  imageUrl: string | null;
+  artists: string[];
+}
+
+export interface SearchArtist {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  followers: number;
+}
+
+export interface SearchResults {
+  albums: SearchAlbum[];
+  tracks: SearchTrack[];
+  artists: SearchArtist[];
+}

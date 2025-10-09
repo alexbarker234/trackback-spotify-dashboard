@@ -1,7 +1,13 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
-import { faChevronDown, faFileImport, faSignOutAlt, IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChevronDown,
+  faFileImport,
+  faMagnifyingGlass,
+  faSignOutAlt,
+  IconDefinition
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import Image from "next/image";
@@ -38,6 +44,7 @@ function ProfileMenuItem({ href, onClick, icon, label }: MenuItemProps) {
 
 export default function UserProfile({ userInfo }: { userInfo: { username: string; avatarURL: string } }) {
   const menuItems: MenuItemProps[] = [
+    { href: "/search", icon: faMagnifyingGlass, label: "Search" },
     { href: "/import", icon: faFileImport, label: "Import" }
     //{ href: "/settings", icon: FaCog, label: "Settings" }
   ];
