@@ -22,43 +22,55 @@ export default function StatGrid({ stats }: { stats: Stats }) {
     <div className="flex flex-col gap-4 lg:gap-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
         {/* Total Listens */}
-        <div className="rounded-lg bg-zinc-800 p-6">
-          <h3 className="mb-2 text-sm font-medium text-zinc-400">Total Listens</h3>
-          <p className="text-3xl font-bold text-zinc-100">{stats.totalListens.toLocaleString()}</p>
-          <p className="text-sm text-zinc-500">{formatDuration(stats.totalDuration)} total time</p>
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500/10 to-rose-500/10 p-6 backdrop-blur-sm transition-all">
+          <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-pink-500/20 blur-2xl"></div>
+          <div className="relative">
+            <h3 className="mb-2 text-sm font-medium text-gray-400">Total Listens</h3>
+            <p className="text-3xl font-bold text-pink-400">{stats.totalListens.toLocaleString()}</p>
+            <p className="text-sm text-gray-500">{formatDuration(stats.totalDuration)} total time</p>
+          </div>
         </div>
 
         {/* This Year */}
-        <div className="rounded-lg bg-zinc-800 p-6">
-          <h3 className="mb-2 text-sm font-medium text-zinc-400">This Year</h3>
-          <p className="text-3xl font-bold text-zinc-100">{stats.yearListens.toLocaleString()}</p>
-          <p className="text-sm text-zinc-500">{formatDuration(stats.yearDuration)} total time</p>
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-6 backdrop-blur-sm transition-all">
+          <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-purple-500/20 blur-2xl"></div>
+          <div className="relative">
+            <h3 className="mb-2 text-sm font-medium text-gray-400">This Year</h3>
+            <p className="text-3xl font-bold text-purple-400">{stats.yearListens.toLocaleString()}</p>
+            <p className="text-sm text-gray-500">{formatDuration(stats.yearDuration)} total time</p>
+          </div>
         </div>
 
         {/* This Month */}
-        <div className="rounded-lg bg-zinc-800 p-6">
-          <h3 className="mb-2 text-sm font-medium text-zinc-400">This Month</h3>
-          <p className="text-3xl font-bold text-zinc-100">{stats.monthListens.toLocaleString()}</p>
-          <p className="text-sm text-zinc-500">{formatDuration(stats.monthDuration)} total time</p>
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 p-6 backdrop-blur-sm transition-all">
+          <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-yellow-500/20 blur-2xl"></div>
+          <div className="relative">
+            <h3 className="mb-2 text-sm font-medium text-gray-400">This Month</h3>
+            <p className="text-3xl font-bold text-yellow-400">{stats.monthListens.toLocaleString()}</p>
+            <p className="text-sm text-gray-500">{formatDuration(stats.monthDuration)} total time</p>
+          </div>
         </div>
 
         {/* This Week */}
-        <div className="rounded-lg bg-zinc-800 p-6">
-          <h3 className="mb-2 text-sm font-medium text-zinc-400">This Week</h3>
-          <p className="text-3xl font-bold text-zinc-100">{stats.weekListens.toLocaleString()}</p>
-          <p className="text-sm text-zinc-500">{formatDuration(stats.weekDuration)} total time</p>
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500/10 to-pink-500/10 p-6 backdrop-blur-sm transition-all">
+          <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-red-500/20 blur-2xl"></div>
+          <div className="relative">
+            <h3 className="mb-2 text-sm font-medium text-gray-400">This Week</h3>
+            <p className="text-3xl font-bold text-red-400">{stats.weekListens.toLocaleString()}</p>
+            <p className="text-sm text-gray-500">{formatDuration(stats.weekDuration)} total time</p>
+          </div>
         </div>
       </div>
 
       {/* Additional Stats */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Listen History */}
-        <div className="rounded-lg bg-zinc-800 p-6">
-          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen History</h3>
+        <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
+          <h3 className="mb-4 text-lg font-semibold text-white">Listen History</h3>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-zinc-400">First Listen:</span>
-              <span className="text-right text-zinc-100">
+              <span className="text-gray-400">First Listen:</span>
+              <span className="text-right text-white">
                 {stats.firstListen ? (
                   <>
                     <LocalDate date={stats.firstListen} />
@@ -71,8 +83,8 @@ export default function StatGrid({ stats }: { stats: Stats }) {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-400">Last Listen:</span>
-              <span className="text-right text-zinc-100">
+              <span className="text-gray-400">Last Listen:</span>
+              <span className="text-right text-white">
                 {stats.lastListen ? (
                   <>
                     <LocalDate date={stats.lastListen} />
@@ -88,16 +100,16 @@ export default function StatGrid({ stats }: { stats: Stats }) {
         </div>
 
         {/* Listen Quality */}
-        <div className="rounded-lg bg-zinc-800 p-6">
-          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Listen Quality</h3>
+        <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
+          <h3 className="mb-4 text-lg font-semibold text-white">Listen Quality</h3>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-zinc-400">Average Duration:</span>
-              <span className="text-zinc-100">{formatTime(stats.avgDuration)}</span>
+              <span className="text-gray-400">Average Duration:</span>
+              <span className="text-white">{formatTime(stats.avgDuration)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-400">Completion Rate:</span>
-              <span className="text-zinc-100">{stats.completionRate.toFixed(1)}%</span>
+              <span className="text-gray-400">Completion Rate:</span>
+              <span className="text-white">{stats.completionRate.toFixed(1)}%</span>
             </div>
           </div>
         </div>
