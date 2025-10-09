@@ -17,7 +17,7 @@ interface MenuItemProps {
 
 function ProfileMenuItem({ href, onClick, icon, label }: MenuItemProps) {
   const baseClasses =
-    "flex items-center w-full px-4 py-2 text-sm text-zinc-200 rounded-lg transition-colors hover:bg-zinc-700 cursor-pointer";
+    "flex items-center w-full px-4 py-2 text-sm text-zinc-200 rounded-lg transition-colors hover:bg-white/10 cursor-pointer";
 
   if (href) {
     return (
@@ -53,7 +53,7 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
 
   return (
     <Menu as="div" className="relative inline-block text-left">
-      <MenuButton className="flex cursor-pointer items-center gap-3 rounded-full bg-zinc-800 px-3 py-2 transition-colors hover:bg-zinc-700">
+      <MenuButton className="flex cursor-pointer items-center gap-3 rounded-full bg-white/5 px-3 py-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white focus:outline-none">
         <Image
           src={userInfo.avatarURL}
           alt={userInfo.username}
@@ -61,7 +61,7 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
           height={32}
           className="h-8 w-8 rounded-full"
         />
-        <span className="hidden font-medium text-zinc-100 sm:inline">{userInfo.username}</span>
+        <span className="hidden font-medium sm:inline">{userInfo.username}</span>
         <FontAwesomeIcon icon={faChevronDown} className="h-4 w-4 text-zinc-400" />
       </MenuButton>
 
@@ -76,7 +76,7 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
       >
         <MenuItems
           anchor="bottom end"
-          className="mt-2 w-48 rounded-lg border border-zinc-700 bg-zinc-800 shadow-lg focus:outline-none"
+          className="mt-2 w-48 rounded-lg bg-white/5 shadow-lg backdrop-blur-sm focus:outline-none"
           modal={false}
         >
           {menuItems.map(({ href, onClick, icon: Icon, label }) => (

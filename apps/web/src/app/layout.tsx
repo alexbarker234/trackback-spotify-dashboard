@@ -25,10 +25,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="h-full">
       <Providers>
         <body
-          className={`${poppins.variable} ${poppins.className} font-poppins relative flex min-h-screen flex-col bg-zinc-950 text-zinc-100`}
+          className={`${poppins.variable} ${poppins.className} font-poppins relative flex min-h-screen flex-col bg-gray-900 text-zinc-100`}
         >
-          <Header />
-          <main className="flex min-h-0 w-full flex-grow flex-col overflow-x-hidden">{children}</main>
+          <div className="flex h-full min-h-0 flex-grow flex-col bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
+            <Header />
+            <main className="flex min-h-0 w-full flex-grow flex-col overflow-x-hidden">{children}</main>
+          </div>
         </body>
       </Providers>
     </html>

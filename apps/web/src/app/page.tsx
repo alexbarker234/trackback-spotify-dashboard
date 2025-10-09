@@ -82,8 +82,8 @@ export default async function Home() {
     <>
       {/* User Profile Section */}
       {session?.user && (
-        <div className="bg-zinc-900">
-          <div className="mx-auto flex max-w-7xl items-center space-x-4 px-4 py-16">
+        <div className="bg-black/10 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-7xl items-center space-x-4 px-4 py-4 sm:py-16">
             <Image
               src={session.user.image || "/default-avatar.png"}
               alt={session.user.name || "User"}
