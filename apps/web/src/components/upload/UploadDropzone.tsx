@@ -32,19 +32,21 @@ export default function UploadDropzone({ onDrop, isUploading }: UploadDropzonePr
   return (
     <div
       {...getRootProps()}
-      className={`relative cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-        isDragActive ? "border-blue-400 bg-blue-900/20" : "border-zinc-600 hover:border-zinc-500"
+      className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
+        isDragActive
+          ? "border-pink-400 bg-gradient-to-br from-pink-500/20 to-purple-500/20 backdrop-blur-sm"
+          : "border-white/20 hover:border-pink-400/50 hover:bg-white/5"
       } ${isUploading ? "pointer-events-none opacity-50" : ""} `}
     >
       <input {...getInputProps()} />
       <div className="space-y-4">
-        <FontAwesomeIcon icon={faUpload} className="mx-auto h-12 w-12 text-zinc-400" />
+        <FontAwesomeIcon icon={faUpload} className="mx-auto h-12 w-12 text-gray-400" />
         <div>
-          <p className="text-lg font-medium text-zinc-100">
+          <p className="text-lg font-medium text-white">
             {isDragActive ? "Drop files here" : "Drag & drop JSON files here"}
           </p>
-          <p className="mt-1 text-sm text-zinc-400">or click to select files</p>
-          <p className="mt-2 text-xs text-zinc-500">Supports multiple files • JSON format only</p>
+          <p className="mt-1 text-sm text-gray-400">or click to select files</p>
+          <p className="mt-2 text-xs text-gray-500">Supports multiple files • JSON format only</p>
         </div>
       </div>
     </div>

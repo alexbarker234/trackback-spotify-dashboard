@@ -16,32 +16,32 @@ export default function UploadFile({ file, isUploading, onRemove }: UploadFilePr
       case "waiting":
         return <FontAwesomeIcon icon={faClock} className="h-4 w-4 text-yellow-400" />;
       case "uploading":
-        return <FontAwesomeIcon icon={faSpinner} className="h-4 w-4 animate-spin text-blue-400" />;
+        return <FontAwesomeIcon icon={faSpinner} className="h-4 w-4 animate-spin text-purple-400" />;
       case "uploaded":
-        return <FontAwesomeIcon icon={faCheck} className="h-4 w-4 text-blue-400" />;
+        return <FontAwesomeIcon icon={faCheck} className="h-4 w-4 text-purple-400" />;
       case "complete":
-        return <FontAwesomeIcon icon={faCheck} className="h-4 w-4 text-green-400" />;
+        return <FontAwesomeIcon icon={faCheck} className="h-4 w-4 text-pink-400" />;
       case "error":
         return <FontAwesomeIcon icon={faX} className="h-4 w-4 text-red-400" />;
       default:
-        return <FontAwesomeIcon icon={faFile} className="h-4 w-4 text-zinc-400" />;
+        return <FontAwesomeIcon icon={faFile} className="h-4 w-4 text-gray-400" />;
     }
   };
 
   const getStatusColor = (status: FileToUpload["status"]) => {
     switch (status) {
       case "waiting":
-        return "border-yellow-700 bg-yellow-900/20";
+        return "border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10";
       case "uploading":
-        return "border-blue-700 bg-blue-900/20";
+        return "border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/10";
       case "uploaded":
-        return "border-blue-700 bg-blue-900/20";
+        return "border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-pink-500/10";
       case "complete":
-        return "border-green-700 bg-green-900/20";
+        return "border-pink-500/30 bg-gradient-to-br from-pink-500/10 to-rose-500/10";
       case "error":
-        return "border-red-700 bg-red-900/20";
+        return "border-red-500/30 bg-gradient-to-br from-red-500/10 to-pink-500/10";
       default:
-        return "border-zinc-700 bg-zinc-700/50";
+        return "border-white/10 bg-white/5";
     }
   };
 
@@ -54,26 +54,28 @@ export default function UploadFile({ file, isUploading, onRemove }: UploadFilePr
   };
 
   return (
-    <div className={`flex items-center justify-between rounded-lg border p-4 ${getStatusColor(file.status)}`}>
+    <div
+      className={`flex items-center justify-between rounded-2xl border p-4 backdrop-blur-sm transition-all ${getStatusColor(file.status)}`}
+    >
       <div className="flex min-w-0 flex-1 items-center space-x-3">
         {getStatusIcon(file.status)}
         <div className="min-w-0 flex-1">
           {/* File name and file size */}
-          <div className="mr-4 flex justify-between truncate text-sm font-medium text-zinc-100">
+          <div className="mr-4 flex justify-between truncate text-sm font-medium text-white">
             <p>{file.file.name}</p>
-            <p className="text-zinc-400">{formatFileSize(file.file.size)}</p>
+            <p className="text-gray-400">{formatFileSize(file.file.size)}</p>
           </div>
           {/* Progress */}
-          <div className="flex items-center space-x-4 text-xs text-zinc-400">
+          <div className="flex items-center space-x-4 text-xs text-gray-400">
             {file.status === "uploading" && file.progress !== undefined && <span>{file.progress}%</span>}
             {file.status === "uploaded" && <span>Uploaded</span>}
             {file.status === "complete" && <span>Complete</span>}
             {file.status === "waiting" && <span>Waiting</span>}
           </div>
           {file.status === "uploading" && file.progress !== undefined && (
-            <div className="mt-1 h-1 w-full rounded-full bg-zinc-700">
+            <div className="mt-1 h-1 w-full rounded-full bg-white/10">
               <div
-                className="h-1 rounded-full bg-blue-500 transition-all duration-300"
+                className="h-1 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 transition-all duration-300"
                 style={{ width: `${file.progress}%` }}
               />
             </div>
@@ -84,7 +86,7 @@ export default function UploadFile({ file, isUploading, onRemove }: UploadFilePr
         <button
           onClick={() => onRemove(file.id)}
           disabled={isUploading}
-          className="cursor-pointer text-zinc-400 transition-colors hover:text-red-400 disabled:opacity-50"
+          className="cursor-pointer text-gray-400 transition-colors hover:text-red-400 disabled:opacity-50"
         >
           <FontAwesomeIcon icon={faX} className="h-4 w-4" />
         </button>
