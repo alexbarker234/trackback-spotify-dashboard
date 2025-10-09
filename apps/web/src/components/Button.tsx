@@ -42,14 +42,14 @@ export default function Button({
   href
 }: ButtonProps) {
   const baseClasses =
-    "px-4 py-2 rounded-lg transition-colors flex items-center disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed justify-center";
+    "px-4 py-2 rounded-lg transition-all flex items-center disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed justify-center";
 
   const variantClasses = {
-    primary: "bg-spotify-green hover:bg-spotify-green/80 text-white",
-    secondary: "bg-zinc-600 hover:bg-zinc-700 text-white",
-    danger: "bg-red-600 hover:bg-red-700 text-white",
-    success: "bg-green-600 hover:bg-green-700 text-white",
-    ghost: "text-red-400 hover:text-red-300 hover:bg-red-900/20"
+    primary: "bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white",
+    secondary: "bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm border border-white/10",
+    danger: "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white",
+    success: "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white",
+    ghost: "text-gray-400 hover:text-white hover:bg-white/5"
   };
 
   const displayLabel = loading && loadingLabel ? loadingLabel : label;
