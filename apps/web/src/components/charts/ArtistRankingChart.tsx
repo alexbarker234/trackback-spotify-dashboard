@@ -61,7 +61,7 @@ export default function ArtistRankingChart({ data }: ArtistRankingChartProps) {
   const chartData = data.slice(0, 15).map((artist, index) => ({
     ...artist,
     rank: index + 1,
-    displayName: artist.artistName.length > 15 ? `${artist.artistName.substring(0, 15)}...` : artist.artistName
+    displayName: artist.artistName?.length > 15 ? `${artist.artistName?.substring(0, 15)}...` : artist.artistName
   }));
 
   return (
