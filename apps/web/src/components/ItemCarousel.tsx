@@ -108,8 +108,8 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
       {/* Header with title and controls */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-100">{title}</h2>
-          {subtitle && <p className="text-sm text-zinc-400">{subtitle}</p>}
+          <h2 className="text-2xl font-bold text-white">{title}</h2>
+          {subtitle && <p className="text-sm text-gray-400">{subtitle}</p>}
         </div>
 
         {/* Navigation controls */}
@@ -118,10 +118,10 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
             <button
               onClick={scrollLeft}
               disabled={!canScrollLeft}
-              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${
+              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-not-allowed ${
                 canScrollLeft
-                  ? "bg-zinc-700 text-zinc-100 hover:bg-zinc-600"
-                  : "cursor-not-allowed bg-zinc-800 text-zinc-500"
+                  ? "bg-white/10 text-white hover:scale-110 hover:bg-white/20"
+                  : "cursor-not-allowed bg-white/5 text-gray-500"
               }`}
             >
               <FontAwesomeIcon icon={faChevronLeft} className="h-4 w-4" />
@@ -129,17 +129,17 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
             <button
               onClick={scrollRight}
               disabled={!canScrollRight}
-              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${
+              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-not-allowed ${
                 canScrollRight
-                  ? "bg-zinc-700 text-zinc-100 hover:bg-zinc-600"
-                  : "cursor-not-allowed bg-zinc-800 text-zinc-500"
+                  ? "bg-white/10 text-white hover:scale-110 hover:bg-white/20"
+                  : "cursor-not-allowed bg-white/5 text-gray-500"
               }`}
             >
               <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4" />
             </button>
           </div>
           {viewMoreUrl && (
-            <Link href={viewMoreUrl} className="text-sm text-zinc-400 transition-colors hover:text-zinc-300">
+            <Link href={viewMoreUrl} className="text-sm text-gray-400 transition-colors hover:text-white">
               View More
             </Link>
           )}

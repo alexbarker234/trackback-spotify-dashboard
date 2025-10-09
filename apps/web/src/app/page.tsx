@@ -1,9 +1,8 @@
+import ListenCard from "@/components/cards/ListenCard";
 import MonthlyStreamChart from "@/components/charts/MonthlyStreamChart";
 import YearlyStreamChart from "@/components/charts/YearlyStreamChart";
 import ItemCard from "@/components/ItemCard";
 import ItemCarousel from "@/components/ItemCarousel";
-import LocalDate from "@/components/LocalDate";
-import LocalTime from "@/components/LocalTime";
 import NowPlaying from "@/components/NowPlaying";
 import { auth } from "@/lib/auth";
 import { getTopAlbumsByDateRange } from "@workspace/core/queries/albums";
@@ -13,7 +12,6 @@ import { getTopTracksByDateRange } from "@workspace/core/queries/tracks";
 import { album, albumTrack, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 async function getListens() {
@@ -28,7 +26,9 @@ async function getListens() {
         trackId: albumTrack.trackId,
         artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
         albumName: album.name,
-        albumImageUrl: album.imageUrl
+        albumImageUrl: album.imageUrl,
+        trackDurationMS: track.durationMS,
+        imageUrl: album.imageUrl
       })
       .from(listen)
       .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
@@ -183,39 +183,7 @@ export default async function Home() {
           ) : (
             <div className="space-y-4">
               {listens.map((listen) => (
-                <Link
-                  key={listen.id}
-                  href={`/track/${listen.trackIsrc}`}
-                  className="block rounded-lg bg-zinc-800 p-4 transition-colors hover:bg-zinc-700"
-                >
-                  <div className="flex items-center space-x-4">
-                    {listen.albumImageUrl && (
-                      <img
-                        src={listen.albumImageUrl}
-                        alt={`${listen.albumName} album cover`}
-                        className="h-16 w-16 rounded-lg object-cover"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-zinc-100">{listen.trackName || "Unknown Track"}</h3>
-                      <p className="text-zinc-400">
-                        {listen.artistNames && listen.artistNames.length > 0
-                          ? listen.artistNames.join(", ")
-                          : "Unknown Artist"}
-                      </p>
-                      <p className="text-sm text-zinc-500">{listen.albumName || "Unknown Album"}</p>
-                    </div>
-                    <div className="text-right text-sm text-zinc-400">
-                      <p>
-                        <LocalDate date={listen.playedAt} />
-                      </p>
-                      <p>
-                        <LocalTime date={listen.playedAt} />
-                      </p>
-                      <p className="text-xs">{Math.round(listen.durationMS / 1000)}s</p>
-                    </div>
-                  </div>
-                </Link>
+                <ListenCard key={listen.id} listen={listen} />
               ))}
             </div>
           )}
