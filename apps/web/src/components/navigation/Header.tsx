@@ -3,8 +3,8 @@ import { faClockRotateLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { headers } from "next/headers";
 import Link from "next/link";
-import LoginButton from "./LoginButton";
-import UserProfile from "./UserProfile";
+import LoginButton from "../LoginButton";
+import UserProfile from "../UserProfile";
 
 export default async function Header() {
   const session = await auth.api.getSession({
