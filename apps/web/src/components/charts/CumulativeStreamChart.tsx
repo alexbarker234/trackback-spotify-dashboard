@@ -2,6 +2,7 @@
 
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 interface CumulativeStreamData {
   date: string;
@@ -37,33 +38,33 @@ export default function CumulativeStreamChart({ data }: CumulativeStreamChartPro
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="rounded-lg border border-zinc-700 bg-zinc-800 p-3 shadow-lg">
-          <p className="text-sm font-medium text-zinc-300">{formatDate(label)}</p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Daily Streams: </span>
+        <ChartTooltip>
+          <p className="text-sm font-medium text-gray-300">{formatDate(label)}</p>
+          <p className="text-white">
+            <span className="text-gray-400">Daily Streams: </span>
             {data.streamCount}
           </p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Cumulative Streams: </span>
+          <p className="text-white">
+            <span className="text-gray-400">Cumulative Streams: </span>
             {data.cumulativeStreams.toLocaleString()}
           </p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Daily Duration: </span>
+          <p className="text-white">
+            <span className="text-gray-400">Daily Duration: </span>
             {formatDurationFromMS(data.totalDuration)}
           </p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Cumulative Duration: </span>
+          <p className="text-white">
+            <span className="text-gray-400">Cumulative Duration: </span>
             {formatDurationFromMS(data.cumulativeDuration)}
           </p>
-        </div>
+        </ChartTooltip>
       );
     }
     return null;
   };
 
   return (
-    <div className="rounded-lg bg-zinc-800 p-6">
-      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Cumulative Streams</h3>
+    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
+      <h3 className="mb-4 text-lg font-semibold text-white">Cumulative Streams</h3>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
@@ -75,15 +76,15 @@ export default function CumulativeStreamChart({ data }: CumulativeStreamChartPro
               bottom: 0
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
             <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" fontSize={12} />
             <YAxis stroke="#9CA3AF" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey="cumulativeStreams"
-              stroke="#10B981"
-              fill="#10B981"
+              stroke="#ec4899"
+              fill="#ec4899"
               fillOpacity={0.3}
               strokeWidth={2}
             />
