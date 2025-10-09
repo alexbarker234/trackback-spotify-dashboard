@@ -67,19 +67,11 @@ export default function UploadFile({ file, isUploading, onRemove }: UploadFilePr
           </div>
           {/* Progress */}
           <div className="flex items-center space-x-4 text-xs text-gray-400">
-            {file.status === "uploading" && file.progress !== undefined && <span>{file.progress}%</span>}
+            {file.status === "uploading" && file.progress !== undefined && <span>Uploading...</span>}
             {file.status === "uploaded" && <span>Uploaded</span>}
             {file.status === "complete" && <span>Complete</span>}
             {file.status === "waiting" && <span>Waiting</span>}
           </div>
-          {file.status === "uploading" && file.progress !== undefined && (
-            <div className="mt-1 h-1 w-full rounded-full bg-white/10">
-              <div
-                className="h-1 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 transition-all duration-300"
-                style={{ width: `${file.progress}%` }}
-              />
-            </div>
-          )}
         </div>
       </div>
       {file.status === "waiting" && (
