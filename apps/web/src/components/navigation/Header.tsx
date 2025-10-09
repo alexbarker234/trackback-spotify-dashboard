@@ -1,9 +1,8 @@
 import { auth } from "@/lib/auth";
-import { faClockRotateLeft } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { headers } from "next/headers";
 import Link from "next/link";
 import LoginButton from "../LoginButton";
+import LogoSvg from "../LogoSvg";
 import UserProfile from "../UserProfile";
 
 export default async function Header() {
@@ -14,14 +13,9 @@ export default async function Header() {
     <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="group text-xl font-bold transition-colors hover:text-zinc-400">
-            <FontAwesomeIcon
-              icon={faClockRotateLeft}
-              className="transition-transform duration-500 group-hover:-rotate-360"
-            />{" "}
-            Trackback
+          <Link href="/" className="group text-xl font-bold transition-opacity hover:opacity-50">
+            <LogoSvg className="inline-block h-8 w-8 fill-white" /> Trackback
           </Link>
-
           {/* Auth Section */}
           <div className="flex items-center space-x-4">
             {session?.user?.id ? (
