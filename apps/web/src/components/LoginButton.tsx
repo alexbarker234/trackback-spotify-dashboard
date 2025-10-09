@@ -29,16 +29,10 @@ export default function LoginButton() {
       type="button"
       onClick={handleLogin}
       disabled={loading}
-      className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-60"
+      className="flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-3 font-medium text-white transition-colors hover:from-pink-700 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {loading ? (
-        <span>Signing in...</span>
-      ) : (
-        <>
-          <FontAwesomeIcon icon={faSpotify} />
-          <span>Sign in with Spotify</span>
-        </>
-      )}
+      <FontAwesomeIcon icon={faSpotify} />
+      <span>Sign in with Spotify</span>
     </button>
   );
 }

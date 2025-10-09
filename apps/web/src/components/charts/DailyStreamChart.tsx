@@ -2,6 +2,7 @@
 
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 interface DailyStreamData {
   date: string;
@@ -54,31 +55,31 @@ export default function DailyStreamChart({ data }: DailyStreamChartProps) {
       const movingAvgData = payload.find((p) => p.dataKey === "movingAverage");
 
       return (
-        <div className="rounded-lg border border-zinc-700 bg-zinc-800 p-3 shadow-lg">
-          <p className="text-sm font-medium text-zinc-300">{formatDate(label)}</p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Streams: </span>
+        <ChartTooltip>
+          <p className="text-sm font-medium text-gray-300">{formatDate(label)}</p>
+          <p className="text-white">
+            <span className="text-gray-400">Streams: </span>
             {streamData?.value}
           </p>
           {movingAvgData?.value && (
-            <p className="text-zinc-100">
-              <span className="text-zinc-400">4-Week Avg: </span>
+            <p className="text-white">
+              <span className="text-gray-400">4-Week Avg: </span>
               {movingAvgData.value}
             </p>
           )}
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Duration: </span>
+          <p className="text-white">
+            <span className="text-gray-400">Duration: </span>
             {formatDurationFromMS(streamData?.payload.totalDuration || 0)}
           </p>
-        </div>
+        </ChartTooltip>
       );
     }
     return null;
   };
 
   return (
-    <div className="rounded-lg bg-zinc-800 p-6">
-      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Daily Streams</h3>
+    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
+      <h3 className="mb-4 text-lg font-semibold text-white">Daily Streams</h3>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
@@ -90,22 +91,22 @@ export default function DailyStreamChart({ data }: DailyStreamChartProps) {
               bottom: 0
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
             <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" fontSize={12} />
             <YAxis stroke="#9CA3AF" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey="streamCount"
-              stroke="#3B82F6"
-              fill="#3B82F6"
+              stroke="#a855f7"
+              fill="#a855f7"
               fillOpacity={0.3}
               strokeWidth={2}
             />
             <Line
               type="monotone"
               dataKey="movingAverage"
-              stroke="#F59E0B"
+              stroke="#eab308"
               dot={false}
               connectNulls={false}
               strokeWidth={2}

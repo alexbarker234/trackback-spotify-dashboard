@@ -68,7 +68,7 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
     // Mark file as uploading
     onProgress?.({
       type: "progress",
-      message: `Uploading ${file.name} to blob storage...`,
+      message: `Uploading ${file.name}...`,
       progress: { current: i, total: files.length, percentage: Math.round((i / files.length) * 50) },
       fileProgress: {
         fileIndex: i,
@@ -86,7 +86,7 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
       });
 
       blobUrls.push(blob.url);
-      console.log(`Uploaded ${file.name} to blob storage: ${blob.url}`);
+      console.log(`Uploaded ${file.name}: ${blob.url}`);
 
       // Mark file as uploaded
       onProgress?.({
@@ -101,7 +101,7 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
         }
       });
     } catch (error) {
-      console.error(`Failed to upload ${file.name} to blob storage:`, error);
+      console.error(`Failed to upload ${file.name}:`, error);
 
       // Mark file as error
       onProgress?.({

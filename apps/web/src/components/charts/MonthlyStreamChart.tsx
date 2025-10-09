@@ -2,6 +2,7 @@
 
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 interface MonthlyStreamData {
   month: string;
@@ -41,25 +42,25 @@ export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
   }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-lg border border-zinc-700 bg-zinc-800 p-3 shadow-lg">
-          <p className="text-sm font-medium text-zinc-300">{formatMonth(label)}</p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Streams: </span>
+        <ChartTooltip>
+          <p className="text-sm font-medium text-gray-300">{formatMonth(label)}</p>
+          <p className="text-white">
+            <span className="text-gray-400">Streams: </span>
             {payload[0].value.toLocaleString()}
           </p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Duration: </span>
+          <p className="text-white">
+            <span className="text-gray-400">Duration: </span>
             {formatDurationFromMS(payload[0].payload.totalDuration)}
           </p>
-        </div>
+        </ChartTooltip>
       );
     }
     return null;
   };
 
   return (
-    <div className="rounded-lg bg-zinc-800 p-6">
-      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Streams by month</h3>
+    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
+      <h3 className="mb-4 text-lg font-semibold text-white">Streams by month</h3>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -71,11 +72,11 @@ export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
               bottom: 0
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
             <XAxis dataKey="month" tickFormatter={formatShortMonth} stroke="#9CA3AF" fontSize={12} />
             <YAxis stroke="#9CA3AF" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="streamCount" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="streamCount" fill="#a855f7" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

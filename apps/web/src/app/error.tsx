@@ -7,6 +7,6 @@ interface ErrorProps {
   reset: () => void;
 }
 
-export default function Error({ error, reset }: ErrorProps) {
-  return <ErrorPage reset={reset} />;
+export default function Error({ reset }: ErrorProps) {
+  return <ErrorPage onReset={reset} />;
 }

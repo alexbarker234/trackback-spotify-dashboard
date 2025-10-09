@@ -11,7 +11,7 @@ export default async function Header() {
     headers: await headers()
   });
   return (
-    <header className="bg-zinc-900">
+    <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="group text-xl font-bold transition-colors hover:text-zinc-400">

@@ -182,10 +182,12 @@ export default function UploadArea() {
 
   return (
     <div className="mx-auto w-full max-w-4xl p-6">
-      <div className="rounded-lg bg-zinc-800 shadow-lg">
-        <div className="border-b border-zinc-700 p-6">
-          <h2 className="mb-2 text-2xl font-bold text-zinc-100">Upload Spotify Data</h2>
-          <p className="text-zinc-400">
+      <div className="rounded-2xl bg-white/5 shadow-lg backdrop-blur-sm">
+        <div className="p-6">
+          <h2 className="mb-2 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 bg-clip-text text-2xl font-bold text-transparent">
+            Upload Spotify Data
+          </h2>
+          <p className="text-gray-400">
             Upload your Spotify Extended Streaming History JSON files to import your listening data.
           </p>
         </div>
@@ -195,30 +197,30 @@ export default function UploadArea() {
 
         {/* Global Progress */}
         {globalProgress && (
-          <div className="border-t border-zinc-700 p-6">
+          <div className="border-t border-white/10 p-6">
             <div className="mb-4">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-zinc-100">Upload Progress</h3>
-                <span className="text-sm text-zinc-400">
+                <h3 className="text-lg font-medium text-white">Upload Progress</h3>
+                <span className="text-sm text-gray-400">
                   {globalProgress.current} of {globalProgress.total} files
                 </span>
               </div>
-              <div className="mb-2 h-2 w-full rounded-full bg-zinc-700">
+              <div className="mb-2 h-2 w-full rounded-full bg-white/10">
                 <div
-                  className="h-2 rounded-full bg-blue-500 transition-all duration-300"
+                  className="h-2 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 transition-all duration-300"
                   style={{ width: `${globalProgress.percentage}%` }}
                 />
               </div>
-              <p className="text-sm text-zinc-400">{globalProgress.message}</p>
+              <p className="text-sm text-gray-400">{globalProgress.message}</p>
             </div>
           </div>
         )}
 
         {/* Upload Summary */}
         {uploadMutation.isSuccess && uploadMutation.data && (
-          <div className="mt-6 rounded-lg border border-green-700 bg-green-900/20 p-4">
-            <h4 className="mb-2 font-medium text-green-300">Upload Complete!</h4>
-            <div className="space-y-1 text-sm text-green-200">
+          <div className="mt-6 rounded-2xl border border-pink-500/30 bg-gradient-to-br from-pink-500/10 to-purple-500/10 p-4 backdrop-blur-sm">
+            <h4 className="mb-2 font-medium text-pink-300">Upload Complete!</h4>
+            <div className="space-y-1 text-sm text-gray-200">
               <p>Total files: {uploadMutation.data.results.totalFiles}</p>
               <p>Processed: {uploadMutation.data.results.totalProcessed} listens</p>
               <p>Skipped: {uploadMutation.data.results.totalSkipped} items</p>
@@ -230,16 +232,16 @@ export default function UploadArea() {
 
         {/* File List */}
         {files.length > 0 && (
-          <div className="border-t border-zinc-700 p-6">
+          <div className="border-t border-white/10 p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-zinc-100">Files ({files.length})</h3>
+              <h3 className="text-lg font-medium text-white">Files ({files.length})</h3>
               <div className="flex items-center space-x-2">
                 {/* Upload Button */}
                 {hasWaitingFiles && (
                   <button
                     onClick={handleUpload}
                     disabled={isUploading}
-                    className={`cursor-pointer rounded-md bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50`}
+                    className={`cursor-pointer rounded-md bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-2 font-medium text-white transition-all disabled:cursor-not-allowed disabled:opacity-50`}
                   >
                     {isUploading ? (
                       <div className="flex items-center space-x-2">

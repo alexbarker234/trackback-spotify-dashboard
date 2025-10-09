@@ -1,6 +1,7 @@
 "use client";
 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 interface YearlyPercentageData {
   year: string;
@@ -29,29 +30,29 @@ export default function YearlyPercentageChart({ data, itemName }: YearlyPercenta
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="rounded-lg border border-zinc-700 bg-zinc-800 p-3 shadow-lg">
-          <p className="text-sm font-medium text-zinc-300">{label}</p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">{itemName}: </span>
+        <ChartTooltip>
+          <p className="text-sm font-medium text-gray-300">{label}</p>
+          <p className="text-white">
+            <span className="text-gray-400">{itemName}: </span>
             {data.itemPercentage.toFixed(1)}% ({data.itemListens.toLocaleString()} listens)
           </p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Other: </span>
+          <p className="text-white">
+            <span className="text-gray-400">Other: </span>
             {data.otherPercentage.toFixed(1)}% ({data.otherListens.toLocaleString()} listens)
           </p>
-          <p className="text-zinc-100">
-            <span className="text-zinc-400">Total Listens: </span>
+          <p className="text-white">
+            <span className="text-gray-400">Total Listens: </span>
             {data.totalListens.toLocaleString()}
           </p>
-        </div>
+        </ChartTooltip>
       );
     }
     return null;
   };
 
   return (
-    <div className="rounded-lg bg-zinc-800 p-6">
-      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Yearly Listen Distribution</h3>
+    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
+      <h3 className="mb-4 text-lg font-semibold text-white">Yearly Listen Distribution</h3>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
@@ -63,7 +64,7 @@ export default function YearlyPercentageChart({ data, itemName }: YearlyPercenta
               bottom: 0
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
             <XAxis dataKey="year" stroke="#9CA3AF" fontSize={12} />
             <YAxis
               stroke="#9CA3AF"
@@ -76,8 +77,8 @@ export default function YearlyPercentageChart({ data, itemName }: YearlyPercenta
               type="monotone"
               dataKey="otherPercentage"
               stackId="1"
-              stroke="#6B7280"
-              fill="#6B7280"
+              stroke="#9ca3af"
+              fill="#9ca3af"
               fillOpacity={0.6}
               strokeWidth={2}
               name="Other"
@@ -86,8 +87,8 @@ export default function YearlyPercentageChart({ data, itemName }: YearlyPercenta
               type="monotone"
               dataKey="itemPercentage"
               stackId="1"
-              stroke="#10B981"
-              fill="#10B981"
+              stroke="#ec4899"
+              fill="#ec4899"
               fillOpacity={0.8}
               strokeWidth={2}
               name={itemName}
