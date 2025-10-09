@@ -6,6 +6,7 @@ import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
+import NoData from "@/components/NoData";
 import StatGrid, { Stats } from "@/components/StatGrid";
 import { auth } from "@/lib/auth";
 import { TopAlbum } from "@/types";
@@ -18,7 +19,7 @@ import {
 } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 async function getArtistData(artistId: string) {
   try {
@@ -222,7 +223,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
   ]);
 
   if (!artistData) {
-    notFound();
+    return <NoData />;
   }
 
   const { artist } = artistData;

@@ -15,7 +15,6 @@ export interface ErrorPageProps {
   showGoHome?: boolean;
   showGoBack?: boolean;
   onReset?: () => void;
-  fullScreen?: boolean;
 }
 
 export default function ErrorPage({
@@ -28,15 +27,10 @@ export default function ErrorPage({
   showTryAgain = true,
   showGoHome = true,
   showGoBack = false,
-  onReset,
-  fullScreen = false
+  onReset
 }: ErrorPageProps) {
-  const containerClass = fullScreen
-    ? "flex min-h-screen items-center justify-center px-4"
-    : "flex flex-grow items-center justify-center px-4";
-
   return (
-    <div className={containerClass}>
+    <div className="flex flex-grow items-center justify-center px-4">
       <div className="w-full max-w-md text-center">
         {/* Icon */}
         <div className="mb-8">
