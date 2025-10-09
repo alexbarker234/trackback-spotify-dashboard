@@ -13,7 +13,7 @@ function AuthErrorContent() {
     errorDescription = "Sorry, only one user is allowed in this app.";
   }
 
-  return <ErrorPage errorMessage={errorDescription} reset={() => {}} allowTryAgain={false} />;
+  return <ErrorPage message={errorDescription} showTryAgain={false} />;
 }
 
 export default function AuthErrorPage() {

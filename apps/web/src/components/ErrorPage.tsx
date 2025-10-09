@@ -1,55 +1,109 @@
 "use client";
-import { faExclamationTriangle, faHome, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { faArrowLeft, faExclamationTriangle, faHome, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Link from "next/link";
+import Button from "./Button";
+
+export interface ErrorPageProps {
+  icon?: IconDefinition;
+  iconBgColor?: string;
+  iconColor?: string;
+  title?: string;
+  subtitle?: string;
+  message?: string;
+  showTryAgain?: boolean;
+  showGoHome?: boolean;
+  showGoBack?: boolean;
+  onReset?: () => void;
+  fullScreen?: boolean;
+}
 
 export default function ErrorPage({
-  errorMessage,
-  reset,
-  allowTryAgain = true
-}: {
-  errorMessage?: string;
-  reset: () => void;
-  allowTryAgain?: boolean;
-}) {
+  icon = faExclamationTriangle,
+  iconBgColor = "bg-gradient-to-br from-red-500/10 to-pink-500/10",
+  iconColor = "text-red-400",
+  title = "Something went wrong!",
+  subtitle = "An error occurred",
+  message = "We're sorry, but something unexpected happened. Try refreshing the page.",
+  showTryAgain = true,
+  showGoHome = true,
+  showGoBack = false,
+  onReset,
+  fullScreen = false
+}: ErrorPageProps) {
+  const containerClass = fullScreen
+    ? "flex min-h-screen items-center justify-center px-4"
+    : "flex flex-grow items-center justify-center px-4";
+
   return (
-    <div className="flex h-full flex-grow items-center justify-center bg-zinc-950 px-4">
+    <div className={containerClass}>
       <div className="w-full max-w-md text-center">
-        {/* Error Icon */}
+        {/* Icon */}
         <div className="mb-8">
-          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-red-900/20">
-            <FontAwesomeIcon icon={faExclamationTriangle} className="h-12 w-12 text-red-400" />
+          <div
+            className={`mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full backdrop-blur-sm ${iconBgColor}`}
+          >
+            <FontAwesomeIcon icon={icon} className={`text-4xl ${iconColor}`} />
           </div>
-          <h1 className="mb-2 text-3xl font-bold text-zinc-100">Something went wrong!</h1>
-          <h2 className="mb-4 text-xl font-semibold text-zinc-300">An error occurred</h2>
+          <h1 className="mb-2 text-3xl font-bold text-white">{title}</h1>
+          <h2 className="mb-4 text-xl font-semibold text-gray-300">{subtitle}</h2>
         </div>
 
-        {/* Error Message */}
+        {/* Message */}
         <div className="mb-8">
-          <p className="mb-4 leading-relaxed text-zinc-400">
-            {errorMessage || "We're sorry, but something unexpected happened. Try refresh the page."}
-          </p>
+          <p className="mb-4 leading-relaxed text-gray-400">{message}</p>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-4">
-          {allowTryAgain && (
-            <button
-              onClick={reset}
-              className="inline-flex w-full cursor-pointer items-center justify-center rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-purple-700"
-            >
-              <FontAwesomeIcon icon={faSyncAlt} className="mr-2 h-4 w-4" />
-              Try Again
-            </button>
-          )}
+          {(() => {
+            const buttons = [];
+            let buttonCount = 0;
 
-          <Link
-            href="/"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-800 px-6 py-3 font-medium text-zinc-200 transition-colors duration-200 hover:bg-zinc-700"
-          >
-            <FontAwesomeIcon icon={faHome} className="mr-2 h-4 w-4" />
-            Go Home
-          </Link>
+            if (showTryAgain && onReset) {
+              buttons.push(
+                <Button
+                  key="try-again"
+                  onClick={onReset}
+                  variant={buttonCount === 0 ? "primary" : "secondary"}
+                  className="w-full py-3 font-medium"
+                  icon={faSyncAlt}
+                  label="Try Again"
+                />
+              );
+              buttonCount++;
+            }
+
+            if (showGoHome) {
+              buttons.push(
+                <Button
+                  key="go-home"
+                  href="/"
+                  variant={buttonCount === 0 ? "primary" : "secondary"}
+                  className="w-full py-3 font-medium"
+                  icon={faHome}
+                  label="Go Home"
+                />
+              );
+              buttonCount++;
+            }
+
+            if (showGoBack) {
+              buttons.push(
+                <Button
+                  key="go-back"
+                  onClick={() => window.history.back()}
+                  variant={buttonCount === 0 ? "primary" : "secondary"}
+                  className="w-full py-3 font-medium"
+                  icon={faArrowLeft}
+                  label="Go Back"
+                />
+              );
+              buttonCount++;
+            }
+
+            return buttons;
+          })()}
         </div>
       </div>
     </div>
