@@ -1,4 +1,5 @@
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { AlbumListenStats, ArtistListenStats, BaseListenStats, TrackListenStats } from "../types/listenStatTypes";
 
 export async function getRecentListensForArtist(artistId: string, limit: number = 10) {
   try {
@@ -482,5 +483,249 @@ export async function getDailyUniqueStreamData(options: GetDailyUniqueStreamData
   } catch (error) {
     console.error("Error fetching daily unique stream data:", error);
     return [];
+  }
+}
+
+async function calculateBaseStats(
+  listens: Array<{ durationMS: number; playedAt: Date }>
+): Promise<{ stats: Omit<BaseListenStats, "avgDuration">; avgDuration: number }> {
+  const now = new Date();
+  const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const totalListens = listens.length;
+  const totalDuration = listens.reduce((sum, l) => sum + l.durationMS, 0);
+
+  const yearListens = listens.filter((l) => l.playedAt >= oneYearAgo).length;
+  const yearDuration = listens.filter((l) => l.playedAt >= oneYearAgo).reduce((sum, l) => sum + l.durationMS, 0);
+
+  const monthListens = listens.filter((l) => l.playedAt >= oneMonthAgo).length;
+  const monthDuration = listens.filter((l) => l.playedAt >= oneMonthAgo).reduce((sum, l) => sum + l.durationMS, 0);
+
+  const weekListens = listens.filter((l) => l.playedAt >= oneWeekAgo).length;
+  const weekDuration = listens.filter((l) => l.playedAt >= oneWeekAgo).reduce((sum, l) => sum + l.durationMS, 0);
+
+  const firstListen = listens.length > 0 ? listens[listens.length - 1]!.playedAt : null;
+  const lastListen = listens.length > 0 ? listens[0]!.playedAt : null;
+
+  const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
+
+  return {
+    stats: {
+      totalListens,
+      totalDuration,
+      yearListens,
+      yearDuration,
+      monthListens,
+      monthDuration,
+      weekListens,
+      weekDuration,
+      firstListen,
+      lastListen
+    },
+    avgDuration
+  };
+}
+
+export async function getBasicListenStats(): Promise<BaseListenStats> {
+  try {
+    const allListens = await db
+      .select({
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt
+      })
+      .from(listen)
+      .where(gte(listen.durationMS, 30000))
+      .orderBy(desc(listen.playedAt));
+
+    const { stats } = await calculateBaseStats(allListens);
+
+    return stats;
+  } catch (error) {
+    console.error("Error fetching basic listen stats:", error);
+    return {
+      totalListens: 0,
+      totalDuration: 0,
+      yearListens: 0,
+      yearDuration: 0,
+      monthListens: 0,
+      monthDuration: 0,
+      weekListens: 0,
+      weekDuration: 0,
+      firstListen: null,
+      lastListen: null
+    };
+  }
+}
+
+export async function getTrackListenStats(trackIsrc: string): Promise<TrackListenStats> {
+  try {
+    // Get all listens for this track
+    const allListens = await db
+      .select({
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .where(and(eq(track.isrc, trackIsrc), gte(listen.durationMS, 30000)))
+      .orderBy(desc(listen.playedAt));
+
+    const { stats, avgDuration } = await calculateBaseStats(allListens);
+
+    // Get track duration for completion rate calculation
+    const trackData = await db.query.track.findFirst({
+      where: (track, { eq }) => eq(track.isrc, trackIsrc)
+    });
+
+    const trackDuration = trackData?.durationMS || 0;
+    const completionRate = trackDuration > 0 ? (avgDuration / trackDuration) * 100 : 0;
+
+    return {
+      ...stats,
+      avgDuration,
+      completionRate
+    };
+  } catch (error) {
+    console.error("Error fetching track listen stats:", error);
+    return {
+      totalListens: 0,
+      totalDuration: 0,
+      yearListens: 0,
+      yearDuration: 0,
+      monthListens: 0,
+      monthDuration: 0,
+      weekListens: 0,
+      weekDuration: 0,
+      firstListen: null,
+      lastListen: null,
+      avgDuration: 0,
+      completionRate: 0
+    };
+  }
+}
+
+export async function getArtistListenStats(artistId: string): Promise<ArtistListenStats> {
+  try {
+    // Get all listens for this artist
+    const allListens = await db
+      .select({
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt,
+        trackIsrc: track.isrc
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
+      .orderBy(desc(listen.playedAt));
+
+    const { stats, avgDuration } = await calculateBaseStats(allListens);
+
+    // Get unique tracks
+    const uniqueTracks = new Set(allListens.map((l) => l.trackIsrc)).size;
+
+    // Get unique albums for this artist
+    const albumTracks = await db
+      .select({ albumId: albumTrack.albumId })
+      .from(albumTrack)
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(eq(trackArtist.artistId, artistId));
+
+    const uniqueAlbums = new Set(albumTracks.map((at) => at.albumId)).size;
+
+    // TODO: Implement artist-level completion rate
+    const completionRate = 0;
+
+    return {
+      ...stats,
+      avgDuration,
+      uniqueTracks,
+      uniqueAlbums,
+      completionRate
+    };
+  } catch (error) {
+    console.error("Error fetching artist listen stats:", error);
+    return {
+      totalListens: 0,
+      totalDuration: 0,
+      yearListens: 0,
+      yearDuration: 0,
+      monthListens: 0,
+      monthDuration: 0,
+      weekListens: 0,
+      weekDuration: 0,
+      firstListen: null,
+      lastListen: null,
+      avgDuration: 0,
+      uniqueTracks: 0,
+      uniqueAlbums: 0,
+      completionRate: 0
+    };
+  }
+}
+
+export async function getAlbumListenStats(albumId: string): Promise<AlbumListenStats> {
+  try {
+    // Get all listens for this album
+    const allListens = await db
+      .select({
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt,
+        trackIsrc: track.isrc
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
+      .orderBy(desc(listen.playedAt));
+
+    const { stats, avgDuration } = await calculateBaseStats(allListens);
+
+    // Get unique tracks
+    const uniqueTracks = new Set(allListens.map((l) => l.trackIsrc)).size;
+
+    // Get unique artists for this album
+    const artistTracks = await db
+      .select({ artistId: trackArtist.artistId })
+      .from(albumTrack)
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(eq(albumTrack.albumId, albumId));
+
+    const uniqueArtists = new Set(artistTracks.map((at) => at.artistId)).size;
+
+    // TODO: Implement album-level completion rate
+    const completionRate = 0;
+
+    return {
+      ...stats,
+      avgDuration,
+      uniqueTracks,
+      uniqueArtists,
+      completionRate
+    };
+  } catch (error) {
+    console.error("Error fetching album listen stats:", error);
+    return {
+      totalListens: 0,
+      totalDuration: 0,
+      yearListens: 0,
+      yearDuration: 0,
+      monthListens: 0,
+      monthDuration: 0,
+      weekListens: 0,
+      weekDuration: 0,
+      firstListen: null,
+      lastListen: null,
+      avgDuration: 0,
+      completionRate: 0,
+      uniqueTracks: 0,
+      uniqueArtists: 0
+    };
   }
 }

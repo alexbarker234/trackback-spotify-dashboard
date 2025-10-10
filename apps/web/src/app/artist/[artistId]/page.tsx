@@ -7,10 +7,11 @@ import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
-import StatGrid, { Stats } from "@/components/statsGrid/StatGrid";
+import StatGrid from "@/components/statsGrid/StatGrid";
 import { auth } from "@/lib/auth";
 import { TopAlbum } from "@/types";
 import {
+  getArtistListenStats,
   getCumulativeStreamData,
   getDailyStreamData,
   getRecentListensForArtist,
@@ -67,103 +68,6 @@ async function getArtistData(artistId: string) {
   }
 }
 
-type ArtistStats = Stats & {
-  uniqueTracks: number;
-  uniqueAlbums: number;
-};
-
-async function getArtistStats(artistId: string): Promise<ArtistStats> {
-  try {
-    const now = new Date();
-    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Get all listens for this artist
-    const allListens = await db
-      .select({
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt,
-        trackIsrc: track.isrc
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
-      .orderBy(desc(listen.playedAt));
-
-    // Calculate statistics
-    const totalListens = allListens.length;
-    const totalDuration = allListens.reduce((sum, l) => sum + l.durationMS, 0);
-
-    const yearListens = allListens.filter((l) => l.playedAt >= oneYearAgo).length;
-    const yearDuration = allListens.filter((l) => l.playedAt >= oneYearAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const monthListens = allListens.filter((l) => l.playedAt >= oneMonthAgo).length;
-    const monthDuration = allListens.filter((l) => l.playedAt >= oneMonthAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const weekListens = allListens.filter((l) => l.playedAt >= oneWeekAgo).length;
-    const weekDuration = allListens.filter((l) => l.playedAt >= oneWeekAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const firstListen = allListens.length > 0 ? allListens[allListens.length - 1].playedAt : null;
-    const lastListen = allListens.length > 0 ? allListens[0].playedAt : null;
-
-    const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
-
-    // Get unique tracks and albums
-    const uniqueTracks = new Set(allListens.map((l) => l.trackIsrc)).size;
-
-    // Get unique albums for this artist
-    const albumTracks = await db
-      .select({ albumId: albumTrack.albumId })
-      .from(albumTrack)
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .where(eq(trackArtist.artistId, artistId));
-
-    const uniqueAlbums = new Set(albumTracks.map((at) => at.albumId)).size;
-
-    // TODO
-    const completionRate = 0;
-
-    return {
-      totalListens,
-      totalDuration,
-      yearListens,
-      yearDuration,
-      monthListens,
-      monthDuration,
-      weekListens,
-      weekDuration,
-      firstListen,
-      lastListen,
-      avgDuration,
-      uniqueTracks,
-      uniqueAlbums,
-      completionRate
-    };
-  } catch (error) {
-    console.error("Error fetching artist stats:", error);
-    return {
-      totalListens: 0,
-      totalDuration: 0,
-      yearListens: 0,
-      yearDuration: 0,
-      monthListens: 0,
-      monthDuration: 0,
-      weekListens: 0,
-      weekDuration: 0,
-      firstListen: null,
-      lastListen: null,
-      avgDuration: 0,
-      uniqueTracks: 0,
-      uniqueAlbums: 0,
-      completionRate: 0
-    };
-  }
-}
-
 async function getTopAlbums(artistId: string, limit: number = 10): Promise<TopAlbum[]> {
   try {
     const topAlbums = await db
@@ -213,7 +117,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
     yearlyPercentageData
   ] = await Promise.all([
     getArtistData(artistId),
-    getArtistStats(artistId),
+    getArtistListenStats(artistId),
     getTopTracksForArtist(artistId),
     getTopAlbums(artistId),
     getRecentListensForArtist(artistId),

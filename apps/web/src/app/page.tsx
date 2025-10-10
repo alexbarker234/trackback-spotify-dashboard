@@ -8,87 +8,12 @@ import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
 import { getTopAlbumsByDateRange } from "@workspace/core/queries/albums";
 import { getTopArtistsByDateRange } from "@workspace/core/queries/artists";
-import { getMonthlyStreamData, getYearlyStreamData } from "@workspace/core/queries/listens";
+import { getBasicListenStats, getMonthlyStreamData, getYearlyStreamData } from "@workspace/core/queries/listens";
 import { getTopTracksByDateRange } from "@workspace/core/queries/tracks";
 import { album, albumTrack, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-
-type ListenStats = {
-  totalListens: number;
-  totalDuration: number;
-  yearListens: number;
-  yearDuration: number;
-  monthListens: number;
-  monthDuration: number;
-  weekListens: number;
-  weekDuration: number;
-  firstListen: Date | null;
-  lastListen: Date | null;
-};
-
-async function getListenStats(): Promise<ListenStats> {
-  try {
-    const now = new Date();
-    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Get all listens (not filtered by track)
-    const allListens = await db
-      .select({
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt
-      })
-      .from(listen)
-      .where(gte(listen.durationMS, 30000))
-      .orderBy(desc(listen.playedAt));
-
-    // Calculate statistics
-    const totalListens = allListens.length;
-    const totalDuration = allListens.reduce((sum, l) => sum + l.durationMS, 0);
-
-    const yearListens = allListens.filter((l) => l.playedAt >= oneYearAgo).length;
-    const yearDuration = allListens.filter((l) => l.playedAt >= oneYearAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const monthListens = allListens.filter((l) => l.playedAt >= oneMonthAgo).length;
-    const monthDuration = allListens.filter((l) => l.playedAt >= oneMonthAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const weekListens = allListens.filter((l) => l.playedAt >= oneWeekAgo).length;
-    const weekDuration = allListens.filter((l) => l.playedAt >= oneWeekAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const firstListen = allListens.length > 0 ? allListens[allListens.length - 1].playedAt : null;
-    const lastListen = allListens.length > 0 ? allListens[0].playedAt : null;
-
-    return {
-      totalListens,
-      totalDuration,
-      yearListens,
-      yearDuration,
-      monthListens,
-      monthDuration,
-      weekListens,
-      weekDuration,
-      firstListen,
-      lastListen
-    };
-  } catch (error) {
-    console.error("Error fetching listen stats:", error);
-    return {
-      totalListens: 0,
-      totalDuration: 0,
-      yearListens: 0,
-      yearDuration: 0,
-      monthListens: 0,
-      monthDuration: 0,
-      weekListens: 0,
-      weekDuration: 0,
-      firstListen: null,
-      lastListen: null
-    };
-  }
-}
 
 // TODO move this
 async function getListens() {
@@ -148,7 +73,7 @@ export default async function Home() {
 
   const [listenStats, listens, topTracks, topArtists, topAlbums, monthlyStreamData, yearlyStreamData] =
     await Promise.all([
-      getListenStats(),
+      getBasicListenStats(),
       getListens(),
       getTopTracksByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
       getTopArtistsByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
