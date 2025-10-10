@@ -7,7 +7,7 @@ import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
-import StatGrid, { Stats } from "@/components/StatGrid";
+import StatGrid, { Stats } from "@/components/statsGrid/StatGrid";
 import { auth } from "@/lib/auth";
 import { TopArtist } from "@/types";
 import {
