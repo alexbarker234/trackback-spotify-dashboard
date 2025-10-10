@@ -168,11 +168,11 @@ export default async function Home() {
               alt={session.user.name || "User"}
               width={200}
               height={200}
-              className="h-full max-h-48 w-full max-w-48 rounded-full"
+              className="max-h-48 max-w-48 min-w-0 shrink grow rounded-full"
             />
-            <div>
-              <h2 className="text-2xl font-bold text-zinc-100 sm:text-3xl">{session.user.name}</h2>
-              <p className="text-lg text-zinc-400 sm:text-xl">{session.user.email}</p>
+            <div className="shrink-0">
+              <h2 className="xs:text-2xl text-xl font-bold text-zinc-100 sm:text-3xl">{session.user.name}</h2>
+              <p className="xs:text-lg text-base text-zinc-400 sm:text-xl">{session.user.email}</p>
             </div>
           </div>
         </div>

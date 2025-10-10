@@ -19,7 +19,7 @@ export default function ListeningMetricsGrid({ stats }: { stats: ListeningMetric
         <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-pink-500/20 blur-2xl"></div>
         <div className="relative">
           <h3 className="mb-2 text-sm font-medium text-gray-400">Total Listens</h3>
-          <p className="text-3xl font-bold text-pink-400">{stats.totalListens.toLocaleString()}</p>
+          <p className="xs:text-3xl text-2xl font-bold text-pink-400">{stats.totalListens.toLocaleString()}</p>
           <p className="text-sm text-gray-500">{formatDuration(stats.totalDuration)} total time</p>
         </div>
       </div>
@@ -29,7 +29,7 @@ export default function ListeningMetricsGrid({ stats }: { stats: ListeningMetric
         <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-purple-500/20 blur-2xl"></div>
         <div className="relative">
           <h3 className="mb-2 text-sm font-medium text-gray-400">This Year</h3>
-          <p className="text-3xl font-bold text-purple-400">{stats.yearListens.toLocaleString()}</p>
+          <p className="xs:text-3xl text-2xl font-bold text-purple-400">{stats.yearListens.toLocaleString()}</p>
           <p className="text-sm text-gray-500">{formatDuration(stats.yearDuration)} total time</p>
         </div>
       </div>
@@ -39,7 +39,7 @@ export default function ListeningMetricsGrid({ stats }: { stats: ListeningMetric
         <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-yellow-500/20 blur-2xl"></div>
         <div className="relative">
           <h3 className="mb-2 text-sm font-medium text-gray-400">This Month</h3>
-          <p className="text-3xl font-bold text-yellow-400">{stats.monthListens.toLocaleString()}</p>
+          <p className="xs:text-3xl text-2xl font-bold text-yellow-400">{stats.monthListens.toLocaleString()}</p>
           <p className="text-sm text-gray-500">{formatDuration(stats.monthDuration)} total time</p>
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function ListeningMetricsGrid({ stats }: { stats: ListeningMetric
         <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-red-500/20 blur-2xl"></div>
         <div className="relative">
           <h3 className="mb-2 text-sm font-medium text-gray-400">This Week</h3>
-          <p className="text-3xl font-bold text-red-400">{stats.weekListens.toLocaleString()}</p>
+          <p className="xs:text-3xl text-2xl font-bold text-red-400">{stats.weekListens.toLocaleString()}</p>
           <p className="text-sm text-gray-500">{formatDuration(stats.weekDuration)} total time</p>
         </div>
       </div>
