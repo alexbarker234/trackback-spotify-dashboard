@@ -372,24 +372,62 @@ export async function getYearlyPercentageData(options: GetYearlyPercentageDataOp
 
 type GetDailyUniqueStreamDataOptions = {
   days?: number;
+  startDate?: Date;
+  endDate?: Date;
+  groupBy?: "day" | "week" | "month" | "year";
 };
 
 export async function getDailyUniqueStreamData(options: GetDailyUniqueStreamDataOptions = {}) {
-  const { days = -1 } = options;
+  const { days = -1, startDate, endDate, groupBy = "day" } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
 
-    // Only add date filter if days is not -1 (get all data)
-    if (days !== -1) {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+    // Handle date filtering - priority: startDate/endDate > days > all data
+    if (startDate) {
       whereConditions.push(gte(listen.playedAt, startDate));
+    } else if (days !== -1) {
+      const calculatedStartDate = new Date();
+      calculatedStartDate.setDate(calculatedStartDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, calculatedStartDate));
     }
 
-    const dailyUniqueStreams = await db
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
+    }
+
+    // Determine the SQL grouping expression based on groupBy parameter
+    let dateGroupBy: ReturnType<typeof sql>;
+    let orderByClause: ReturnType<typeof sql>;
+
+    switch (groupBy) {
+      case "week":
+        // Group by ISO week (year + week number)
+        dateGroupBy = sql`to_char(${listen.playedAt}, 'IYYY-IW')`;
+        orderByClause = sql`to_char(${listen.playedAt}, 'IYYY-IW')`;
+        break;
+      case "month":
+        // Group by year-month
+        dateGroupBy = sql`to_char(${listen.playedAt}, 'YYYY-MM')`;
+        orderByClause = sql`to_char(${listen.playedAt}, 'YYYY-MM')`;
+        break;
+      case "year":
+        // Group by year
+        dateGroupBy = sql`to_char(${listen.playedAt}, 'YYYY')`;
+        orderByClause = sql`to_char(${listen.playedAt}, 'YYYY')`;
+        break;
+      case "day":
+      default:
+        // Group by day (default)
+        dateGroupBy = sql`date(${listen.playedAt})`;
+        orderByClause = sql`date(${listen.playedAt})`;
+        break;
+    }
+
+    const uniqueStreams = await db
       .select({
-        date: sql<string>`date(${listen.playedAt})`.as("date"),
+        date: sql<string>`${dateGroupBy}`.as("date"),
+        streamCount: sql<number>`count(*)`.as("streamCount"),
         uniqueTracks: sql<number>`count(distinct ${track.isrc})`.as("uniqueTracks"),
         uniqueArtists: sql<number>`count(distinct ${trackArtist.artistId})`.as("uniqueArtists")
       })
@@ -398,48 +436,49 @@ export async function getDailyUniqueStreamData(options: GetDailyUniqueStreamData
       .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
       .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
       .where(and(...whereConditions))
-      .groupBy(sql`date(${listen.playedAt})`)
-      .orderBy(sql`date(${listen.playedAt})`);
+      .groupBy(dateGroupBy)
+      .orderBy(orderByClause);
 
     // Convert string values to numbers
-    const streamData = dailyUniqueStreams.map((day) => ({
-      ...day,
-      uniqueTracks: Number(day.uniqueTracks),
-      uniqueArtists: Number(day.uniqueArtists)
+    const streamData = uniqueStreams.map((item) => ({
+      date: item.date,
+      streamCount: Number(item.streamCount),
+      uniqueTracks: Number(item.uniqueTracks),
+      uniqueArtists: Number(item.uniqueArtists)
     }));
 
-    // If no data returned, return empty array
-    if (streamData.length === 0) {
-      return streamData;
+    // For daily grouping, fill in missing days
+    if (groupBy === "day" && streamData.length > 0) {
+      const firstDate = new Date(streamData[0]!.date);
+      const lastDate = new Date(streamData[streamData.length - 1]!.date);
+
+      const streamDataMap = new Map(streamData.map((item) => [item.date, item]));
+      const completeData: Array<{
+        date: string;
+        streamCount: number;
+        uniqueTracks: number;
+        uniqueArtists: number;
+      }> = [];
+
+      const currentDate = new Date(firstDate);
+      while (currentDate <= lastDate) {
+        const dateString = currentDate.toISOString().split("T")[0]!;
+        const existingData = streamDataMap.get(dateString);
+
+        completeData.push({
+          date: dateString,
+          streamCount: existingData ? existingData.streamCount : 0,
+          uniqueTracks: existingData ? existingData.uniqueTracks : 0,
+          uniqueArtists: existingData ? existingData.uniqueArtists : 0
+        });
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      return completeData;
     }
 
-    // Get the first and last dates from the actual data
-    const firstDate = new Date(streamData[0]!.date);
-    const lastDate = new Date(streamData[streamData.length - 1]!.date);
-
-    // Generate complete date range and fill missing days with 0
-    const streamDataMap = new Map(streamData.map((item) => [item.date, item]));
-    const completeData: Array<{
-      date: string;
-      uniqueTracks: number;
-      uniqueArtists: number;
-    }> = [];
-
-    const currentDate = new Date(firstDate);
-    while (currentDate <= lastDate) {
-      const dateString = currentDate.toISOString().split("T")[0]!;
-      const existingData = streamDataMap.get(dateString);
-
-      completeData.push({
-        date: dateString,
-        uniqueTracks: existingData ? existingData.uniqueTracks : 0,
-        uniqueArtists: existingData ? existingData.uniqueArtists : 0
-      });
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return completeData;
+    return streamData;
   } catch (error) {
     console.error("Error fetching daily unique stream data:", error);
     return [];
