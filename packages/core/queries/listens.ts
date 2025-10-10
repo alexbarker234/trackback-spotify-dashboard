@@ -369,3 +369,79 @@ export async function getYearlyPercentageData(options: GetYearlyPercentageDataOp
     return [];
   }
 }
+
+type GetDailyUniqueStreamDataOptions = {
+  days?: number;
+};
+
+export async function getDailyUniqueStreamData(options: GetDailyUniqueStreamDataOptions = {}) {
+  const { days = -1 } = options;
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+
+    // Only add date filter if days is not -1 (get all data)
+    if (days !== -1) {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    const dailyUniqueStreams = await db
+      .select({
+        date: sql<string>`date(${listen.playedAt})`.as("date"),
+        uniqueTracks: sql<number>`count(distinct ${track.isrc})`.as("uniqueTracks"),
+        uniqueArtists: sql<number>`count(distinct ${trackArtist.artistId})`.as("uniqueArtists")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(...whereConditions))
+      .groupBy(sql`date(${listen.playedAt})`)
+      .orderBy(sql`date(${listen.playedAt})`);
+
+    // Convert string values to numbers
+    const streamData = dailyUniqueStreams.map((day) => ({
+      ...day,
+      uniqueTracks: Number(day.uniqueTracks),
+      uniqueArtists: Number(day.uniqueArtists)
+    }));
+
+    // If no data returned, return empty array
+    if (streamData.length === 0) {
+      return streamData;
+    }
+
+    // Get the first and last dates from the actual data
+    const firstDate = new Date(streamData[0]!.date);
+    const lastDate = new Date(streamData[streamData.length - 1]!.date);
+
+    // Generate complete date range and fill missing days with 0
+    const streamDataMap = new Map(streamData.map((item) => [item.date, item]));
+    const completeData: Array<{
+      date: string;
+      uniqueTracks: number;
+      uniqueArtists: number;
+    }> = [];
+
+    const currentDate = new Date(firstDate);
+    while (currentDate <= lastDate) {
+      const dateString = currentDate.toISOString().split("T")[0]!;
+      const existingData = streamDataMap.get(dateString);
+
+      completeData.push({
+        date: dateString,
+        uniqueTracks: existingData ? existingData.uniqueTracks : 0,
+        uniqueArtists: existingData ? existingData.uniqueArtists : 0
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return completeData;
+  } catch (error) {
+    console.error("Error fetching daily unique stream data:", error);
+    return [];
+  }
+}
