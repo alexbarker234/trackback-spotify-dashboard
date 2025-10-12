@@ -1,7 +1,7 @@
 import ListenCard from "@/components/cards/ListenCard";
 import MonthlyStreamChart from "@/components/charts/MonthlyStreamChart";
 import YearlyStreamChart from "@/components/charts/YearlyStreamChart";
-import ItemCard from "@/components/ItemCard";
+import StreamItemCard from "@/components/itemCards/StreamItemCard";
 import ItemCarousel from "@/components/ItemCarousel";
 import NowPlaying from "@/components/NowPlaying";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
@@ -113,7 +113,7 @@ export default async function Home() {
         {topTracks.length > 0 && (
           <ItemCarousel title="Top Tracks" subtitle="Your top tracks from the past 4 weeks" viewMoreUrl="/top/tracks">
             {topTracks.map((track, index) => (
-              <ItemCard
+              <StreamItemCard
                 key={track.trackIsrc}
                 href={`/track/${track.trackIsrc}`}
                 imageUrl={track.imageUrl}
@@ -135,7 +135,7 @@ export default async function Home() {
             viewMoreUrl="/top/artists"
           >
             {topArtists.map((artist, index) => (
-              <ItemCard
+              <StreamItemCard
                 key={artist.artistId}
                 href={`/artist/${artist.artistId}`}
                 imageUrl={artist.artistImageUrl}
@@ -153,7 +153,7 @@ export default async function Home() {
         {topAlbums.length > 0 && (
           <ItemCarousel title="Top Albums" subtitle="Your top albums from the past 4 weeks" viewMoreUrl="/top/albums">
             {topAlbums.map((album, index) => (
-              <ItemCard
+              <StreamItemCard
                 key={album.albumId}
                 href={`/album/${album.albumId}`}
                 imageUrl={album.albumImageUrl}
