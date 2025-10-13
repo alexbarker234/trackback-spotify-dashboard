@@ -729,3 +729,72 @@ export async function getAlbumListenStats(albumId: string): Promise<AlbumListenS
     };
   }
 }
+
+type GetHourlyListenDataOptions = {
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
+  startDate?: Date;
+  endDate?: Date;
+};
+
+export async function getHourlyListenData(options: GetHourlyListenDataOptions = {}) {
+  const { artistId, albumId, trackIsrc, startDate, endDate } = options;
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+
+    // Add entity filters
+    if (artistId) {
+      whereConditions.push(eq(trackArtist.artistId, artistId));
+    } else if (albumId) {
+      whereConditions.push(eq(albumTrack.albumId, albumId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
+    // Handle date filtering
+    if (startDate) {
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
+    }
+
+    const hourlyListens = await db
+      .select({
+        hour: sql<number>`extract(hour from ${listen.playedAt})`.as("hour"),
+        listenCount: sql<number>`count(*)`.as("listenCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(...whereConditions))
+      .groupBy(sql`extract(hour from ${listen.playedAt})`)
+      .orderBy(sql`extract(hour from ${listen.playedAt})`);
+
+    const hourlyData = hourlyListens.map((item) => ({
+      hour: Number(item.hour),
+      listenCount: Number(item.listenCount),
+      totalDuration: Number(item.totalDuration)
+    }));
+
+    // Fill in missing hours with 0 values
+    const completeHourlyData = new Array(24).fill(null).map((_, index) => {
+      const existingData = hourlyData.find((item) => item.hour === index);
+      return {
+        hour: index,
+        listenCount: existingData?.listenCount || 0,
+        totalDuration: existingData?.totalDuration || 0
+      };
+    });
+
+    return completeHourlyData;
+  } catch (error) {
+    console.error("Error fetching hourly listen data:", error);
+    return [];
+  }
+}
