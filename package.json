@@ -6,6 +6,8 @@
     "start": "turbo run start --env-mode=loose",
     "build": "turbo run build --env-mode=loose",
     "dev": "turbo run dev --env-mode=loose",
+    "dev:service": "turbo run dev --env-mode=loose --filter=./apps/service",
+    "dev:web": "turbo run dev --env-mode=loose --filter=./apps/web",
     "dev:packages": "turbo run dev --env-mode=loose --filter=./packages/*",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
