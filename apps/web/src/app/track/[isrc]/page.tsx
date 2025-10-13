@@ -2,6 +2,7 @@ import AlbumGrid from "@/components/cards/AlbumGrid";
 import ListenCard from "@/components/cards/ListenCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
+import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
@@ -13,6 +14,7 @@ import { Listen, TopAlbum } from "@/types";
 import {
   getCumulativeStreamData,
   getDailyStreamData,
+  getHourlyListenData,
   getTrackListenStats,
   getYearlyPercentageData
 } from "@workspace/core";
@@ -126,16 +128,25 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
   const { isrc } = await params;
 
-  const [trackData, stats, recentListens, topAlbums, dailyStreamData, cumulativeStreamData, yearlyPercentageData] =
-    await Promise.all([
-      getTrackData(isrc),
-      getTrackListenStats(isrc),
-      getRecentListens(isrc),
-      getTopAlbums(isrc),
-      getDailyStreamData({ trackIsrc: isrc }),
-      getCumulativeStreamData({ trackIsrc: isrc }),
-      getYearlyPercentageData({ trackIsrc: isrc })
-    ]);
+  const [
+    trackData,
+    stats,
+    recentListens,
+    topAlbums,
+    dailyStreamData,
+    cumulativeStreamData,
+    yearlyPercentageData,
+    hourlyListenData
+  ] = await Promise.all([
+    getTrackData(isrc),
+    getTrackListenStats(isrc),
+    getRecentListens(isrc),
+    getTopAlbums(isrc),
+    getDailyStreamData({ trackIsrc: isrc }),
+    getCumulativeStreamData({ trackIsrc: isrc }),
+    getYearlyPercentageData({ trackIsrc: isrc }),
+    getHourlyListenData({ trackIsrc: isrc })
+  ]);
 
   if (!trackData) {
     return <NoData />;
@@ -162,6 +173,8 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
       {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
       {/* Yearly Percentage Chart */}
       {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={track.name} />}
+      {/* Hourly Listens Chart */}
+      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
 
       {/* Albums */}
       <AlbumGrid albums={topAlbums} />

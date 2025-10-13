@@ -70,6 +70,7 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const containerHeight = containerRef.current.offsetHeight;
+        console.log(containerWidth, containerHeight);
         const size = Math.min(containerWidth, containerHeight, 600);
         setChartSize(size);
       }
@@ -78,14 +79,14 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
     updateSize();
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
-  }, []);
+  }, [containerRef]);
 
   // Chart dimensions - responsive
   const centerX = chartSize / 2;
   const centerY = chartSize / 2;
-  const innerRadius = chartSize * 0.125; // 12.5% of chart size
-  const maxRadius = chartSize * 0.4375; // 43.75% of chart size
-  const barWidth = chartSize * 0.025; // 2.5% of chart size
+  const innerRadius = chartSize * 0.125;
+  const maxRadius = chartSize * 0.5;
+  const barWidth = chartSize * 0.025;
 
   // Generate radial bar data
   const radialBars = completeData.map((item, index) => {
