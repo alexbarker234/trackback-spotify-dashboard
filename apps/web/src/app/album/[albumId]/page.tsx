@@ -3,6 +3,7 @@ import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
+import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
@@ -14,6 +15,7 @@ import {
   getAlbumListenStats,
   getCumulativeStreamData,
   getDailyStreamData,
+  getHourlyListenData,
   getTopTracksForAlbum,
   getYearlyPercentageData
 } from "@workspace/core";
@@ -152,7 +154,8 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
     recentListens,
     dailyStreamData,
     cumulativeStreamData,
-    yearlyPercentageData
+    yearlyPercentageData,
+    hourlyListenData
   ] = await Promise.all([
     getAlbumData(albumId),
     getAlbumListenStats(albumId),
@@ -161,7 +164,8 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
     getRecentListens(albumId),
     getDailyStreamData({ albumId }),
     getCumulativeStreamData({ albumId }),
-    getYearlyPercentageData({ albumId })
+    getYearlyPercentageData({ albumId }),
+    getHourlyListenData({ albumId })
   ]);
 
   if (!albumData) {
@@ -189,6 +193,8 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
       {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
       {/* Yearly Percentage Chart */}
       {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={album.name} />}
+      {/* Hourly Listens Chart */}
+      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
 
       {/* Top Tracks */}
       {topTracks.length > 0 && (
