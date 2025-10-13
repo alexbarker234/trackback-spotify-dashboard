@@ -3,32 +3,22 @@ import { faMusic } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 
-export type ItemCardProps = {
+export interface ItemCardProps {
   href: string;
   imageUrl: string | null;
-  number: number;
   title: string;
   subtitle: string;
-  streams: number;
-  minutes: number;
+  number?: number;
+  content?: string;
   className?: string;
-};
+}
 
-export default function ItemCard({
-  href,
-  imageUrl,
-  number,
-  title,
-  subtitle,
-  streams,
-  minutes,
-  className
-}: ItemCardProps) {
+export default function ItemCard({ href, imageUrl, title, subtitle, content, number, className }: ItemCardProps) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex w-42 shrink-0 grow-0 flex-col space-y-3 rounded-2xl bg-white/5 p-2 backdrop-blur-sm transition-all hover:bg-white/10",
+        "flex cursor-pointer flex-col space-y-3 rounded-2xl bg-white/5 p-3 backdrop-blur-sm transition-all hover:bg-white/10 disabled:cursor-not-allowed",
         className
       )}
     >
@@ -41,12 +31,12 @@ export default function ItemCard({
       )}
       <div className="min-w-0 flex-1">
         <p className="line-clamp-2 font-medium text-white">
-          <span className="font-bold text-gray-400">#{number}</span> {title}
+          {number !== undefined && <span className="font-bold text-gray-400">#{number}</span>}
+          {number !== undefined && " "}
+          {title}
         </p>
         <p className="line-clamp-1 text-sm text-gray-400">{subtitle}</p>
-        <p className="text-xs text-gray-500">
-          {streams} streams • {minutes} minutes
-        </p>
+        {content !== undefined && <p className="text-xs text-gray-500">{content}</p>}
       </div>
     </Link>
   );

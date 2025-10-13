@@ -2,33 +2,25 @@ import AlbumGrid from "@/components/cards/AlbumGrid";
 import ListenCard from "@/components/cards/ListenCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
+import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
-import StatGrid from "@/components/StatGrid";
+import StatGrid from "@/components/statsGrid/StatGrid";
 import { auth } from "@/lib/auth";
 import { formatTime } from "@/lib/utils/timeUtils";
 import { Listen, TopAlbum } from "@/types";
-import { getCumulativeStreamData, getDailyStreamData, getYearlyPercentageData } from "@workspace/core";
+import {
+  getCumulativeStreamData,
+  getDailyStreamData,
+  getHourlyListenData,
+  getTrackListenStats,
+  getYearlyPercentageData
+} from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-interface TrackStats {
-  totalListens: number;
-  totalDuration: number;
-  yearListens: number;
-  yearDuration: number;
-  monthListens: number;
-  monthDuration: number;
-  weekListens: number;
-  weekDuration: number;
-  firstListen: Date | null;
-  lastListen: Date | null;
-  avgDuration: number;
-  completionRate: number;
-}
 
 async function getTrackData(isrc: string) {
   try {
@@ -68,84 +60,6 @@ async function getTrackData(isrc: string) {
   } catch (error) {
     console.error("Error fetching track data:", error);
     return null;
-  }
-}
-
-async function getTrackStats(isrc: string): Promise<TrackStats> {
-  try {
-    const now = new Date();
-    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Get all listens for this track
-    const allListens = await db
-      .select({
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .where(and(eq(track.isrc, isrc), gte(listen.durationMS, 30000)))
-      .orderBy(desc(listen.playedAt));
-
-    // Get track duration for completion rate calculation
-    const trackData = await db.query.track.findFirst({
-      where: (track, { eq }) => eq(track.isrc, isrc)
-    });
-
-    const trackDuration = trackData?.durationMS || 0;
-
-    // Calculate statistics
-    const totalListens = allListens.length;
-    const totalDuration = allListens.reduce((sum, l) => sum + l.durationMS, 0);
-
-    const yearListens = allListens.filter((l) => l.playedAt >= oneYearAgo).length;
-    const yearDuration = allListens.filter((l) => l.playedAt >= oneYearAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const monthListens = allListens.filter((l) => l.playedAt >= oneMonthAgo).length;
-    const monthDuration = allListens.filter((l) => l.playedAt >= oneMonthAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const weekListens = allListens.filter((l) => l.playedAt >= oneWeekAgo).length;
-    const weekDuration = allListens.filter((l) => l.playedAt >= oneWeekAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const firstListen = allListens.length > 0 ? allListens[allListens.length - 1].playedAt : null;
-    const lastListen = allListens.length > 0 ? allListens[0].playedAt : null;
-
-    const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
-    const completionRate = trackDuration > 0 ? (avgDuration / trackDuration) * 100 : 0;
-
-    return {
-      totalListens,
-      totalDuration,
-      yearListens,
-      yearDuration,
-      monthListens,
-      monthDuration,
-      weekListens,
-      weekDuration,
-      firstListen,
-      lastListen,
-      avgDuration,
-      completionRate
-    };
-  } catch (error) {
-    console.error("Error fetching track stats:", error);
-    return {
-      totalListens: 0,
-      totalDuration: 0,
-      yearListens: 0,
-      yearDuration: 0,
-      monthListens: 0,
-      monthDuration: 0,
-      weekListens: 0,
-      weekDuration: 0,
-      firstListen: null,
-      lastListen: null,
-      avgDuration: 0,
-      completionRate: 0
-    };
   }
 }
 
@@ -214,16 +128,25 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
   const { isrc } = await params;
 
-  const [trackData, stats, recentListens, topAlbums, dailyStreamData, cumulativeStreamData, yearlyPercentageData] =
-    await Promise.all([
-      getTrackData(isrc),
-      getTrackStats(isrc),
-      getRecentListens(isrc),
-      getTopAlbums(isrc),
-      getDailyStreamData({ trackIsrc: isrc }),
-      getCumulativeStreamData({ trackIsrc: isrc }),
-      getYearlyPercentageData({ trackIsrc: isrc })
-    ]);
+  const [
+    trackData,
+    stats,
+    recentListens,
+    topAlbums,
+    dailyStreamData,
+    cumulativeStreamData,
+    yearlyPercentageData,
+    hourlyListenData
+  ] = await Promise.all([
+    getTrackData(isrc),
+    getTrackListenStats(isrc),
+    getRecentListens(isrc),
+    getTopAlbums(isrc),
+    getDailyStreamData({ trackIsrc: isrc }),
+    getCumulativeStreamData({ trackIsrc: isrc }),
+    getYearlyPercentageData({ trackIsrc: isrc }),
+    getHourlyListenData({ trackIsrc: isrc })
+  ]);
 
   if (!trackData) {
     return <NoData />;
@@ -250,6 +173,8 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
       {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
       {/* Yearly Percentage Chart */}
       {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={track.name} />}
+      {/* Hourly Listens Chart */}
+      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
 
       {/* Albums */}
       <AlbumGrid albums={topAlbums} />

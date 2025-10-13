@@ -3,7 +3,7 @@
 import { DateRange } from "@/hooks/useDateRange";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
-import ItemCard from "../ItemCard";
+import StreamItemCard from "../itemCards/StreamItemCard";
 
 export type TopItem = {
   id: string;
@@ -69,7 +69,7 @@ export default function TopItemsPage({
         ) : items && items.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
             {items.map((item, index) => (
-              <ItemCard
+              <StreamItemCard
                 key={item.id}
                 href={item.href}
                 imageUrl={item.imageUrl}

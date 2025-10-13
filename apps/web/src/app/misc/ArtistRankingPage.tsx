@@ -31,7 +31,7 @@ export default function ArtistRankingPage() {
   };
 
   return (
-    <div className="flex-1 p-8">
+    <div className="flex-1 px-2 py-4 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-8 text-4xl font-bold text-white">Artist Rankings</h1>
 

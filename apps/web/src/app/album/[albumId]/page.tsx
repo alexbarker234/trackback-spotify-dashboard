@@ -3,16 +3,19 @@ import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
+import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
-import StatGrid, { Stats } from "@/components/StatGrid";
+import StatGrid from "@/components/statsGrid/StatGrid";
 import { auth } from "@/lib/auth";
 import { TopArtist } from "@/types";
 import {
+  getAlbumListenStats,
   getCumulativeStreamData,
   getDailyStreamData,
+  getHourlyListenData,
   getTopTracksForAlbum,
   getYearlyPercentageData
 } from "@workspace/core";
@@ -63,102 +66,6 @@ async function getAlbumData(albumId: string) {
   } catch (error) {
     console.error("Error fetching album data:", error);
     return null;
-  }
-}
-
-type AlbumStats = Stats & {
-  uniqueTracks: number;
-  uniqueArtists: number;
-};
-
-async function getAlbumStats(albumId: string): Promise<AlbumStats> {
-  try {
-    const now = new Date();
-    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Get all listens for this album
-    const allListens = await db
-      .select({
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt,
-        trackIsrc: track.isrc
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
-      .orderBy(desc(listen.playedAt));
-
-    // Calculate statistics
-    const totalListens = allListens.length;
-    const totalDuration = allListens.reduce((sum, l) => sum + l.durationMS, 0);
-
-    const yearListens = allListens.filter((l) => l.playedAt >= oneYearAgo).length;
-    const yearDuration = allListens.filter((l) => l.playedAt >= oneYearAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const monthListens = allListens.filter((l) => l.playedAt >= oneMonthAgo).length;
-    const monthDuration = allListens.filter((l) => l.playedAt >= oneMonthAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const weekListens = allListens.filter((l) => l.playedAt >= oneWeekAgo).length;
-    const weekDuration = allListens.filter((l) => l.playedAt >= oneWeekAgo).reduce((sum, l) => sum + l.durationMS, 0);
-
-    const firstListen = allListens.length > 0 ? allListens[allListens.length - 1].playedAt : null;
-    const lastListen = allListens.length > 0 ? allListens[0].playedAt : null;
-
-    const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
-
-    // Get unique tracks and artists
-    const uniqueTracks = new Set(allListens.map((l) => l.trackIsrc)).size;
-
-    // Get unique artists for this album
-    const artistTracks = await db
-      .select({ artistId: trackArtist.artistId })
-      .from(albumTrack)
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .where(eq(albumTrack.albumId, albumId));
-
-    const uniqueArtists = new Set(artistTracks.map((at) => at.artistId)).size;
-
-    // TODO
-    const completionRate = 0;
-
-    return {
-      totalListens,
-      totalDuration,
-      yearListens,
-      yearDuration,
-      monthListens,
-      monthDuration,
-      weekListens,
-      weekDuration,
-      firstListen,
-      lastListen,
-      avgDuration,
-      completionRate,
-      uniqueTracks,
-      uniqueArtists
-    };
-  } catch (error) {
-    console.error("Error fetching album stats:", error);
-    return {
-      totalListens: 0,
-      totalDuration: 0,
-      yearListens: 0,
-      yearDuration: 0,
-      monthListens: 0,
-      monthDuration: 0,
-      weekListens: 0,
-      weekDuration: 0,
-      firstListen: null,
-      lastListen: null,
-      avgDuration: 0,
-      completionRate: 0,
-      uniqueTracks: 0,
-      uniqueArtists: 0
-    };
   }
 }
 
@@ -247,16 +154,18 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
     recentListens,
     dailyStreamData,
     cumulativeStreamData,
-    yearlyPercentageData
+    yearlyPercentageData,
+    hourlyListenData
   ] = await Promise.all([
     getAlbumData(albumId),
-    getAlbumStats(albumId),
+    getAlbumListenStats(albumId),
     getTopTracksForAlbum(albumId),
     getTopArtists(albumId),
     getRecentListens(albumId),
     getDailyStreamData({ albumId }),
     getCumulativeStreamData({ albumId }),
-    getYearlyPercentageData({ albumId })
+    getYearlyPercentageData({ albumId }),
+    getHourlyListenData({ albumId })
   ]);
 
   if (!albumData) {
@@ -284,6 +193,8 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
       {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
       {/* Yearly Percentage Chart */}
       {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={album.name} />}
+      {/* Hourly Listens Chart */}
+      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
 
       {/* Top Tracks */}
       {topTracks.length > 0 && (

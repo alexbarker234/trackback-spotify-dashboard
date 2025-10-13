@@ -1,11 +1,11 @@
 "use client";
 
+import SearchItemCard from "@/components/itemCards/SearchItemCard";
 import Loading from "@/components/Loading";
 import SearchBar from "@/components/SearchBar";
 import { useSearch } from "@/hooks/useSearch";
 import { faMusic } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function SearchPage() {
@@ -116,33 +116,5 @@ export default function SearchPage() {
         </div>
       )}
     </div>
-  );
-}
-
-interface SearchItemCardProps {
-  href: string;
-  imageUrl: string | null;
-  title: string;
-  subtitle: string;
-}
-
-function SearchItemCard({ href, imageUrl, title, subtitle }: SearchItemCardProps) {
-  return (
-    <Link
-      href={href}
-      className="flex cursor-pointer flex-col space-y-3 rounded-2xl bg-white/5 p-3 backdrop-blur-sm transition-all hover:bg-white/10 disabled:cursor-not-allowed"
-    >
-      {imageUrl ? (
-        <img src={imageUrl} alt={title} className="aspect-square w-full rounded-lg object-cover shadow-lg" />
-      ) : (
-        <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-white/5">
-          <FontAwesomeIcon icon={faMusic} className="text-4xl text-gray-400" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 font-medium text-white">{title}</p>
-        <p className="line-clamp-1 text-sm text-gray-400">{subtitle}</p>
-      </div>
-    </Link>
   );
 }
