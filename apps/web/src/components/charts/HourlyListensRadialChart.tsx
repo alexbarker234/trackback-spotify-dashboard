@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils/cn";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import ChartTooltip from "./ChartTooltip";
 
 interface HourlyListenData {
@@ -18,9 +17,10 @@ interface HourlyListensRadialChartProps {
 
 export default function HourlyListensRadialChart({ data }: HourlyListensRadialChartProps) {
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const [chartSize, setChartSize] = useState(320);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -81,7 +81,7 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
     return () => window.removeEventListener("resize", updateSize);
   }, [containerRef]);
 
-  // Chart dimensions - responsive
+  // Responsive chart dimensions
   const centerX = chartSize / 2;
   const centerY = chartSize / 2;
   const innerRadius = chartSize * 0.125;
@@ -107,29 +107,65 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
     };
   });
 
-  const handleBarHover = (hour: number | null) => {
-    if (hour !== null) setHoveredHour(hour);
+  const selectFromMousePosition = (mouseX: number, mouseY: number) => {
+    const dx = mouseX - centerX;
+    const dy = mouseY - centerY;
+
+    // Calculate angle from center to mouse position
+    // atan2 returns angle in radians from -π to π
+    let angle = Math.atan2(dy, dx);
+    // Convert to degrees and adjust to start from top (12 o'clock)
+    angle = (angle * 180) / Math.PI;
+    angle = (angle + 90 + 360) % 360; // Normalize to 0-360, starting from top
+
+    // Convert angle to hour index (0-23)
+    // Each hour is 15 degrees (360/24)
+    const hourIndex = Math.round(angle / 15) % 24;
+    setHoveredHour(hourIndex);
+  };
+
+  const setTooltipPositionFromMouse = (mouseX: number, mouseY: number) => {
+    if (containerRef.current && tooltipRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+
+      let x = mouseX + 10;
+      let y = mouseY + 10;
+
+      // Keep the tooltip within the right and bottom bounds of the container
+      if (x + tooltipRect.width > containerRect.width) {
+        x = containerRect.width - tooltipRect.width;
+      }
+      if (y + tooltipRect.height > containerRect.height) {
+        y = containerRect.height - tooltipRect.height;
+      }
+
+      // Keep the tooltip within the top and left bounds of the container
+      x = Math.max(0, x);
+      y = Math.max(0, y);
+
+      setTooltipPosition({ x, y });
+    }
   };
 
   const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
-    setMousePosition({
-      x: event.clientX,
-      y: event.clientY
-    });
-
-    // Calculate distance from the center of the chart
     if (chartRef.current) {
       const rect = chartRef.current.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
+
+      setTooltipPositionFromMouse(mouseX, mouseY);
+
       const dx = mouseX - centerX;
       const dy = mouseY - centerY;
       const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+
       if (distanceFromCenter > maxRadius + chartSize * 0.03) {
         setIsHovering(false);
         setHoveredHour(null);
       } else {
         setIsHovering(true);
+        selectFromMousePosition(mouseX, mouseY);
       }
     }
   };
@@ -234,66 +270,49 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
 
             {/* Radial bars */}
             {radialBars.map((bar) => (
-              <g key={bar.hour}>
-                {/* Hover area - larger invisible area for easier hovering */}
-                <rect
-                  x={bar.startX - barWidth / 2 - chartSize * 0.00625}
-                  y={bar.startY - barWidth / 2 - chartSize * 0.00625}
-                  width={maxRadius - innerRadius}
-                  height={barWidth + chartSize * 0.0125}
-                  fill="transparent"
-                  transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
-                  onMouseEnter={() => handleBarHover(bar.hour)}
-                  onMouseLeave={() => handleBarHover(null)}
-                />
-                {/* Actual bar */}
-                <rect
-                  x={bar.startX - barWidth / 2}
-                  y={bar.startY - barWidth / 2}
-                  width={bar.barLength}
-                  height={barWidth}
-                  rx={barWidth / 2}
-                  ry={barWidth / 2}
-                  transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
-                  className={cn("fill-purple-500 transition-all duration-500 ease-out", {
-                    "fill-pink-500": bar.isHovered
-                  })}
-                />
-              </g>
+              <rect
+                key={bar.hour}
+                x={bar.startX - barWidth / 2}
+                y={bar.startY - barWidth / 2}
+                width={bar.barLength}
+                height={barWidth}
+                rx={barWidth / 2}
+                ry={barWidth / 2}
+                transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
+                className={cn("fill-purple-500 transition-all duration-500 ease-out", {
+                  "fill-pink-500": bar.isHovered
+                })}
+              />
             ))}
           </svg>
 
-          {/* Tooltip Portal */}
-          {isHovering &&
-            hoveredData &&
-            typeof document !== "undefined" &&
-            createPortal(
-              <div
-                className="animate-in fade-in-0 pointer-events-none fixed z-50 transition-all duration-200 ease-out"
-                style={{
-                  left: mousePosition.x + 15,
-                  top: mousePosition.y - 40,
-                  transform: "translate(-50%, -100%)"
-                }}
-              >
-                <ChartTooltip>
-                  <p className="text-sm font-medium text-gray-300">
-                    {hoveredData.hour}:00 (
-                    {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
-                    {hoveredData.hour < 12 ? "AM" : "PM"})
-                  </p>
-                  <p className="text-white">
-                    <span className="text-gray-400">Listens: </span>
-                    {hoveredData.listenCount}
-                  </p>
-                  <p className="text-white">
-                    <span className="text-gray-400">Duration: </span>
-                    {formatDuration(hoveredData.totalDuration)}
-                  </p>
-                </ChartTooltip>
-              </div>,
-              document.body
-            )}
+          {/* Tooltip */}
+          {isHovering && hoveredData && (
+            <div
+              ref={tooltipRef}
+              className="animate-in fade-in-0 pointer-events-none absolute z-50 text-nowrap transition-all duration-200 ease-out"
+              style={{
+                left: tooltipPosition.x,
+                top: tooltipPosition.y
+              }}
+            >
+              <ChartTooltip>
+                <p className="text-sm font-medium text-gray-300">
+                  {hoveredData.hour}:00 (
+                  {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
+                  {hoveredData.hour < 12 ? "AM" : "PM"})
+                </p>
+                <p className="text-white">
+                  <span className="text-gray-400">Listens: </span>
+                  {hoveredData.listenCount}
+                </p>
+                <p className="text-white">
+                  <span className="text-gray-400">Duration: </span>
+                  {formatDuration(hoveredData.totalDuration)}
+                </p>
+              </ChartTooltip>
+            </div>
+          )}
         </div>
       </div>
     </div>

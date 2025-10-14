@@ -83,7 +83,7 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
       >
         <MenuItems
           anchor="bottom end"
-          className="mt-2 w-48 rounded-lg bg-white/5 shadow-lg backdrop-blur-sm focus:outline-none"
+          className="mt-2 w-48 rounded-lg bg-white/3 shadow-lg backdrop-blur-lg focus:outline-none"
           modal={false}
         >
           {menuItems.map(({ href, onClick, icon: Icon, label }) => (
