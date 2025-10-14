@@ -80,7 +80,7 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
     return () => window.removeEventListener("resize", updateSize);
   }, [containerRef]);
 
-  // Chart dimensions - responsive
+  // Responsive chart dimensions
   const centerX = chartSize / 2;
   const centerY = chartSize / 2;
   const innerRadius = chartSize * 0.125;
@@ -106,8 +106,21 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
     };
   });
 
-  const handleBarHover = (hour: number | null) => {
-    if (hour !== null) setHoveredHour(hour);
+  const selectFromMousePosition = (mouseX: number, mouseY: number) => {
+    const dx = mouseX - centerX;
+    const dy = mouseY - centerY;
+
+    // Calculate angle from center to mouse position
+    // atan2 returns angle in radians from -π to π
+    let angle = Math.atan2(dy, dx);
+    // Convert to degrees and adjust to start from top (12 o'clock)
+    angle = (angle * 180) / Math.PI;
+    angle = (angle + 90 + 360) % 360; // Normalize to 0-360, starting from top
+
+    // Convert angle to hour index (0-23)
+    // Each hour is 15 degrees (360/24)
+    const hourIndex = Math.round(angle / 15) % 24;
+    setHoveredHour(hourIndex);
   };
 
   const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
@@ -121,15 +134,16 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
         y: mouseY
       });
 
-      // Calculate distance from the center of the chart
       const dx = mouseX - centerX;
       const dy = mouseY - centerY;
       const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+
       if (distanceFromCenter > maxRadius + chartSize * 0.03) {
         setIsHovering(false);
         setHoveredHour(null);
       } else {
         setIsHovering(true);
+        selectFromMousePosition(mouseX, mouseY);
       }
     }
   };
@@ -234,32 +248,19 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
 
             {/* Radial bars */}
             {radialBars.map((bar) => (
-              <g key={bar.hour}>
-                {/* Hover area - larger invisible area for easier hovering */}
-                <rect
-                  x={bar.startX - barWidth / 2 - chartSize * 0.00625}
-                  y={bar.startY - barWidth / 2 - chartSize * 0.00625}
-                  width={maxRadius - innerRadius}
-                  height={barWidth + chartSize * 0.0125}
-                  fill="transparent"
-                  transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
-                  onMouseEnter={() => handleBarHover(bar.hour)}
-                  onMouseLeave={() => handleBarHover(null)}
-                />
-                {/* Actual bar */}
-                <rect
-                  x={bar.startX - barWidth / 2}
-                  y={bar.startY - barWidth / 2}
-                  width={bar.barLength}
-                  height={barWidth}
-                  rx={barWidth / 2}
-                  ry={barWidth / 2}
-                  transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
-                  className={cn("fill-purple-500 transition-all duration-500 ease-out", {
-                    "fill-pink-500": bar.isHovered
-                  })}
-                />
-              </g>
+              <rect
+                key={bar.hour}
+                x={bar.startX - barWidth / 2}
+                y={bar.startY - barWidth / 2}
+                width={bar.barLength}
+                height={barWidth}
+                rx={barWidth / 2}
+                ry={barWidth / 2}
+                transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
+                className={cn("fill-purple-500 transition-all duration-500 ease-out", {
+                  "fill-pink-500": bar.isHovered
+                })}
+              />
             ))}
           </svg>
 
