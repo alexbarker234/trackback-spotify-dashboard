@@ -9,7 +9,6 @@ import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
 import StatGrid from "@/components/statsGrid/StatGrid";
-import { TopArtist } from "@/types";
 import {
   getAlbumListenStats,
   getCumulativeStreamData,
@@ -19,7 +18,8 @@ import {
   getTopTracksForAlbum,
   getYearlyPercentageData
 } from "@workspace/core";
-import { albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { getTopArtists } from "@workspace/core/queries/artists";
+import { db } from "@workspace/database";
 
 async function getAlbumData(albumId: string) {
   try {
@@ -67,45 +67,6 @@ async function getAlbumData(albumId: string) {
   }
 }
 
-async function getTopArtists(albumId: string, limit: number = 10): Promise<TopArtist[]> {
-  try {
-    const topArtists = await db
-      .select({
-        artistName: trackArtist.artistId,
-        artistId: trackArtist.artistId,
-        artistImageUrl: sql<string | null>`null`.as("artistImageUrl"),
-        listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
-      .groupBy(trackArtist.artistId)
-      .orderBy(desc(sql<number>`count(*)`))
-      .limit(limit);
-
-    // Get artist names and images
-    const artistIds = topArtists.map((ta) => ta.artistId);
-    const artists = await db.query.artist.findMany({
-      where: (artist, { inArray }) => inArray(artist.id, artistIds)
-    });
-
-    return topArtists.map((ta) => {
-      const artist = artists.find((a) => a.id === ta.artistId);
-      return {
-        ...ta,
-        artistName: artist?.name || ta.artistName,
-        artistImageUrl: artist?.imageUrl || null
-      };
-    });
-  } catch (error) {
-    console.error("Error fetching top artists:", error);
-    return [];
-  }
-}
-
 export default async function AlbumPage({ params }: { params: Promise<{ albumId: string }> }) {
   const { albumId } = await params;
 
@@ -123,7 +84,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
     getAlbumData(albumId),
     getAlbumListenStats(albumId),
     getTopTracksForAlbum(albumId),
-    getTopArtists(albumId),
+    getTopArtists({ albumId }),
     getRecentListens({ albumId }),
     getDailyStreamData({ albumId }),
     getCumulativeStreamData({ albumId }),

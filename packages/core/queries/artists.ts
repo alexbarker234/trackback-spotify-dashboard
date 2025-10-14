@@ -2,17 +2,27 @@ import { albumTrack, and, artist, db, desc, eq, gte, listen, sql, track, trackAr
 import { TopArtist } from "../types";
 
 export type TopArtistsOptions = {
+  albumId?: string;
+  trackIsrc?: string;
   startDate?: Date;
   endDate?: Date;
   limit?: number;
 };
 
-export async function getTopArtistsByDateRange(options: TopArtistsOptions = {}): Promise<TopArtist[]> {
-  const { startDate, endDate, limit = 250 } = options;
+export async function getTopArtists(options: TopArtistsOptions = {}): Promise<TopArtist[]> {
+  const { albumId, trackIsrc, startDate, endDate, limit = 250 } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
 
+    // Add entity filters
+    if (albumId) {
+      whereConditions.push(eq(albumTrack.albumId, albumId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
+    // Add date filters
     if (startDate) whereConditions.push(gte(listen.playedAt, startDate));
     if (endDate) whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
 
@@ -35,7 +45,6 @@ export async function getTopArtistsByDateRange(options: TopArtistsOptions = {}):
       .limit(limit);
 
     // Filter out null values and convert to TopArtist format
-    // TODO make this cleaner
     const validArtists = topArtists
       .filter((artist) => artist.artistName && artist.artistId)
       .map((artist) => ({
@@ -48,7 +57,7 @@ export async function getTopArtistsByDateRange(options: TopArtistsOptions = {}):
 
     return validArtists;
   } catch (error) {
-    console.error("Error fetching top artists by date range:", error);
+    console.error("Error fetching top artists:", error);
     return [];
   }
 }
