@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils/cn";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import ChartTooltip from "./ChartTooltip";
 
 interface HourlyListenData {
@@ -112,16 +111,17 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
   };
 
   const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
-    setMousePosition({
-      x: event.clientX,
-      y: event.clientY
-    });
-
-    // Calculate distance from the center of the chart
     if (chartRef.current) {
       const rect = chartRef.current.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
+
+      setMousePosition({
+        x: mouseX,
+        y: mouseY
+      });
+
+      // Calculate distance from the center of the chart
       const dx = mouseX - centerX;
       const dy = mouseY - centerY;
       const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
@@ -263,37 +263,32 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
             ))}
           </svg>
 
-          {/* Tooltip Portal */}
-          {isHovering &&
-            hoveredData &&
-            typeof document !== "undefined" &&
-            createPortal(
-              <div
-                className="animate-in fade-in-0 pointer-events-none fixed z-50 transition-all duration-200 ease-out"
-                style={{
-                  left: mousePosition.x + 15,
-                  top: mousePosition.y - 40,
-                  transform: "translate(-50%, -100%)"
-                }}
-              >
-                <ChartTooltip>
-                  <p className="text-sm font-medium text-gray-300">
-                    {hoveredData.hour}:00 (
-                    {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
-                    {hoveredData.hour < 12 ? "AM" : "PM"})
-                  </p>
-                  <p className="text-white">
-                    <span className="text-gray-400">Listens: </span>
-                    {hoveredData.listenCount}
-                  </p>
-                  <p className="text-white">
-                    <span className="text-gray-400">Duration: </span>
-                    {formatDuration(hoveredData.totalDuration)}
-                  </p>
-                </ChartTooltip>
-              </div>,
-              document.body
-            )}
+          {/* Tooltip */}
+          {isHovering && hoveredData && (
+            <div
+              className="animate-in fade-in-0 pointer-events-none absolute z-50 text-nowrap transition-all duration-200 ease-out"
+              style={{
+                left: mousePosition.x + 10,
+                top: mousePosition.y + 10
+              }}
+            >
+              <ChartTooltip>
+                <p className="text-sm font-medium text-gray-300">
+                  {hoveredData.hour}:00 (
+                  {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
+                  {hoveredData.hour < 12 ? "AM" : "PM"})
+                </p>
+                <p className="text-white">
+                  <span className="text-gray-400">Listens: </span>
+                  {hoveredData.listenCount}
+                </p>
+                <p className="text-white">
+                  <span className="text-gray-400">Duration: </span>
+                  {formatDuration(hoveredData.totalDuration)}
+                </p>
+              </ChartTooltip>
+            </div>
+          )}
         </div>
       </div>
     </div>
