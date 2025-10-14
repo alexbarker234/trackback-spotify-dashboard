@@ -1,8 +1,41 @@
-import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import {
+  album,
+  albumTrack,
+  and,
+  artist,
+  db,
+  desc,
+  eq,
+  gte,
+  listen,
+  sql,
+  track,
+  trackArtist
+} from "@workspace/database";
 import { AlbumListenStats, ArtistListenStats, BaseListenStats, TrackListenStats } from "../types/listenStatTypes";
 
-export async function getRecentListensForArtist(artistId: string, limit: number = 10) {
+type GetRecentListensOptions = {
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
+  limit?: number;
+};
+
+export async function getRecentListens(options: GetRecentListensOptions = {}) {
+  const { artistId, albumId, trackIsrc, limit = 10 } = options;
+
   try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+
+    // Add entity filters
+    if (artistId) {
+      whereConditions.push(eq(trackArtist.artistId, artistId));
+    } else if (albumId) {
+      whereConditions.push(eq(albumTrack.albumId, albumId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
     const recentListens = await db
       .select({
         id: listen.id,
@@ -11,14 +44,27 @@ export async function getRecentListensForArtist(artistId: string, limit: number 
         trackName: track.name,
         trackIsrc: track.isrc,
         imageUrl: album.imageUrl,
-        trackDurationMS: track.durationMS
+        trackDurationMS: track.durationMS,
+        artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
+        albumName: album.name
       })
       .from(listen)
       .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
       .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
       .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
       .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
+      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
+      .where(and(...whereConditions))
+      .groupBy(
+        listen.id,
+        listen.durationMS,
+        listen.playedAt,
+        track.name,
+        track.isrc,
+        albumTrack.trackId,
+        album.name,
+        album.imageUrl
+      )
       .orderBy(desc(listen.playedAt))
       .limit(limit);
 

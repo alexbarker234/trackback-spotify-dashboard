@@ -7,219 +7,138 @@ import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialCha
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
+import Loading from "@/components/Loading";
 import NoData from "@/components/NoData";
 import StatGrid from "@/components/statsGrid/StatGrid";
-import { TopArtist } from "@/types";
 import {
   getAlbumListenStats,
   getCumulativeStreamData,
   getDailyStreamData,
   getHourlyListenData,
+  getRecentListens,
   getTopTracksForAlbum,
   getYearlyPercentageData
 } from "@workspace/core";
-import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { getAlbumData } from "@workspace/core/queries/albums";
+import { getTopArtists } from "@workspace/core/queries/artists";
+import { Suspense } from "react";
 
-async function getAlbumData(albumId: string) {
-  try {
-    // Get album data
-    const albumData = await db.query.album.findFirst({
-      where: (album, { eq }) => eq(album.id, albumId)
-    });
-
-    if (!albumData) return null;
-
-    // Get artists for this album
-    const albumArtists = await db.query.albumArtist.findMany({
-      where: (albumArtist, { eq }) => eq(albumArtist.albumId, albumId)
-    });
-
-    const artists = await db.query.artist.findMany({
-      where: (artist, { inArray }) =>
-        inArray(
-          artist.id,
-          albumArtists.map((aa) => aa.artistId)
-        )
-    });
-
-    // Get tracks for this album
-    const albumTracks = await db.query.albumTrack.findMany({
-      where: (albumTrack, { eq }) => eq(albumTrack.albumId, albumId)
-    });
-
-    const tracks = await db.query.track.findMany({
-      where: (track, { inArray }) =>
-        inArray(
-          track.isrc,
-          albumTracks.map((at) => at.trackIsrc)
-        )
-    });
-
-    return {
-      album: albumData,
-      artists,
-      tracks
-    };
-  } catch (error) {
-    console.error("Error fetching album data:", error);
-    return null;
-  }
+async function AlbumHeader({ albumData }: { albumData: Awaited<ReturnType<typeof getAlbumData>> }) {
+  const { album, artists } = albumData;
+  return (
+    <ItemHeader
+      imageUrl={album.imageUrl}
+      name={album.name}
+      artists={artists}
+      subtitle={`${albumData.tracks.length} tracks • ${albumData.artists.length} artists`}
+    />
+  );
 }
 
-async function getTopArtists(albumId: string, limit: number = 10): Promise<TopArtist[]> {
-  try {
-    const topArtists = await db
-      .select({
-        artistName: trackArtist.artistId,
-        artistId: trackArtist.artistId,
-        artistImageUrl: sql<string | null>`null`.as("artistImageUrl"),
-        listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
-      .groupBy(trackArtist.artistId)
-      .orderBy(desc(sql<number>`count(*)`))
-      .limit(limit);
-
-    // Get artist names and images
-    const artistIds = topArtists.map((ta) => ta.artistId);
-    const artists = await db.query.artist.findMany({
-      where: (artist, { inArray }) => inArray(artist.id, artistIds)
-    });
-
-    return topArtists.map((ta) => {
-      const artist = artists.find((a) => a.id === ta.artistId);
-      return {
-        ...ta,
-        artistName: artist?.name || ta.artistName,
-        artistImageUrl: artist?.imageUrl || null
-      };
-    });
-  } catch (error) {
-    console.error("Error fetching top artists:", error);
-    return [];
-  }
+async function StatsSection({ albumId }: { albumId: string }) {
+  const stats = await getAlbumListenStats(albumId);
+  return <StatGrid stats={stats} />;
 }
 
-async function getRecentListens(albumId: string, limit: number = 10) {
-  try {
-    const recentListens = await db
-      .select({
-        id: listen.id,
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt,
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        imageUrl: album.imageUrl,
-        trackDurationMS: track.durationMS
-      })
-      .from(listen)
-      .innerJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .innerJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
-      .orderBy(desc(listen.playedAt))
-      .limit(limit);
-
-    return recentListens;
-  } catch (error) {
-    console.error("Error fetching recent listens:", error);
-    return [];
-  }
-}
-
-export default async function AlbumPage({ params }: { params: Promise<{ albumId: string }> }) {
-  const { albumId } = await params;
-
-  const [
-    albumData,
-    stats,
-    topTracks,
-    topArtists,
-    recentListens,
-    dailyStreamData,
-    cumulativeStreamData,
-    yearlyPercentageData,
-    hourlyListenData
-  ] = await Promise.all([
-    getAlbumData(albumId),
-    getAlbumListenStats(albumId),
-    getTopTracksForAlbum(albumId),
-    getTopArtists(albumId),
-    getRecentListens(albumId),
+async function ChartsSection({ albumId, albumName }: { albumId: string; albumName: string }) {
+  const [dailyStreamData, cumulativeStreamData, yearlyPercentageData, hourlyListenData] = await Promise.all([
     getDailyStreamData({ albumId }),
     getCumulativeStreamData({ albumId }),
     getYearlyPercentageData({ albumId }),
     getHourlyListenData({ albumId })
   ]);
 
-  if (!albumData) {
-    return <NoData />;
-  }
+  return (
+    <>
+      {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
+      {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
+      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={albumName} />}
+      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
+    </>
+  );
+}
 
-  const { album, artists } = albumData;
+async function TopTracksSection({ albumId }: { albumId: string }) {
+  const topTracks = await getTopTracksForAlbum(albumId);
+  if (topTracks.length === 0) return null;
+  return (
+    <div>
+      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks on this album</h3>
+      <div className="space-y-2">
+        {topTracks.map((track, index) => (
+          <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function TopArtistsSection({ albumId }: { albumId: string }) {
+  const topArtists = await getTopArtists({ albumId });
+  if (topArtists.length === 0) return null;
+  return (
+    <div>
+      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Artists on this album</h3>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {topArtists.map((artist, index) => (
+          <ArtistCard key={artist.artistId} artist={artist} rank={index + 1} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function RecentListensSection({ albumId }: { albumId: string }) {
+  const recentListens = await getRecentListens({ albumId });
+  if (recentListens.length === 0) return null;
+  return (
+    <div>
+      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Album Listens</h3>
+      <div className="space-y-2">
+        {recentListens.map((listen) => (
+          <ListenCard key={listen.id} listen={listen} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default async function AlbumPage({ params }: { params: Promise<{ albumId: string }> }) {
+  const { albumId } = await params;
+  const albumData = await getAlbumData(albumId);
+  if (!albumData) return <NoData />;
 
   return (
     <ItemPageSkeleton>
       {/* Album Header */}
-      <ItemHeader
-        imageUrl={album.imageUrl}
-        name={album.name}
-        artists={artists}
-        subtitle={`${stats.uniqueTracks} tracks • ${stats.uniqueArtists} artists`}
-      />
+      <Suspense fallback={<Loading />}>
+        <AlbumHeader albumData={albumData} />
+      </Suspense>
 
       {/* Statistics Grid */}
-      <StatGrid stats={stats} />
+      <Suspense fallback={<Loading />}>
+        <StatsSection albumId={albumId} />
+      </Suspense>
 
-      {/* Daily Stream Chart */}
-      {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
-      {/* Cumulative Stream Chart */}
-      {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
-      {/* Yearly Percentage Chart */}
-      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={album.name} />}
-      {/* Hourly Listens Chart */}
-      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
+      {/* Charts */}
+      <Suspense fallback={<Loading />}>
+        <ChartsSection albumId={albumId} albumName={albumData.album.name} />
+      </Suspense>
 
       {/* Top Tracks */}
-      {topTracks.length > 0 && (
-        <div>
-          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks on this album</h3>
-          <div className="space-y-2">
-            {topTracks.map((track, index) => (
-              <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
-            ))}
-          </div>
-        </div>
-      )}
+      <Suspense fallback={<Loading />}>
+        <TopTracksSection albumId={albumId} />
+      </Suspense>
 
       {/* Top Artists */}
-      {topArtists.length > 0 && (
-        <div>
-          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Artists on this album</h3>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {topArtists.map((artist, index) => (
-              <ArtistCard key={artist.artistId} artist={artist} rank={index + 1} />
-            ))}
-          </div>
-        </div>
-      )}
+      <Suspense fallback={<Loading />}>
+        <TopArtistsSection albumId={albumId} />
+      </Suspense>
 
       {/* Recent Listens */}
-      {recentListens.length > 0 && (
-        <div>
-          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Album Listens</h3>
-          <div className="space-y-2">
-            {recentListens.map((listen) => (
-              <ListenCard key={listen.id} listen={listen} />
-            ))}
-          </div>
-        </div>
-      )}
+      <Suspense fallback={<Loading />}>
+        <RecentListensSection albumId={albumId} />
+      </Suspense>
     </ItemPageSkeleton>
   );
 }

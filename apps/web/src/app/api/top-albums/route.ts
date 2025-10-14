@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getTopAlbumsByDateRange } from "@workspace/core/queries/albums";
+import { getTopAlbums } from "@workspace/core/queries/albums";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const startDate = startDateParam ? new Date(startDateParam) : undefined;
     const endDate = endDateParam ? new Date(endDateParam) : undefined;
 
-    const albums = await getTopAlbumsByDateRange({
+    const albums = await getTopAlbums({
       startDate,
       endDate,
       limit

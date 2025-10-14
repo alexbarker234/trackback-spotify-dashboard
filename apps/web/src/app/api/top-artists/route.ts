@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getTopArtistsByDateRange } from "@workspace/core/queries/artists";
+import { getTopArtists } from "@workspace/core/queries/artists";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const startDate = startDateParam ? new Date(startDateParam) : undefined;
     const endDate = endDateParam ? new Date(endDateParam) : undefined;
 
-    const artists = await getTopArtistsByDateRange({
+    const artists = await getTopArtists({
       startDate,
       endDate,
       limit
