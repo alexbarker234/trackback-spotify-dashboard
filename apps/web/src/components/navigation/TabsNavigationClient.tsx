@@ -14,7 +14,7 @@ interface Tab {
 }
 
 const tabs: Tab[] = [
-  { name: "Home", path: "/", icon: faHome },
+  { name: "Home", path: "/dashboard", icon: faHome },
   { name: "Trends", path: "/dashboard/misc", icon: faChartLine },
   { name: "Dashboard", path: "/dashboard/top/tracks", icon: faTableColumns },
   { name: "Search", path: "/dashboard/search", icon: faMagnifyingGlass }
