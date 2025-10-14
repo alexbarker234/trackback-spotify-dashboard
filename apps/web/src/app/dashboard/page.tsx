@@ -3,6 +3,7 @@ import MonthlyStreamChart from "@/components/charts/MonthlyStreamChart";
 import YearlyStreamChart from "@/components/charts/YearlyStreamChart";
 import StreamItemCard from "@/components/itemCards/StreamItemCard";
 import ItemCarousel from "@/components/ItemCarousel";
+import Loading from "@/components/Loading";
 import NowPlaying from "@/components/NowPlaying";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
@@ -13,6 +14,7 @@ import { getTopTracksByDateRange } from "@workspace/core/queries/tracks";
 import { album, albumTrack, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Image from "next/image";
+import { Suspense } from "react";
 
 // TODO move this
 async function getListens() {
@@ -58,24 +60,125 @@ async function getListens() {
   }
 }
 
+async function MetricsSection() {
+  const listenStats = await getBasicListenStats();
+  return <ListeningMetricsGrid stats={listenStats} />;
+}
+
+async function TopTracksSection() {
+  const fourWeeksAgo = new Date();
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+  const topTracks = await getTopTracksByDateRange({ startDate: fourWeeksAgo, limit: 250 });
+
+  if (topTracks.length === 0) return null;
+
+  return (
+    <ItemCarousel title="Top Tracks" subtitle="Your top tracks from the past 4 weeks" viewMoreUrl="/top/tracks">
+      {topTracks.map((track, index) => (
+        <StreamItemCard
+          key={track.trackIsrc}
+          href={`/dashboard/track/${track.trackIsrc}`}
+          imageUrl={track.imageUrl}
+          number={index + 1}
+          title={track.trackName}
+          subtitle={track.artists.map((a) => a.artistName).join(", ")}
+          streams={track.listenCount}
+          minutes={Math.round(track.totalDuration / 60000)}
+        />
+      ))}
+    </ItemCarousel>
+  );
+}
+
+async function TopArtistsSection() {
+  const fourWeeksAgo = new Date();
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+  const topArtists = await getTopArtistsByDateRange({ startDate: fourWeeksAgo, limit: 250 });
+
+  if (topArtists.length === 0) return null;
+
+  return (
+    <ItemCarousel title="Top Artists" subtitle="Your top artists from the past 4 weeks" viewMoreUrl="/top/artists">
+      {topArtists.map((artist, index) => (
+        <StreamItemCard
+          key={artist.artistId}
+          href={`/dashboard/artist/${artist.artistId}`}
+          imageUrl={artist.artistImageUrl}
+          number={index + 1}
+          title={artist.artistName}
+          subtitle={`${artist.listenCount} streams`}
+          streams={artist.listenCount}
+          minutes={artist.listenCount}
+        />
+      ))}
+    </ItemCarousel>
+  );
+}
+
+async function TopAlbumsSection() {
+  const fourWeeksAgo = new Date();
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+  const topAlbums = await getTopAlbumsByDateRange({ startDate: fourWeeksAgo, limit: 250 });
+
+  if (topAlbums.length === 0) return null;
+
+  return (
+    <ItemCarousel title="Top Albums" subtitle="Your top albums from the past 4 weeks" viewMoreUrl="/top/albums">
+      {topAlbums.map((album, index) => (
+        <StreamItemCard
+          key={album.albumId}
+          href={`/dashboard/album/${album.albumId}`}
+          imageUrl={album.albumImageUrl}
+          number={index + 1}
+          title={album.albumName}
+          subtitle={album.artistNames?.join(", ")}
+          streams={album.listenCount}
+          minutes={album.listenCount}
+        />
+      ))}
+    </ItemCarousel>
+  );
+}
+
+async function StreamChartsSection() {
+  const [monthlyStreamData, yearlyStreamData] = await Promise.all([getMonthlyStreamData(), getYearlyStreamData()]);
+
+  if (monthlyStreamData.length === 0 && yearlyStreamData.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {monthlyStreamData.length > 0 && <MonthlyStreamChart data={monthlyStreamData} />}
+      {yearlyStreamData.length > 0 && <YearlyStreamChart data={yearlyStreamData} />}
+    </div>
+  );
+}
+
+async function RecentListensSection() {
+  const listens = await getListens();
+
+  return (
+    <div>
+      <h2 className="mb-6 text-3xl font-bold text-zinc-100">Recent Listens</h2>
+
+      {listens.length === 0 ? (
+        <div className="py-8 text-center text-zinc-400">
+          No listens found. Start listening to music to see your history here!
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {listens.map((listen) => (
+            <ListenCard key={listen.id} listen={listen} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function Home() {
   const session = await auth.api.getSession({
     headers: await headers()
   });
-
-  const fourWeeksAgo = new Date();
-  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-
-  const [listenStats, listens, topTracks, topArtists, topAlbums, monthlyStreamData, yearlyStreamData] =
-    await Promise.all([
-      getBasicListenStats(),
-      getListens(),
-      getTopTracksByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
-      getTopArtistsByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
-      getTopAlbumsByDateRange({ startDate: fourWeeksAgo, limit: 250 }),
-      getMonthlyStreamData(),
-      getYearlyStreamData()
-    ]);
 
   return (
     <>
@@ -102,88 +205,35 @@ export default async function Home() {
         {/* Now Playing Section */}
         <NowPlaying />
 
-        <ListeningMetricsGrid stats={listenStats} />
+        {/* Metrics Section */}
+        <Suspense fallback={<Loading />}>
+          <MetricsSection />
+        </Suspense>
 
         {/* Top Tracks Section */}
-        {topTracks.length > 0 && (
-          <ItemCarousel title="Top Tracks" subtitle="Your top tracks from the past 4 weeks" viewMoreUrl="/top/tracks">
-            {topTracks.map((track, index) => (
-              <StreamItemCard
-                key={track.trackIsrc}
-                href={`/dashboard/track/${track.trackIsrc}`}
-                imageUrl={track.imageUrl}
-                number={index + 1}
-                title={track.trackName}
-                subtitle={track.artists.map((a) => a.artistName).join(", ")}
-                streams={track.listenCount}
-                minutes={Math.round(track.totalDuration / 60000)}
-              />
-            ))}
-          </ItemCarousel>
-        )}
+        <Suspense fallback={<Loading />}>
+          <TopTracksSection />
+        </Suspense>
 
         {/* Top Artists Section */}
-        {topArtists.length > 0 && (
-          <ItemCarousel
-            title="Top Artists"
-            subtitle="Your top artists from the past 4 weeks"
-            viewMoreUrl="/top/artists"
-          >
-            {topArtists.map((artist, index) => (
-              <StreamItemCard
-                key={artist.artistId}
-                href={`/dashboard/artist/${artist.artistId}`}
-                imageUrl={artist.artistImageUrl}
-                number={index + 1}
-                title={artist.artistName}
-                subtitle={`${artist.listenCount} streams`}
-                streams={artist.listenCount}
-                minutes={artist.listenCount}
-              />
-            ))}
-          </ItemCarousel>
-        )}
+        <Suspense fallback={<Loading />}>
+          <TopArtistsSection />
+        </Suspense>
 
         {/* Top Albums Section */}
-        {topAlbums.length > 0 && (
-          <ItemCarousel title="Top Albums" subtitle="Your top albums from the past 4 weeks" viewMoreUrl="/top/albums">
-            {topAlbums.map((album, index) => (
-              <StreamItemCard
-                key={album.albumId}
-                href={`/dashboard/album/${album.albumId}`}
-                imageUrl={album.albumImageUrl}
-                number={index + 1}
-                title={album.albumName}
-                subtitle={album.artistNames?.join(", ")}
-                streams={album.listenCount}
-                minutes={album.listenCount}
-              />
-            ))}
-          </ItemCarousel>
-        )}
+        <Suspense fallback={<Loading />}>
+          <TopAlbumsSection />
+        </Suspense>
 
         {/* Stream Charts Section */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {monthlyStreamData.length > 0 && <MonthlyStreamChart data={monthlyStreamData} />}
-          {yearlyStreamData.length > 0 && <YearlyStreamChart data={yearlyStreamData} />}
-        </div>
+        <Suspense fallback={<Loading />}>
+          <StreamChartsSection />
+        </Suspense>
 
         {/* Recent Listens Section */}
-        <div>
-          <h2 className="mb-6 text-3xl font-bold text-zinc-100">Recent Listens</h2>
-
-          {listens.length === 0 ? (
-            <div className="py-8 text-center text-zinc-400">
-              No listens found. Start listening to music to see your history here!
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {listens.map((listen) => (
-                <ListenCard key={listen.id} listen={listen} />
-              ))}
-            </div>
-          )}
-        </div>
+        <Suspense fallback={<Loading />}>
+          <RecentListensSection />
+        </Suspense>
       </div>
     </>
   );
