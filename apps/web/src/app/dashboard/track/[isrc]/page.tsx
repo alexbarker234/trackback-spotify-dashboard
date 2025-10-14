@@ -6,6 +6,7 @@ import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialCha
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
+import Loading from "@/components/Loading";
 import NoData from "@/components/NoData";
 import StatGrid from "@/components/statsGrid/StatGrid";
 import { formatTime } from "@/lib/utils/timeUtils";
@@ -19,72 +20,94 @@ import {
 } from "@workspace/core";
 import { getTopAlbums } from "@workspace/core/queries/albums";
 import { getTrackData } from "@workspace/core/queries/tracks";
+import { Suspense } from "react";
 
-export default async function TrackPage({ params }: { params: Promise<{ isrc: string }> }) {
-  const { isrc } = await params;
+async function TrackHeader({ trackData }: { trackData: Awaited<ReturnType<typeof getTrackData>> }) {
+  const { track, artists } = trackData;
+  return (
+    <ItemHeader
+      imageUrl={track.imageUrl}
+      name={track.name}
+      artists={artists}
+      subtitle={`Duration: ${formatTime(track.durationMS)}`}
+    />
+  );
+}
 
-  const [
-    trackData,
-    stats,
-    recentListens,
-    topAlbums,
-    dailyStreamData,
-    cumulativeStreamData,
-    yearlyPercentageData,
-    hourlyListenData
-  ] = await Promise.all([
-    getTrackData(isrc),
-    getTrackListenStats(isrc),
-    getRecentListens({ trackIsrc: isrc }),
-    getTopAlbums({ trackIsrc: isrc }),
+async function StatsSection({ isrc }: { isrc: string }) {
+  const stats = await getTrackListenStats(isrc);
+  return <StatGrid stats={stats} />;
+}
+
+async function ChartsSection({ isrc, trackName }: { isrc: string; trackName: string }) {
+  const [dailyStreamData, cumulativeStreamData, yearlyPercentageData, hourlyListenData] = await Promise.all([
     getDailyStreamData({ trackIsrc: isrc }),
     getCumulativeStreamData({ trackIsrc: isrc }),
     getYearlyPercentageData({ trackIsrc: isrc }),
     getHourlyListenData({ trackIsrc: isrc })
   ]);
 
-  if (!trackData) {
-    return <NoData />;
-  }
+  return (
+    <>
+      {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
+      {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
+      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={trackName} />}
+      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
+    </>
+  );
+}
 
-  const { track, artists } = trackData;
+async function AlbumsSection({ isrc }: { isrc: string }) {
+  const topAlbums = await getTopAlbums({ trackIsrc: isrc });
+  return <AlbumGrid albums={topAlbums} />;
+}
+
+async function RecentListensSection({ isrc }: { isrc: string }) {
+  const recentListens = await getRecentListens({ trackIsrc: isrc });
+  if (recentListens.length === 0) return null;
+  return (
+    <div>
+      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
+      <div className="space-y-2">
+        {recentListens.map((listen) => (
+          <ListenCard key={listen.id} listen={listen} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default async function TrackPage({ params }: { params: Promise<{ isrc: string }> }) {
+  const { isrc } = await params;
+  const trackData = await getTrackData(isrc);
+  if (!trackData) return <NoData />;
 
   return (
     <ItemPageSkeleton>
       {/* Track Header */}
-      <ItemHeader
-        imageUrl={track.imageUrl}
-        name={track.name}
-        artists={artists}
-        subtitle={`Duration: ${formatTime(track.durationMS)}`}
-      />
+      <Suspense fallback={<Loading />}>
+        <TrackHeader trackData={trackData} />
+      </Suspense>
 
       {/* Statistics Grid */}
-      <StatGrid stats={stats} />
+      <Suspense fallback={<Loading />}>
+        <StatsSection isrc={isrc} />
+      </Suspense>
 
-      {/* Daily Stream Chart */}
-      {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
-      {/* Cumulative Stream Chart */}
-      {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
-      {/* Yearly Percentage Chart */}
-      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={track.name} />}
-      {/* Hourly Listens Chart */}
-      {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
+      {/* Charts */}
+      <Suspense fallback={<Loading />}>
+        <ChartsSection isrc={isrc} trackName={trackData?.track.name || ""} />
+      </Suspense>
 
       {/* Albums */}
-      <AlbumGrid albums={topAlbums} />
+      <Suspense fallback={<Loading />}>
+        <AlbumsSection isrc={isrc} />
+      </Suspense>
 
       {/* Recent Listens */}
-      {recentListens.length > 0 && (
-        <div>
-          <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
-          <div className="space-y-2">
-            {recentListens.map((listen) => (
-              <ListenCard key={listen.id} listen={listen} />
-            ))}
-          </div>
-        </div>
-      )}
+      <Suspense fallback={<Loading />}>
+        <RecentListensSection isrc={isrc} />
+      </Suspense>
     </ItemPageSkeleton>
   );
 }
