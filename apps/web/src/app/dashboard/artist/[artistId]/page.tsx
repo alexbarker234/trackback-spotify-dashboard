@@ -9,7 +9,6 @@ import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
 import StatGrid from "@/components/statsGrid/StatGrid";
-import { TopAlbum } from "@/types";
 import {
   getArtistListenStats,
   getCumulativeStreamData,
@@ -19,7 +18,8 @@ import {
   getTopTracksForArtist,
   getYearlyPercentageData
 } from "@workspace/core";
-import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { getTopAlbums } from "@workspace/core/queries/albums";
+import { db } from "@workspace/database";
 
 async function getArtistData(artistId: string) {
   try {
@@ -67,33 +67,6 @@ async function getArtistData(artistId: string) {
   }
 }
 
-async function getTopAlbums(artistId: string, limit: number = 10): Promise<TopAlbum[]> {
-  try {
-    const topAlbums = await db
-      .select({
-        albumName: album.name,
-        albumId: album.id,
-        albumImageUrl: album.imageUrl,
-        listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(eq(trackArtist.artistId, artistId), gte(listen.durationMS, 30000)))
-      .groupBy(album.id, album.name, album.imageUrl)
-      .orderBy(desc(sql<number>`count(*)`))
-      .limit(limit);
-
-    return topAlbums;
-  } catch (error) {
-    console.error("Error fetching top albums:", error);
-    return [];
-  }
-}
-
 export default async function ArtistPage({ params }: { params: Promise<{ artistId: string }> }) {
   const { artistId } = await params;
 
@@ -111,7 +84,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
     getArtistData(artistId),
     getArtistListenStats(artistId),
     getTopTracksForArtist(artistId),
-    getTopAlbums(artistId),
+    getTopAlbums({ artistId }),
     getRecentListens({ artistId }),
     getDailyStreamData({ artistId }),
     getCumulativeStreamData({ artistId }),

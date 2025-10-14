@@ -9,7 +9,6 @@ import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
 import StatGrid from "@/components/statsGrid/StatGrid";
 import { formatTime } from "@/lib/utils/timeUtils";
-import { TopAlbum } from "@/types";
 import {
   getCumulativeStreamData,
   getDailyStreamData,
@@ -18,7 +17,8 @@ import {
   getTrackListenStats,
   getYearlyPercentageData
 } from "@workspace/core";
-import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { getTopAlbums } from "@workspace/core/queries/albums";
+import { album, albumTrack, db, eq, track } from "@workspace/database";
 
 async function getTrackData(isrc: string) {
   try {
@@ -61,33 +61,6 @@ async function getTrackData(isrc: string) {
   }
 }
 
-async function getTopAlbums(isrc: string, limit: number = 10): Promise<TopAlbum[]> {
-  try {
-    const topAlbums = await db
-      .select({
-        albumName: album.name,
-        albumId: album.id,
-        albumImageUrl: album.imageUrl,
-        listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(eq(albumTrack.trackIsrc, isrc), gte(listen.durationMS, 30000)))
-      .groupBy(album.id, album.name, album.imageUrl)
-      .orderBy(desc(sql<number>`count(*)`))
-      .limit(limit);
-
-    return topAlbums;
-  } catch (error) {
-    console.error("Error fetching top albums:", error);
-    return [];
-  }
-}
-
 export default async function TrackPage({ params }: { params: Promise<{ isrc: string }> }) {
   const { isrc } = await params;
 
@@ -104,7 +77,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
     getTrackData(isrc),
     getTrackListenStats(isrc),
     getRecentListens({ trackIsrc: isrc }),
-    getTopAlbums(isrc),
+    getTopAlbums({ trackIsrc: isrc }),
     getDailyStreamData({ trackIsrc: isrc }),
     getCumulativeStreamData({ trackIsrc: isrc }),
     getYearlyPercentageData({ trackIsrc: isrc }),

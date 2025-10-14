@@ -1,18 +1,42 @@
-import { album, albumArtist, albumTrack, and, artist, db, desc, eq, gte, listen, sql } from "@workspace/database";
+import {
+  album,
+  albumArtist,
+  albumTrack,
+  and,
+  artist,
+  db,
+  desc,
+  eq,
+  gte,
+  listen,
+  sql,
+  track,
+  trackArtist
+} from "@workspace/database";
 import { TopAlbum } from "../types";
 
 export type TopAlbumsOptions = {
+  artistId?: string;
+  trackIsrc?: string;
   startDate?: Date;
   endDate?: Date;
   limit?: number;
 };
 
-export async function getTopAlbumsByDateRange(options: TopAlbumsOptions = {}): Promise<TopAlbum[]> {
-  const { startDate, endDate, limit = 250 } = options;
+export async function getTopAlbums(options: TopAlbumsOptions = {}): Promise<TopAlbum[]> {
+  const { artistId, trackIsrc, startDate, endDate, limit = 250 } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
 
+    // Add entity filters
+    if (artistId) {
+      whereConditions.push(eq(trackArtist.artistId, artistId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
+    // Add date filters
     if (startDate) whereConditions.push(gte(listen.playedAt, startDate));
     if (endDate) whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
 
@@ -30,6 +54,8 @@ export async function getTopAlbumsByDateRange(options: TopAlbumsOptions = {}): P
       .leftJoin(album, eq(albumTrack.albumId, album.id))
       .leftJoin(albumArtist, eq(albumArtist.albumId, album.id))
       .leftJoin(artist, eq(albumArtist.artistId, artist.id))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
       .where(and(...whereConditions))
       .groupBy(album.name, album.id, album.imageUrl)
       .orderBy(desc(sql<number>`count(*)`))
@@ -49,7 +75,7 @@ export async function getTopAlbumsByDateRange(options: TopAlbumsOptions = {}): P
 
     return validAlbums;
   } catch (error) {
-    console.error("Error fetching top albums by date range:", error);
+    console.error("Error fetching top albums:", error);
     return [];
   }
 }

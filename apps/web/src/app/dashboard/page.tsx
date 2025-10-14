@@ -7,7 +7,7 @@ import Loading from "@/components/Loading";
 import NowPlaying from "@/components/NowPlaying";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
-import { getTopAlbumsByDateRange } from "@workspace/core/queries/albums";
+import { getTopAlbums } from "@workspace/core/queries/albums";
 import { getTopArtistsByDateRange } from "@workspace/core/queries/artists";
 import {
   getBasicListenStats,
@@ -78,7 +78,7 @@ async function TopArtistsSection() {
 async function TopAlbumsSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const topAlbums = await getTopAlbumsByDateRange({ startDate: fourWeeksAgo, limit: 250 });
+  const topAlbums = await getTopAlbums({ startDate: fourWeeksAgo, limit: 250 });
 
   if (topAlbums.length === 0) return null;
 
