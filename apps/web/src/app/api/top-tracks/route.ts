@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getTopTracksByDateRange } from "@workspace/core/queries/tracks";
+import { getTopTracks } from "@workspace/core/queries/tracks";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const startDate = startDateParam ? new Date(startDateParam) : undefined;
     const endDate = endDateParam ? new Date(endDateParam) : undefined;
 
-    const tracks = await getTopTracksByDateRange({
+    const tracks = await getTopTracks({
       startDate,
       endDate,
       limit
