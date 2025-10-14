@@ -17,9 +17,10 @@ interface HourlyListensRadialChartProps {
 
 export default function HourlyListensRadialChart({ data }: HourlyListensRadialChartProps) {
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const [chartSize, setChartSize] = useState(320);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -123,16 +124,37 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
     setHoveredHour(hourIndex);
   };
 
+  const setTooltipPositionFromMouse = (mouseX: number, mouseY: number) => {
+    if (containerRef.current && tooltipRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+
+      let x = mouseX + 10;
+      let y = mouseY + 10;
+
+      // Keep the tooltip within the right and bottom bounds of the container
+      if (x + tooltipRect.width > containerRect.width) {
+        x = containerRect.width - tooltipRect.width;
+      }
+      if (y + tooltipRect.height > containerRect.height) {
+        y = containerRect.height - tooltipRect.height;
+      }
+
+      // Keep the tooltip within the top and left bounds of the container
+      x = Math.max(0, x);
+      y = Math.max(0, y);
+
+      setTooltipPosition({ x, y });
+    }
+  };
+
   const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
     if (chartRef.current) {
       const rect = chartRef.current.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
 
-      setMousePosition({
-        x: mouseX,
-        y: mouseY
-      });
+      setTooltipPositionFromMouse(mouseX, mouseY);
 
       const dx = mouseX - centerX;
       const dy = mouseY - centerY;
@@ -267,10 +289,11 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
           {/* Tooltip */}
           {isHovering && hoveredData && (
             <div
+              ref={tooltipRef}
               className="animate-in fade-in-0 pointer-events-none absolute z-50 text-nowrap transition-all duration-200 ease-out"
               style={{
-                left: mousePosition.x + 10,
-                top: mousePosition.y + 10
+                left: tooltipPosition.x,
+                top: tooltipPosition.y
               }}
             >
               <ChartTooltip>
