@@ -23,7 +23,7 @@ const tabs: Tab[] = [
 export default function TabsNavigation() {
   const pathname = usePathname();
   const { isStandalone } = useStandalone();
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<{ [key: string]: HTMLAnchorElement | null }>({});
 
@@ -38,7 +38,10 @@ export default function TabsNavigation() {
 
   useEffect(() => {
     const updateIndicator = () => {
-      if (!activeTab) return;
+      if (!activeTab) {
+        setIndicatorStyle({ left: indicatorStyle.left, width: indicatorStyle.width, opacity: 0 });
+        return;
+      }
 
       const activeButton = buttonsRef.current[activeTab.path];
       const container = containerRef.current;
@@ -49,7 +52,8 @@ export default function TabsNavigation() {
 
         setIndicatorStyle({
           left: buttonRect.left - containerRect.left,
-          width: buttonRect.width
+          width: buttonRect.width,
+          opacity: 1
         });
       }
     };
@@ -60,7 +64,7 @@ export default function TabsNavigation() {
   }, [pathname, activeTab]);
 
   if (!isStandalone) {
-    return null;
+    //return null;
   }
 
   return (
@@ -72,7 +76,8 @@ export default function TabsNavigation() {
             className="absolute top-1/2 h-[85%] -translate-y-1/2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-300 ease-out"
             style={{
               left: `${indicatorStyle.left}px`,
-              width: `${indicatorStyle.width}px`
+              width: `${indicatorStyle.width}px`,
+              opacity: indicatorStyle.opacity
             }}
           />
 
