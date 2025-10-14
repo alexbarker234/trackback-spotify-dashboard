@@ -61,7 +61,7 @@ export default function SearchPage() {
                 {results.artists.map((artist) => (
                   <SearchItemCard
                     key={artist.id}
-                    href={`/artist/${artist.id}`}
+                    href={`/dashboard/artist/${artist.id}`}
                     imageUrl={artist.imageUrl}
                     title={artist.name}
                     subtitle={`${artist.followers.toLocaleString()} followers`}
@@ -79,7 +79,7 @@ export default function SearchPage() {
                 {results.albums.map((album) => (
                   <SearchItemCard
                     key={album.id}
-                    href={`/album/${album.id}`}
+                    href={`/dashboard/album/${album.id}`}
                     imageUrl={album.imageUrl}
                     title={album.name}
                     subtitle={album.artists.join(", ")}
@@ -97,7 +97,7 @@ export default function SearchPage() {
                 {results.tracks.map((track) => (
                   <SearchItemCard
                     key={track.id}
-                    href={track.isrc ? `/track/${track.isrc}` : `/track/${track.id}`}
+                    href={`/track/dashboard/${track.isrc}`}
                     imageUrl={track.imageUrl}
                     title={track.name}
                     subtitle={track.artists.join(", ")}

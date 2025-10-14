@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function TrackCard({ track, rank }: { track: TopTrack; rank: number }) {
   return (
     <Link
-      href={`/track/${track.trackIsrc}`}
+      href={`/dashboard/track/${track.trackIsrc}`}
       className="block rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
     >
       <div className="flex items-center justify-between">

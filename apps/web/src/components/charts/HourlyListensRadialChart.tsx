@@ -298,9 +298,8 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
             >
               <ChartTooltip>
                 <p className="text-sm font-medium text-gray-300">
-                  {hoveredData.hour}:00 (
                   {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
-                  {hoveredData.hour < 12 ? "AM" : "PM"})
+                  {hoveredData.hour < 12 ? "AM" : "PM"}
                 </p>
                 <p className="text-white">
                   <span className="text-gray-400">Listens: </span>

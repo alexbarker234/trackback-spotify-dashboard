@@ -18,7 +18,7 @@ export default function ItemHeader({ imageUrl, name, artists, subtitle }: ItemHe
             {artists.map((artist) => (
               <Link
                 key={artist.id}
-                href={`/artist/${artist.id}`}
+                href={`/dashboard/artist/${artist.id}`}
                 className="text-lg text-zinc-300 transition-colors hover:text-zinc-400"
               >
                 {artist.name}

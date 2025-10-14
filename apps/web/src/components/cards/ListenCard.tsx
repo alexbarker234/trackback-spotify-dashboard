@@ -7,7 +7,7 @@ import LocalTime from "../LocalTime";
 export default function ListenCard({ listen }: { listen: Listen }) {
   return (
     <Link
-      href={`/track/${listen.trackIsrc}`}
+      href={`/dashboard/track/${listen.trackIsrc}`}
       className="block rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
     >
       <div className="flex items-center justify-between">

@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function AlbumCard({ album, rank }: { album: TopAlbum; rank: number }) {
   return (
     <Link
-      href={`/album/${album.albumId}`}
+      href={`/dashboard/album/${album.albumId}`}
       className="rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
     >
       <div className="flex gap-4">

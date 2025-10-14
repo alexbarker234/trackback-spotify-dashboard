@@ -44,8 +44,8 @@ function ProfileMenuItem({ href, onClick, icon, label }: MenuItemProps) {
 
 export default function UserProfile({ userInfo }: { userInfo: { username: string; avatarURL: string } }) {
   const menuItems: MenuItemProps[] = [
-    { href: "/search", icon: faMagnifyingGlass, label: "Search" },
-    { href: "/import", icon: faFileImport, label: "Import" }
+    { href: "/dashboard/search", icon: faMagnifyingGlass, label: "Search" },
+    { href: "/dashboard/import", icon: faFileImport, label: "Import" }
     //{ href: "/settings", icon: FaCog, label: "Settings" }
   ];
 

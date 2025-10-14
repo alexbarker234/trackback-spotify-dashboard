@@ -2,9 +2,9 @@
 
 import TopItemsPage, { TopItem } from "@/components/top/TopItemsPage";
 import { useDateRange } from "@/hooks/useDateRange";
-import { useTopAlbums } from "@/hooks/useTopAlbums";
+import { useTopTracks } from "@/hooks/useTopTracks";
 
-export default function TopAlbumsPage() {
+export default function TopTracksPage() {
   const {
     dateRange,
     currentPeriod,
@@ -15,25 +15,25 @@ export default function TopAlbumsPage() {
     handleNextPeriod
   } = useDateRange();
 
-  const { data, isLoading, error } = useTopAlbums({
+  const { data, isLoading, error } = useTopTracks({
     startDate,
     endDate
   });
 
-  // Transform albums data to TopItem format
-  const items: TopItem[] = data.map((album) => ({
-    id: album.albumId,
-    name: album.albumName,
-    imageUrl: album.albumImageUrl,
-    subtitle: album.artistNames.join(", "),
-    streams: album.listenCount,
-    minutes: Math.round(album.totalDuration / 60000),
-    href: `/album/${album.albumId}`
+  // Transform tracks data to TopItem format
+  const items: TopItem[] = data.map((track) => ({
+    id: track.trackIsrc,
+    name: track.trackName,
+    imageUrl: track.imageUrl,
+    subtitle: track.artists.map((a) => a.artistName).join(", "),
+    streams: track.listenCount,
+    minutes: Math.round(track.totalDuration / 60000),
+    href: `/dashboard/track/${track.trackIsrc}`
   }));
 
   return (
     <TopItemsPage
-      title="Top Albums"
+      title="Top Tracks"
       items={items}
       isLoading={isLoading}
       error={error}

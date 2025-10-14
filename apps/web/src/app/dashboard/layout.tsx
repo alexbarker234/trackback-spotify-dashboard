@@ -1,20 +1,15 @@
-import UploadArea from "@/components/upload/UploadArea";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function ImportPage() {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({
     headers: await headers()
   });
 
   if (!session?.user) {
-    redirect("/login");
+    redirect("/");
   }
 
-  return (
-    <div>
-      <UploadArea />
-    </div>
-  );
+  return children;
 }

@@ -44,7 +44,7 @@ export default function NowPlaying() {
   return (
     <NowPlayingSkeleton>
       <Link
-        href={`/track/${trackIsrc}`}
+        href={`/dashboard/track/${trackIsrc}`}
         className="flex items-center space-x-4 rounded-lg p-1 transition-colors hover:bg-white/5 sm:px-2"
       >
         {item.album.images[0] && (

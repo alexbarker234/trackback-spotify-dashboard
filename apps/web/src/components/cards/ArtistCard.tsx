@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function ArtistCard({ artist, rank }: { artist: TopArtist; rank: number }) {
   return (
     <Link
-      href={`/artist/${artist.artistId}`}
+      href={`/dashboard/artist/${artist.artistId}`}
       className="rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
     >
       <div className="flex gap-4">

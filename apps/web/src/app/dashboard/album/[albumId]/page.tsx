@@ -9,7 +9,6 @@ import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
 import StatGrid from "@/components/statsGrid/StatGrid";
-import { auth } from "@/lib/auth";
 import { TopArtist } from "@/types";
 import {
   getAlbumListenStats,
@@ -20,8 +19,6 @@ import {
   getYearlyPercentageData
 } from "@workspace/core";
 import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 async function getAlbumData(albumId: string) {
   try {
@@ -136,14 +133,6 @@ async function getRecentListens(albumId: string, limit: number = 10) {
 }
 
 export default async function AlbumPage({ params }: { params: Promise<{ albumId: string }> }) {
-  const session = await auth.api.getSession({
-    headers: await headers()
-  });
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
   const { albumId } = await params;
 
   const [
