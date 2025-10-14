@@ -19,53 +19,7 @@ import {
   getYearlyPercentageData
 } from "@workspace/core";
 import { getTopAlbums } from "@workspace/core/queries/albums";
-import { db } from "@workspace/database";
-
-async function getArtistData(artistId: string) {
-  try {
-    // Get artist data
-    const artistData = await db.query.artist.findFirst({
-      where: (artist, { eq }) => eq(artist.id, artistId)
-    });
-
-    if (!artistData) return null;
-
-    // Get tracks for this artist
-    const trackArtists = await db.query.trackArtist.findMany({
-      where: (trackArtist, { eq }) => eq(trackArtist.artistId, artistId)
-    });
-
-    const tracks = await db.query.track.findMany({
-      where: (track, { inArray }) =>
-        inArray(
-          track.isrc,
-          trackArtists.map((ta) => ta.trackIsrc)
-        )
-    });
-
-    // Get albums for this artist
-    const albumArtists = await db.query.albumArtist.findMany({
-      where: (albumArtist, { eq }) => eq(albumArtist.artistId, artistId)
-    });
-
-    const albums = await db.query.album.findMany({
-      where: (album, { inArray }) =>
-        inArray(
-          album.id,
-          albumArtists.map((aa) => aa.albumId)
-        )
-    });
-
-    return {
-      artist: artistData,
-      tracks,
-      albums
-    };
-  } catch (error) {
-    console.error("Error fetching artist data:", error);
-    return null;
-  }
-}
+import { getArtistData } from "@workspace/core/queries/artists";
 
 export default async function ArtistPage({ params }: { params: Promise<{ artistId: string }> }) {
   const { artistId } = await params;

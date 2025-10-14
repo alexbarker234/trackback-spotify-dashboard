@@ -18,48 +18,7 @@ import {
   getYearlyPercentageData
 } from "@workspace/core";
 import { getTopAlbums } from "@workspace/core/queries/albums";
-import { album, albumTrack, db, eq, track } from "@workspace/database";
-
-async function getTrackData(isrc: string) {
-  try {
-    const trackRows = await db
-      .select({
-        name: track.name,
-        isrc: track.isrc,
-        durationMS: track.durationMS,
-        imageUrl: album.imageUrl
-      })
-      .from(track)
-      .leftJoin(albumTrack, eq(track.isrc, albumTrack.trackIsrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(eq(track.isrc, isrc))
-      .limit(1);
-    const trackData = trackRows[0];
-
-    if (!trackData) return null;
-
-    // Get artists for this track
-    const trackArtists = await db.query.trackArtist.findMany({
-      where: (trackArtist, { eq }) => eq(trackArtist.trackIsrc, isrc)
-    });
-
-    const artists = await db.query.artist.findMany({
-      where: (artist, { inArray }) =>
-        inArray(
-          artist.id,
-          trackArtists.map((ta) => ta.artistId)
-        )
-    });
-
-    return {
-      track: trackData,
-      artists
-    };
-  } catch (error) {
-    console.error("Error fetching track data:", error);
-    return null;
-  }
-}
+import { getTrackData } from "@workspace/core/queries/tracks";
 
 export default async function TrackPage({ params }: { params: Promise<{ isrc: string }> }) {
   const { isrc } = await params;
