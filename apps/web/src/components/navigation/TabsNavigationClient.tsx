@@ -1,7 +1,13 @@
 "use client";
 
 import { useStandalone } from "@/hooks/useStandalone";
-import { faChartLine, faHome, faMagnifyingGlass, faTableColumns } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChartLine,
+  faHome,
+  faMagnifyingGlass,
+  faTableColumns,
+  IconDefinition
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -10,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 interface Tab {
   name: string;
   path: string;
-  icon: typeof faHome;
+  icon: IconDefinition;
 }
 
 const tabs: Tab[] = [
@@ -27,14 +33,12 @@ export default function TabsNavigation() {
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<{ [key: string]: HTMLAnchorElement | null }>({});
 
-  const isActiveTab = (path: string) => {
-    if (path === "/") {
-      return pathname === "/";
-    }
-    return pathname.startsWith(path);
+  const isActiveTab = (tabPath: string, pathname: string) => {
+    const withoutQuery = tabPath.split("?")[0];
+    return pathname === withoutQuery;
   };
 
-  const activeTab = tabs.find((tab) => isActiveTab(tab.path));
+  const activeTab = tabs.find((tab) => isActiveTab(tab.path, pathname));
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -64,7 +68,7 @@ export default function TabsNavigation() {
   }, [pathname, activeTab]);
 
   if (!isStandalone) {
-    return null;
+    //return null;
   }
 
   return (
@@ -83,7 +87,7 @@ export default function TabsNavigation() {
 
           {/* Tabs */}
           {tabs.map((tab) => {
-            const isActive = isActiveTab(tab.path);
+            const isActive = isActiveTab(tab.path, pathname);
             return (
               <Link
                 key={tab.path}

@@ -70,7 +70,6 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const containerHeight = containerRef.current.offsetHeight;
-        console.log(containerWidth, containerHeight);
         const size = Math.min(containerWidth, containerHeight, 600);
         setChartSize(size);
       }
