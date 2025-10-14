@@ -15,7 +15,7 @@ import {
   getRecentListens,
   getYearlyStreamData
 } from "@workspace/core/queries/listens";
-import { getTopTracksByDateRange } from "@workspace/core/queries/tracks";
+import { getTopTracks } from "@workspace/core/queries/tracks";
 import { headers } from "next/headers";
 import Image from "next/image";
 import { Suspense } from "react";
@@ -28,7 +28,7 @@ async function MetricsSection() {
 async function TopTracksSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const topTracks = await getTopTracksByDateRange({ startDate: fourWeeksAgo, limit: 250 });
+  const topTracks = await getTopTracks({ startDate: fourWeeksAgo, limit: 250 });
 
   if (topTracks.length === 0) return null;
 

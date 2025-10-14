@@ -16,12 +16,6 @@ import {
 } from "@workspace/database";
 import { TopTrack } from "../types";
 
-export type TopTracksOptions = {
-  startDate?: Date;
-  endDate?: Date;
-  limit?: number;
-};
-
 type BaseTopTrack = {
   trackName: string;
   trackIsrc: string;
@@ -30,19 +24,16 @@ type BaseTopTrack = {
   imageUrl: string | null;
 };
 
-type GetTopTracksOptions = {
+export type TopTracksOptions = {
   artistId?: string;
   albumId?: string;
+  startDate?: Date;
+  endDate?: Date;
   limit?: number;
 };
 
-export async function getTopTracks(options: GetTopTracksOptions = {}): Promise<TopTrack[]> {
-  const { artistId, albumId, limit = 10 } = options;
-
-  // Validate that exactly one filter is provided
-  if ((artistId && albumId) || (!artistId && !albumId)) {
-    throw new Error("Exactly one of artistId or albumId must be provided");
-  }
+export async function getTopTracks(options: TopTracksOptions = {}): Promise<TopTrack[]> {
+  const { artistId, albumId, startDate, endDate, limit = 250 } = options;
 
   try {
     let query = db
@@ -54,28 +45,45 @@ export async function getTopTracks(options: GetTopTracksOptions = {}): Promise<T
         imageUrl: sql<string>`min(${album.imageUrl})`.as("imageUrl")
       })
       .from(listen)
-      .innerJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .innerJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
       .leftJoin(album, eq(albumTrack.albumId, album.id));
 
     // Add artist join and filter only when filtering by artist
     if (artistId) {
-      query = query.innerJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc));
+      query = query.leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc));
     }
 
     // Build where conditions
     const conditions = [gte(listen.durationMS, 30000), isNotNull(track.name), isNotNull(track.isrc)];
+
+    // Add entity filters
     if (artistId) {
       conditions.push(eq(trackArtist.artistId, artistId));
     } else if (albumId) {
       conditions.push(eq(albumTrack.albumId, albumId));
     }
 
-    const topTracks: BaseTopTrack[] = await query
+    // Add date filters
+    if (startDate) conditions.push(gte(listen.playedAt, startDate));
+    if (endDate) conditions.push(sql`${listen.playedAt} <= ${endDate}`);
+
+    const topTracksResult = await query
       .where(and(...conditions))
       .groupBy(track.isrc, track.name)
       .orderBy(desc(sql<number>`count(*)`))
       .limit(limit);
+
+    // Filter out null values and convert to BaseTopTrack format
+    const topTracks: BaseTopTrack[] = topTracksResult
+      .filter((track) => track.trackName && track.trackIsrc)
+      .map((track) => ({
+        trackName: track.trackName!,
+        trackIsrc: track.trackIsrc!,
+        listenCount: track.listenCount,
+        totalDuration: track.totalDuration,
+        imageUrl: track.imageUrl
+      }));
 
     return populateArtists(topTracks);
   } catch (error) {
@@ -90,50 +98,6 @@ export async function getTopTracksForArtist(artistId: string, limit: number = 10
 
 export async function getTopTracksForAlbum(albumId: string, limit: number = 10): Promise<TopTrack[]> {
   return getTopTracks({ albumId, limit });
-}
-
-export async function getTopTracksByDateRange(options: TopTracksOptions = {}): Promise<TopTrack[]> {
-  const { startDate, endDate, limit = 250 } = options;
-
-  try {
-    const whereConditions = [gte(listen.durationMS, 30000), isNotNull(track.name), isNotNull(track.isrc)];
-
-    if (startDate) whereConditions.push(gte(listen.playedAt, startDate));
-    if (endDate) whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
-
-    const topTracks = await db
-      .select({
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        listenCount: sql<number>`count(*)`.as("listenCount"),
-        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration"),
-        imageUrl: sql<string>`min(${album.imageUrl})`.as("imageUrl")
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(...whereConditions))
-      .groupBy(track.isrc, track.name)
-      .orderBy(desc(sql<number>`count(*)`))
-      .limit(limit);
-
-    // Filter out null values and convert to BaseTopTrack format
-    const validTracks = topTracks
-      .filter((track) => track.trackName && track.trackIsrc)
-      .map((track) => ({
-        trackName: track.trackName!,
-        trackIsrc: track.trackIsrc!,
-        listenCount: track.listenCount,
-        totalDuration: track.totalDuration,
-        imageUrl: track.imageUrl
-      }));
-
-    return populateArtists(validTracks);
-  } catch (error) {
-    console.error("Error fetching top tracks by date range:", error);
-    return [];
-  }
 }
 
 async function populateArtists(topTracks: BaseTopTrack[]): Promise<TopTrack[]> {
