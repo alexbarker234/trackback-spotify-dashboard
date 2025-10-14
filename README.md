@@ -1,7 +1,7 @@
 # Trackback - Spotify Dashboard
 
 <p align="center">
-  <img height="400px" src="https://raw.githubusercontent.com/alexbarker234/trackback-spotify-dashboard/main/assets/trackback.png" alt="Preview">
+  <img height="400px" src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/trackback.png?raw=true" alt="Preview">
 </p>
 
 <p align="center">
