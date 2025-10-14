@@ -9,11 +9,12 @@ import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import NoData from "@/components/NoData";
 import StatGrid from "@/components/statsGrid/StatGrid";
 import { formatTime } from "@/lib/utils/timeUtils";
-import { Listen, TopAlbum } from "@/types";
+import { TopAlbum } from "@/types";
 import {
   getCumulativeStreamData,
   getDailyStreamData,
   getHourlyListenData,
+  getRecentListens,
   getTrackListenStats,
   getYearlyPercentageData
 } from "@workspace/core";
@@ -87,33 +88,6 @@ async function getTopAlbums(isrc: string, limit: number = 10): Promise<TopAlbum[
   }
 }
 
-async function getRecentListens(isrc: string, limit: number = 10): Promise<Listen[]> {
-  try {
-    const recentListens = await db
-      .select({
-        id: listen.id,
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt,
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        imageUrl: album.imageUrl,
-        trackDurationMS: track.durationMS
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(eq(track.isrc, isrc), gte(listen.durationMS, 30000)))
-      .orderBy(desc(listen.playedAt))
-      .limit(limit);
-
-    return recentListens;
-  } catch (error) {
-    console.error("Error fetching recent listens:", error);
-    return [];
-  }
-}
-
 export default async function TrackPage({ params }: { params: Promise<{ isrc: string }> }) {
   const { isrc } = await params;
 
@@ -129,7 +103,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
   ] = await Promise.all([
     getTrackData(isrc),
     getTrackListenStats(isrc),
-    getRecentListens(isrc),
+    getRecentListens({ trackIsrc: isrc }),
     getTopAlbums(isrc),
     getDailyStreamData({ trackIsrc: isrc }),
     getCumulativeStreamData({ trackIsrc: isrc }),

@@ -15,10 +15,11 @@ import {
   getCumulativeStreamData,
   getDailyStreamData,
   getHourlyListenData,
+  getRecentListens,
   getTopTracksForAlbum,
   getYearlyPercentageData
 } from "@workspace/core";
-import { album, albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import { albumTrack, and, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 
 async function getAlbumData(albumId: string) {
   try {
@@ -105,33 +106,6 @@ async function getTopArtists(albumId: string, limit: number = 10): Promise<TopAr
   }
 }
 
-async function getRecentListens(albumId: string, limit: number = 10) {
-  try {
-    const recentListens = await db
-      .select({
-        id: listen.id,
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt,
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        imageUrl: album.imageUrl,
-        trackDurationMS: track.durationMS
-      })
-      .from(listen)
-      .innerJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .innerJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .where(and(eq(albumTrack.albumId, albumId), gte(listen.durationMS, 30000)))
-      .orderBy(desc(listen.playedAt))
-      .limit(limit);
-
-    return recentListens;
-  } catch (error) {
-    console.error("Error fetching recent listens:", error);
-    return [];
-  }
-}
-
 export default async function AlbumPage({ params }: { params: Promise<{ albumId: string }> }) {
   const { albumId } = await params;
 
@@ -150,7 +124,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ albumId:
     getAlbumListenStats(albumId),
     getTopTracksForAlbum(albumId),
     getTopArtists(albumId),
-    getRecentListens(albumId),
+    getRecentListens({ albumId }),
     getDailyStreamData({ albumId }),
     getCumulativeStreamData({ albumId }),
     getYearlyPercentageData({ albumId }),

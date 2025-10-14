@@ -15,7 +15,7 @@ import {
   getCumulativeStreamData,
   getDailyStreamData,
   getHourlyListenData,
-  getRecentListensForArtist,
+  getRecentListens,
   getTopTracksForArtist,
   getYearlyPercentageData
 } from "@workspace/core";
@@ -112,7 +112,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
     getArtistListenStats(artistId),
     getTopTracksForArtist(artistId),
     getTopAlbums(artistId),
-    getRecentListensForArtist(artistId),
+    getRecentListens({ artistId }),
     getDailyStreamData({ artistId }),
     getCumulativeStreamData({ artistId }),
     getYearlyPercentageData({ artistId }),

@@ -9,56 +9,16 @@ import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
 import { getTopAlbumsByDateRange } from "@workspace/core/queries/albums";
 import { getTopArtistsByDateRange } from "@workspace/core/queries/artists";
-import { getBasicListenStats, getMonthlyStreamData, getYearlyStreamData } from "@workspace/core/queries/listens";
+import {
+  getBasicListenStats,
+  getMonthlyStreamData,
+  getRecentListens,
+  getYearlyStreamData
+} from "@workspace/core/queries/listens";
 import { getTopTracksByDateRange } from "@workspace/core/queries/tracks";
-import { album, albumTrack, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 import { headers } from "next/headers";
 import Image from "next/image";
 import { Suspense } from "react";
-
-// TODO move this
-async function getListens() {
-  try {
-    const listens = await db
-      .select({
-        id: listen.id,
-        durationMS: listen.durationMS,
-        playedAt: listen.playedAt,
-        trackName: track.name,
-        trackIsrc: track.isrc,
-        trackId: albumTrack.trackId,
-        artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
-        albumName: album.name,
-        albumImageUrl: album.imageUrl,
-        trackDurationMS: track.durationMS,
-        imageUrl: album.imageUrl
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
-      .leftJoin(album, eq(albumTrack.albumId, album.id))
-      .groupBy(
-        listen.id,
-        listen.durationMS,
-        listen.playedAt,
-        track.name,
-        track.isrc,
-        albumTrack.trackId,
-        album.name,
-        album.imageUrl
-      )
-      .where(gte(listen.durationMS, 30000))
-      .orderBy(desc(listen.playedAt))
-      .limit(50);
-
-    return listens;
-  } catch (error) {
-    console.error("Error fetching listens:", error);
-    return [];
-  }
-}
 
 async function MetricsSection() {
   const listenStats = await getBasicListenStats();
@@ -154,7 +114,7 @@ async function StreamChartsSection() {
 }
 
 async function RecentListensSection() {
-  const listens = await getListens();
+  const listens = await getRecentListens({ limit: 50 });
 
   return (
     <div>
