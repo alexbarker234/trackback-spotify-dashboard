@@ -3,6 +3,7 @@
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "./ChartTooltip";
+import ExpandableChartContainer from "./ExpandableChartContainer";
 
 interface ArtistRankingData {
   artistId: string;
@@ -65,33 +66,30 @@ export default function ArtistRankingChart({ data }: ArtistRankingChartProps) {
   }));
 
   return (
-    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
-      <h3 className="mb-4 text-lg font-semibold text-white">Top Artists by Streams</h3>
-      <div className="h-[500px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{
-              top: 10,
-              right: 30,
-              left: 20,
-              bottom: 60
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-            <XAxis dataKey="displayName" stroke="#9CA3AF" fontSize={12} angle={-45} textAnchor="end" height={60} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="streamCount" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-            <defs>
-              <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ec4899" stopOpacity={1} />
-                <stop offset="100%" stopColor="#a855f7" stopOpacity={1} />
-              </linearGradient>
-            </defs>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+    <ExpandableChartContainer title="Top Artists by Streams" chartHeight="h-[500px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={chartData}
+          margin={{
+            top: 10,
+            right: 30,
+            left: 20,
+            bottom: 60
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+          <XAxis dataKey="displayName" stroke="#9CA3AF" fontSize={12} angle={-45} textAnchor="end" height={60} />
+          <YAxis stroke="#9CA3AF" fontSize={12} />
+          <Tooltip content={<CustomTooltip />} />
+          <Bar dataKey="streamCount" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
+          <defs>
+            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ec4899" stopOpacity={1} />
+              <stop offset="100%" stopColor="#a855f7" stopOpacity={1} />
+            </linearGradient>
+          </defs>
+        </BarChart>
+      </ResponsiveContainer>
+    </ExpandableChartContainer>
   );
 }

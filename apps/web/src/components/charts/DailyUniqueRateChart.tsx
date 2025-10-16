@@ -2,6 +2,7 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "./ChartTooltip";
+import ExpandableChartContainer from "./ExpandableChartContainer";
 
 interface DailyUniqueRateData {
   date: string;
@@ -180,47 +181,46 @@ export default function DailyUniqueRateChart({ data, groupBy = "day" }: DailyUni
   };
 
   return (
-    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
-      <h3 className="mb-4 text-lg font-semibold text-white">{getTitle()}</h3>
-      <p className="mb-4 text-sm text-gray-400">{getSubtitle()}</p>
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={processedData}
-            margin={{
-              top: 10,
-              right: 10,
-              left: -30,
-              bottom: 0
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-            <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} domain={[0, 100]} />
-            <Tooltip content={<CustomTooltip />} />
-            <Line type="monotone" dataKey="trackUniqueRate" stroke="#10b981" dot={false} strokeWidth={2} />
-            <Line type="monotone" dataKey="artistUniqueRate" stroke="#3b82f6" dot={false} strokeWidth={2} />
-            <Line
-              type="monotone"
-              dataKey="movingAvgTrackRate"
-              stroke="#eab308"
-              dot={false}
-              connectNulls={false}
-              strokeWidth={2}
-              strokeDasharray="5 5"
-            />
-            <Line
-              type="monotone"
-              dataKey="movingAvgArtistRate"
-              stroke="#f97316"
-              dot={false}
-              connectNulls={false}
-              strokeWidth={2}
-              strokeDasharray="5 5"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+    <ExpandableChartContainer title={getTitle()}>
+      <div className="mb-4">
+        <p className="text-sm text-gray-400">{getSubtitle()}</p>
       </div>
-    </div>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={processedData}
+          margin={{
+            top: 10,
+            right: 10,
+            left: -30,
+            bottom: 0
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+          <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" fontSize={12} />
+          <YAxis stroke="#9CA3AF" fontSize={12} domain={[0, 100]} />
+          <Tooltip content={<CustomTooltip />} />
+          <Line type="monotone" dataKey="trackUniqueRate" stroke="#10b981" dot={false} strokeWidth={2} />
+          <Line type="monotone" dataKey="artistUniqueRate" stroke="#3b82f6" dot={false} strokeWidth={2} />
+          <Line
+            type="monotone"
+            dataKey="movingAvgTrackRate"
+            stroke="#eab308"
+            dot={false}
+            connectNulls={false}
+            strokeWidth={2}
+            strokeDasharray="5 5"
+          />
+          <Line
+            type="monotone"
+            dataKey="movingAvgArtistRate"
+            stroke="#f97316"
+            dot={false}
+            connectNulls={false}
+            strokeWidth={2}
+            strokeDasharray="5 5"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </ExpandableChartContainer>
   );
 }

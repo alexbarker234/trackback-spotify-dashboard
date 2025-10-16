@@ -68,7 +68,7 @@ export default function TabsNavigation() {
   }, [pathname, activeTab]);
 
   if (!isStandalone) {
-    //return null;
+    return null;
   }
 
   return (

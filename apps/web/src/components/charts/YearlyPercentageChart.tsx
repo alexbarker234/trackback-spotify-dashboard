@@ -2,6 +2,7 @@
 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "./ChartTooltip";
+import ExpandableChartContainer from "./ExpandableChartContainer";
 
 interface YearlyPercentageData {
   year: string;
@@ -51,51 +52,43 @@ export default function YearlyPercentageChart({ data, itemName }: YearlyPercenta
   };
 
   return (
-    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
-      <h3 className="mb-4 text-lg font-semibold text-white">Yearly Listen Distribution</h3>
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={data}
-            margin={{
-              top: 10,
-              right: 10,
-              left: -20,
-              bottom: 0
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-            <XAxis dataKey="year" stroke="#9CA3AF" fontSize={12} />
-            <YAxis
-              stroke="#9CA3AF"
-              fontSize={12}
-              domain={[0, 100]}
-              tickFormatter={(value) => `${Math.round(value)}%`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="otherPercentage"
-              stackId="1"
-              stroke="#9ca3af"
-              fill="#9ca3af"
-              fillOpacity={0.6}
-              strokeWidth={2}
-              name="Other"
-            />
-            <Area
-              type="monotone"
-              dataKey="itemPercentage"
-              stackId="1"
-              stroke="#ec4899"
-              fill="#ec4899"
-              fillOpacity={0.8}
-              strokeWidth={2}
-              name={itemName}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+    <ExpandableChartContainer title="Yearly Listen Distribution">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          margin={{
+            top: 10,
+            right: 10,
+            left: -20,
+            bottom: 0
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+          <XAxis dataKey="year" stroke="#9CA3AF" fontSize={12} />
+          <YAxis stroke="#9CA3AF" fontSize={12} domain={[0, 100]} tickFormatter={(value) => `${Math.round(value)}%`} />
+          <Tooltip content={<CustomTooltip />} />
+          <Area
+            type="monotone"
+            dataKey="otherPercentage"
+            stackId="1"
+            stroke="#9ca3af"
+            fill="#9ca3af"
+            fillOpacity={0.6}
+            strokeWidth={2}
+            name="Other"
+          />
+          <Area
+            type="monotone"
+            dataKey="itemPercentage"
+            stackId="1"
+            stroke="#ec4899"
+            fill="#ec4899"
+            fillOpacity={0.8}
+            strokeWidth={2}
+            name={itemName}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </ExpandableChartContainer>
   );
 }
