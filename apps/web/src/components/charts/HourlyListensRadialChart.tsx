@@ -295,7 +295,18 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
               className={cn("fill-purple-500 transition-colors duration-500 ease-out", {
                 "fill-pink-500": bar.isHovered
               })}
-            />
+            >
+              <animate
+                attributeName="width"
+                from="0"
+                to={bar.barLength}
+                dur="0.5s"
+                fill="freeze"
+                calcMode="spline"
+                keySplines="0.4 0 0.2 1"
+                keyTimes="0;1"
+              />
+            </rect>
           ))}
         </svg>
 
