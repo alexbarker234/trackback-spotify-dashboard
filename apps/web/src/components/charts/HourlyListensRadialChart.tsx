@@ -16,7 +16,8 @@ interface HourlyListensRadialChartProps {
   data: HourlyListenData[];
 }
 
-export default function HourlyListensRadialChart({ data }: HourlyListensRadialChartProps) {
+// Separate component for the chart content to ensure each instance has its own sizing
+function RadialChartContent({ data }: { data: HourlyListenData[] }) {
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
@@ -71,15 +72,29 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const containerHeight = containerRef.current.offsetHeight;
-        const size = Math.min(containerWidth, containerHeight, 600);
+        const size = Math.min(containerWidth, containerHeight);
         setChartSize(size);
       }
     };
 
     updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
-  }, [containerRef]);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === containerRef.current) {
+          updateSize();
+        }
+      }
+    });
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   // Responsive chart dimensions
   const centerX = chartSize / 2;
@@ -182,137 +197,143 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
   const hoveredData = hoveredHour !== null ? completeData[hoveredHour] : null;
 
   return (
-    <ExpandableChartContainer title="Hourly Listening Pattern" chartHeight="h-96">
-      <div className="flex h-full w-full items-center justify-center" ref={containerRef}>
-        <div className="relative" ref={chartRef}>
-          <svg
-            width={chartSize}
-            height={chartSize}
-            className="overflow-visible"
-            onMouseMove={handleMouseMove}
-            onMouseEnter={handleChartMouseEnter}
-            onMouseLeave={handleChartMouseLeave}
-          >
-            {/* Hour markers */}
-            {[0, 6, 12, 18].map((hour) => {
-              const angle = (hour * 360) / 24 - 90;
-              const radians = (angle * Math.PI) / 180;
-              const labelRadius = innerRadius - chartSize * 0.0625; // 6.25% of chart size
-              const labelX = centerX + Math.cos(radians) * labelRadius;
-              const labelY = centerY + Math.sin(radians) * labelRadius;
+    <div className="flex h-full w-full items-center justify-center" ref={containerRef}>
+      <div className="relative" ref={chartRef}>
+        <svg
+          width={chartSize}
+          height={chartSize}
+          className="overflow-visible"
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleChartMouseEnter}
+          onMouseLeave={handleChartMouseLeave}
+        >
+          {/* Hour markers */}
+          {[0, 6, 12, 18].map((hour) => {
+            const angle = (hour * 360) / 24 - 90;
+            const radians = (angle * Math.PI) / 180;
+            const labelRadius = innerRadius - chartSize * 0.0625; // 6.25% of chart size
+            const labelX = centerX + Math.cos(radians) * labelRadius;
+            const labelY = centerY + Math.sin(radians) * labelRadius;
 
-              return (
-                <text
-                  key={hour}
-                  x={labelX}
-                  y={labelY}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill="white"
-                  fontSize={chartSize * 0.0375} // 3.75% of chart size
-                  fontWeight="500"
-                >
-                  {hour}
-                </text>
-              );
-            })}
+            return (
+              <text
+                key={hour}
+                x={labelX}
+                y={labelY}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize={chartSize * 0.0375} // 3.75% of chart size
+                fontWeight="500"
+              >
+                {hour}
+              </text>
+            );
+          })}
 
-            {/* Maximum radius circle */}
-            <circle
-              cx={centerX}
-              cy={centerY}
-              r={maxRadius}
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.2)"
-              strokeWidth="1"
-              strokeDasharray="2,2"
+          {/* Maximum radius circle */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={maxRadius}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.2)"
+            strokeWidth="1"
+            strokeDasharray="2,2"
+          />
+
+          {/* Hour tick marks */}
+          {completeData.map((_, index) => {
+            const angle = (index * 360) / 24 - 90;
+            const radians = (angle * Math.PI) / 180;
+            const tickLength = chartSize * 0.015625; // 1.5625% of chart size
+            const tickInnerX = centerX + Math.cos(radians) * (innerRadius - tickLength);
+            const tickInnerY = centerY + Math.sin(radians) * (innerRadius - tickLength);
+            const tickOuterX = centerX + Math.cos(radians) * (innerRadius - tickLength * 2);
+            const tickOuterY = centerY + Math.sin(radians) * (innerRadius - tickLength * 2);
+
+            return (
+              <line
+                key={index}
+                x1={tickInnerX}
+                y1={tickInnerY}
+                x2={tickOuterX}
+                y2={tickOuterY}
+                stroke="white"
+                strokeWidth={chartSize * 0.003125} // Scale stroke width too
+                opacity="0.3"
+              />
+            );
+          })}
+
+          {/* Background bars */}
+          {radialBars.map((bar) => (
+            <rect
+              key={`bg-${bar.hour}`}
+              x={bar.startX - barWidth / 2}
+              y={bar.startY - barWidth / 2}
+              width={maxRadius - innerRadius}
+              height={barWidth}
+              rx={barWidth / 2}
+              ry={barWidth / 2}
+              fill="rgba(0, 0, 0, 0.2)"
+              transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
             />
+          ))}
 
-            {/* Hour tick marks */}
-            {completeData.map((_, index) => {
-              const angle = (index * 360) / 24 - 90;
-              const radians = (angle * Math.PI) / 180;
-              const tickLength = chartSize * 0.015625; // 1.5625% of chart size
-              const tickInnerX = centerX + Math.cos(radians) * (innerRadius - tickLength);
-              const tickInnerY = centerY + Math.sin(radians) * (innerRadius - tickLength);
-              const tickOuterX = centerX + Math.cos(radians) * (innerRadius - tickLength * 2);
-              const tickOuterY = centerY + Math.sin(radians) * (innerRadius - tickLength * 2);
+          {/* Radial bars */}
+          {radialBars.map((bar) => (
+            <rect
+              key={bar.hour}
+              x={bar.startX - barWidth / 2}
+              y={bar.startY - barWidth / 2}
+              width={bar.barLength}
+              height={barWidth}
+              rx={barWidth / 2}
+              ry={barWidth / 2}
+              transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
+              className={cn("fill-purple-500 transition-colors duration-500 ease-out", {
+                "fill-pink-500": bar.isHovered
+              })}
+            />
+          ))}
+        </svg>
 
-              return (
-                <line
-                  key={index}
-                  x1={tickInnerX}
-                  y1={tickInnerY}
-                  x2={tickOuterX}
-                  y2={tickOuterY}
-                  stroke="white"
-                  strokeWidth={chartSize * 0.003125} // Scale stroke width too
-                  opacity="0.3"
-                />
-              );
-            })}
-
-            {/* Background bars */}
-            {radialBars.map((bar) => (
-              <rect
-                key={`bg-${bar.hour}`}
-                x={bar.startX - barWidth / 2}
-                y={bar.startY - barWidth / 2}
-                width={maxRadius - innerRadius}
-                height={barWidth}
-                rx={barWidth / 2}
-                ry={barWidth / 2}
-                fill="rgba(0, 0, 0, 0.2)"
-                transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
-              />
-            ))}
-
-            {/* Radial bars */}
-            {radialBars.map((bar) => (
-              <rect
-                key={bar.hour}
-                x={bar.startX - barWidth / 2}
-                y={bar.startY - barWidth / 2}
-                width={bar.barLength}
-                height={barWidth}
-                rx={barWidth / 2}
-                ry={barWidth / 2}
-                transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
-                className={cn("fill-purple-500 transition-all duration-500 ease-out", {
-                  "fill-pink-500": bar.isHovered
-                })}
-              />
-            ))}
-          </svg>
-
-          {/* Tooltip */}
-          {isHovering && hoveredData && (
-            <div
-              ref={tooltipRef}
-              className="animate-in fade-in-0 pointer-events-none absolute z-50 text-nowrap transition-all duration-200 ease-out"
-              style={{
-                left: tooltipPosition.x,
-                top: tooltipPosition.y
-              }}
-            >
-              <ChartTooltip>
-                <p className="text-sm font-medium text-gray-300">
-                  {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
-                  {hoveredData.hour < 12 ? "AM" : "PM"}
-                </p>
-                <p className="text-white">
-                  <span className="text-gray-400">Listens: </span>
-                  {hoveredData.listenCount}
-                </p>
-                <p className="text-white">
-                  <span className="text-gray-400">Duration: </span>
-                  {formatDuration(hoveredData.totalDuration)}
-                </p>
-              </ChartTooltip>
-            </div>
-          )}
-        </div>
+        {/* Tooltip */}
+        {isHovering && hoveredData && (
+          <div
+            ref={tooltipRef}
+            className="animate-in fade-in-0 pointer-events-none absolute z-50 text-nowrap transition-all duration-200 ease-out"
+            style={{
+              left: tooltipPosition.x,
+              top: tooltipPosition.y
+            }}
+          >
+            <ChartTooltip>
+              <p className="text-sm font-medium text-gray-300">
+                {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
+                {hoveredData.hour < 12 ? "AM" : "PM"}
+              </p>
+              <p className="text-white">
+                <span className="text-gray-400">Listens: </span>
+                {hoveredData.listenCount}
+              </p>
+              <p className="text-white">
+                <span className="text-gray-400">Duration: </span>
+                {formatDuration(hoveredData.totalDuration)}
+              </p>
+            </ChartTooltip>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+export default function HourlyListensRadialChart({ data }: HourlyListensRadialChartProps) {
+  return (
+    <ExpandableChartContainer title="Hourly Listening Pattern" chartHeight="h-96">
+      <RadialChartContent data={data} />
     </ExpandableChartContainer>
   );
 }
