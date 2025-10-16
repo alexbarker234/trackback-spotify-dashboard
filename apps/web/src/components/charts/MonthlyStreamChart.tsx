@@ -3,6 +3,7 @@
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "./ChartTooltip";
+import ExpandableChartContainer from "./ExpandableChartContainer";
 
 interface MonthlyStreamData {
   month: string;
@@ -59,27 +60,24 @@ export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
   };
 
   return (
-    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
-      <h3 className="mb-4 text-lg font-semibold text-white">Streams by month</h3>
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={sortedData}
-            margin={{
-              top: 10,
-              right: 10,
-              left: -10,
-              bottom: 0
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-            <XAxis dataKey="month" tickFormatter={formatShortMonth} stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="streamCount" fill="#a855f7" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+    <ExpandableChartContainer title="Streams by month">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={sortedData}
+          margin={{
+            top: 10,
+            right: 10,
+            left: -10,
+            bottom: 0
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+          <XAxis dataKey="month" tickFormatter={formatShortMonth} stroke="#9CA3AF" fontSize={12} />
+          <YAxis stroke="#9CA3AF" fontSize={12} />
+          <Tooltip content={<CustomTooltip />} />
+          <Bar dataKey="streamCount" fill="#a855f7" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ExpandableChartContainer>
   );
 }
