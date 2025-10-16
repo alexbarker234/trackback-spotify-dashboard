@@ -49,7 +49,7 @@ export default function ExpandableChartContainer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="bg-gradient-primary fixed inset-0 z-50 backdrop-blur-sm"
+            className="bg-gradient-primary fixed inset-0 z-60 backdrop-blur-sm"
           />
         )}
       </AnimatePresence>
