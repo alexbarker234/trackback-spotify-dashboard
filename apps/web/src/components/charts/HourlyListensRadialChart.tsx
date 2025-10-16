@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { useEffect, useRef, useState } from "react";
 import ChartTooltip from "./ChartTooltip";
+import ExpandableChartContainer from "./ExpandableChartContainer";
 
 interface HourlyListenData {
   hour: number;
@@ -181,9 +182,8 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
   const hoveredData = hoveredHour !== null ? completeData[hoveredHour] : null;
 
   return (
-    <div className="rounded-2xl bg-white/5 p-6 backdrop-blur-sm">
-      <h3 className="mb-4 text-lg font-semibold text-white">Hourly Listening Pattern</h3>
-      <div className="flex h-96 w-full items-center justify-center" ref={containerRef}>
+    <ExpandableChartContainer title="Hourly Listening Pattern" chartHeight="h-96">
+      <div className="flex h-full w-full items-center justify-center" ref={containerRef}>
         <div className="relative" ref={chartRef}>
           <svg
             width={chartSize}
@@ -313,6 +313,6 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
           )}
         </div>
       </div>
-    </div>
+    </ExpandableChartContainer>
   );
 }
