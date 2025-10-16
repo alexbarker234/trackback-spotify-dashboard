@@ -25,7 +25,7 @@ export default function TopAlbumsPage() {
     id: album.albumId,
     name: album.albumName,
     imageUrl: album.albumImageUrl,
-    subtitle: album.artistNames.join(", "),
+    subtitle: album.artistNames?.join(", "),
     streams: album.listenCount,
     minutes: Math.round(album.totalDuration / 60000),
     href: `/dashboard/album/${album.albumId}`
