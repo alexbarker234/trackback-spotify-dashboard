@@ -26,45 +26,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Convert UTC hourly data to local timezone
-  const convertToLocalTimezone = (inputData: HourlyListenData[]): HourlyListenData[] => {
-    // Get timezone offset in hours (negative for UTC+, positive for UTC-)
-    const timezoneOffsetHours = -new Date().getTimezoneOffset() / 60;
-
-    // Create array to accumulate shifted data
-    const shiftedData = new Array(24).fill(null).map(() => ({
-      hour: 0,
-      listenCount: 0,
-      totalDuration: 0
-    }));
-
-    // Shift each hour's data to local timezone
-    inputData.forEach((item) => {
-      const localHour = (item.hour + timezoneOffsetHours + 24) % 24;
-      shiftedData[localHour]!.hour = localHour;
-      shiftedData[localHour]!.listenCount += item.listenCount;
-      shiftedData[localHour]!.totalDuration += item.totalDuration;
-    });
-
-    return shiftedData;
-  };
-
-  // Fill in missing hours with 0 values
-  const createCompleteHourlyData = (inputData: HourlyListenData[]): HourlyListenData[] => {
-    const hourlyData = new Array(24).fill(null).map((_, index) => {
-      const existingData = inputData.find((item) => item.hour === index);
-      return {
-        hour: index,
-        listenCount: existingData?.listenCount || 0,
-        totalDuration: existingData?.totalDuration || 0
-      };
-    });
-    return hourlyData;
-  };
-
-  const completeData = convertToLocalTimezone(createCompleteHourlyData(data));
-
-  const maxListenCount = Math.max(...completeData.map((d) => d.listenCount));
+  const maxListenCount = Math.max(...data.map((d) => d.listenCount));
 
   // Handle responsive sizing
   useEffect(() => {
@@ -104,7 +66,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
   const barWidth = chartSize * 0.025;
 
   // Generate radial bar data
-  const radialBars = completeData.map((item, index) => {
+  const radialBars = data.map((item, index) => {
     const angle = (index * 360) / 24 - 90; // Start from top (12 o'clock)
     const radians = (angle * Math.PI) / 180;
     const barLength = (item.listenCount / Math.max(maxListenCount, 1)) * (maxRadius - innerRadius);
@@ -194,7 +156,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
     setHoveredHour(null);
   };
 
-  const hoveredData = hoveredHour !== null ? completeData[hoveredHour] : null;
+  const hoveredData = hoveredHour !== null ? data[hoveredHour] : null;
 
   return (
     <div className="flex h-full w-full items-center justify-center" ref={containerRef}>
@@ -243,7 +205,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
           />
 
           {/* Hour tick marks */}
-          {completeData.map((_, index) => {
+          {data.map((_, index) => {
             const angle = (index * 360) / 24 - 90;
             const radians = (angle * Math.PI) / 180;
             const tickLength = chartSize * 0.015625; // 1.5625% of chart size
@@ -342,9 +304,46 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
 }
 
 export default function HourlyListensRadialChart({ data }: HourlyListensRadialChartProps) {
+  // Convert UTC hourly data to local timezone
+  const convertToLocalTimezone = (inputData: HourlyListenData[]): HourlyListenData[] => {
+    // Get timezone offset in hours (negative for UTC+, positive for UTC-)
+    const timezoneOffsetHours = -new Date().getTimezoneOffset() / 60;
+
+    // Create array to accumulate shifted data
+    const shiftedData = new Array(24).fill(null).map(() => ({
+      hour: 0,
+      listenCount: 0,
+      totalDuration: 0
+    }));
+
+    // Shift each hour's data to local timezone
+    inputData.forEach((item) => {
+      const localHour = (item.hour + timezoneOffsetHours + 24) % 24;
+      shiftedData[localHour]!.hour = localHour;
+      shiftedData[localHour]!.listenCount += item.listenCount;
+      shiftedData[localHour]!.totalDuration += item.totalDuration;
+    });
+
+    return shiftedData;
+  };
+
+  // Fill in missing hours with 0 values
+  const createCompleteHourlyData = (inputData: HourlyListenData[]): HourlyListenData[] => {
+    const hourlyData = new Array(24).fill(null).map((_, index) => {
+      const existingData = inputData.find((item) => item.hour === index);
+      return {
+        hour: index,
+        listenCount: existingData?.listenCount || 0,
+        totalDuration: existingData?.totalDuration || 0
+      };
+    });
+    return hourlyData;
+  };
+
+  const completeData = convertToLocalTimezone(createCompleteHourlyData(data));
   return (
     <ExpandableChartContainer title="Hourly Listening Pattern" chartHeight="h-96">
-      <RadialChartContent data={data} />
+      <RadialChartContent data={completeData} />
     </ExpandableChartContainer>
   );
 }
