@@ -33,7 +33,11 @@ async function TopTracksSection() {
   if (topTracks.length === 0) return null;
 
   return (
-    <ItemCarousel title="Top Tracks" subtitle="Your top tracks from the past 4 weeks" viewMoreUrl="/top/tracks">
+    <ItemCarousel
+      title="Top Tracks"
+      subtitle="Your top tracks from the past 4 weeks"
+      viewMoreUrl="dashboard/top/tracks"
+    >
       {topTracks.map((track, index) => (
         <StreamItemCard
           key={track.trackIsrc}
@@ -58,7 +62,11 @@ async function TopArtistsSection() {
   if (topArtists.length === 0) return null;
 
   return (
-    <ItemCarousel title="Top Artists" subtitle="Your top artists from the past 4 weeks" viewMoreUrl="/top/artists">
+    <ItemCarousel
+      title="Top Artists"
+      subtitle="Your top artists from the past 4 weeks"
+      viewMoreUrl="dashboard/top/artists"
+    >
       {topArtists.map((artist, index) => (
         <StreamItemCard
           key={artist.artistId}
@@ -83,7 +91,11 @@ async function TopAlbumsSection() {
   if (topAlbums.length === 0) return null;
 
   return (
-    <ItemCarousel title="Top Albums" subtitle="Your top albums from the past 4 weeks" viewMoreUrl="/top/albums">
+    <ItemCarousel
+      title="Top Albums"
+      subtitle="Your top albums from the past 4 weeks"
+      viewMoreUrl="dashboard/top/albums"
+    >
       {topAlbums.map((album, index) => (
         <StreamItemCard
           key={album.albumId}
