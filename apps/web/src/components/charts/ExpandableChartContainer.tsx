@@ -9,9 +9,15 @@ interface ExpandableChartContainerProps {
   title: string;
   children: React.ReactNode;
   className?: string;
+  chartHeight?: string;
 }
 
-export default function ExpandableChartContainer({ title, children, className = "" }: ExpandableChartContainerProps) {
+export default function ExpandableChartContainer({
+  title,
+  children,
+  className = "",
+  chartHeight = "h-64"
+}: ExpandableChartContainerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Handle escape key to exit fullscreen and body scroll lock
@@ -49,7 +55,7 @@ export default function ExpandableChartContainer({ title, children, className = 
             </button>
           </div>
         </div>
-        <div className={`w-full ${isFullscreenContent ? "h-[calc(100vh-8rem)]" : "h-64"}`}>{children}</div>
+        <div className={`w-full ${isFullscreenContent ? "h-[calc(100vh-8rem)]" : chartHeight}`}>{children}</div>
       </>
     );
   };

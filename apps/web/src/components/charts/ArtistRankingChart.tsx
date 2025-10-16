@@ -66,7 +66,7 @@ export default function ArtistRankingChart({ data }: ArtistRankingChartProps) {
   }));
 
   return (
-    <ExpandableChartContainer title="Top Artists by Streams">
+    <ExpandableChartContainer title="Top Artists by Streams" chartHeight="h-[500px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
