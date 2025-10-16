@@ -23,3 +23,8 @@
     }
   }
 }
+@layer components {
+  .bg-gradient-primary {
+    background-image: linear-gradient(to bottom right, #111827, #1f193c, #111827);
+  }
+}

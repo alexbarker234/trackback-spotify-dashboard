@@ -49,7 +49,7 @@ export default function ExpandableChartContainer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm"
+            className="bg-gradient-primary fixed inset-0 z-50 backdrop-blur-sm"
           />
         )}
       </AnimatePresence>
@@ -63,7 +63,7 @@ export default function ExpandableChartContainer({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className={`h-[95vh] w-[95vw] rounded-2xl bg-gray-500/10 p-6 backdrop-blur-sm ${className}`}
+              className={`h-[95vh] w-[95vw] rounded-2xl bg-white/5 p-6 backdrop-blur-sm ${className}`}
             >
               <ChartContent
                 isFullscreenContent={true}
