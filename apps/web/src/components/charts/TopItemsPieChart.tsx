@@ -110,7 +110,7 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
   };
 
   return (
-    <ExpandableChartContainer title={chartTitle} chartHeight="h-[500px]">
+    <ExpandableChartContainer title={chartTitle} chartHeight="h-[700px] sm:h-[500px]">
       <div className="relative flex h-full flex-col">
         <ResponsiveContainer width="100%" height="100%" className="flex-1">
           <PieChart>
@@ -145,8 +145,15 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
             const percentage = ((item.streams / totalStreams) * 100).toFixed(1);
 
             return (
-              <div key={item.id} className="flex items-center gap-2 rounded-lg bg-white/5 p-2">
+              <div key={item.id} className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1">
                 <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="aspect-square h-8 flex-shrink-0 rounded object-cover"
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium text-white">{item.name}</div>
                   <div className="text-xs text-gray-400">{percentage}%</div>
