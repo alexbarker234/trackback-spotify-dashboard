@@ -1,6 +1,9 @@
 "use client";
 
 import { DateRange } from "@/hooks/useDateRange";
+import { cn } from "@/lib/utils/cn";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
@@ -44,10 +47,43 @@ export default function TopItemsPage({
   maxItems = 20
 }: TopItemsPageProps) {
   const [viewType, setViewType] = useState<ViewType>("grid");
+
+  const pathname = usePathname();
   return (
     <div className="flex-1 px-2 py-4 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-8 text-4xl font-bold text-white">{title}</h1>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white">{title}</h1>
+          <div className="mt-4 flex gap-4">
+            <Link
+              href="/dashboard/top/artists"
+              className={cn(
+                "text-sm text-gray-400 transition-colors hover:text-white",
+                pathname === "/dashboard/top/artists" ? "cursor-default text-white" : ""
+              )}
+            >
+              Artists
+            </Link>
+            <Link
+              href="/dashboard/top/tracks"
+              className={cn(
+                "text-sm text-gray-400 transition-colors hover:text-white",
+                pathname === "/dashboard/top/tracks" ? "cursor-default text-white" : ""
+              )}
+            >
+              Tracks
+            </Link>
+            <Link
+              href="/dashboard/top/albums"
+              className={cn(
+                "text-sm text-gray-400 transition-colors hover:text-white",
+                pathname === "/dashboard/top/albums" ? "cursor-default text-white" : ""
+              )}
+            >
+              Albums
+            </Link>
+          </div>
+        </div>
 
         {/* Controls */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
