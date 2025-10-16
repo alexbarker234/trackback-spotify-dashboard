@@ -1,12 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --spotify-green: #1db954;
 }
 
 @theme {
   --breakpoint-xs: 25rem;
-  --color-spotify-green: var(--spotify-green);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --animate-loader-bounce: loader-bounce 1s ease-in-out infinite;
