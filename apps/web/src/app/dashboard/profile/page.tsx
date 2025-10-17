@@ -15,20 +15,10 @@ export default async function ProfilePage() {
     headers: await headers()
   });
 
-  if (!session?.user) {
-    return (
-      <div className="flex h-full grow items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-400">No user session found</p>
-        </div>
-      </div>
-    );
-  }
-
   const user = session.user;
 
   return (
-    <div className="w-full max-w-md space-y-6 p-4">
+    <div className="mx-auto w-full max-w-md space-y-6 p-4">
       {/* User Profile Section */}
       <div className="rounded-lg bg-white/5 p-6 text-center backdrop-blur-sm">
         <div className="mx-auto mb-4 flex h-32 w-32 justify-center">
