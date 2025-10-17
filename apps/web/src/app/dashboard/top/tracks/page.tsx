@@ -1,5 +1,7 @@
+import { getStandaloneCookieServer } from "@/lib/utils/serverCookies";
 import TopTracksPage from "./TopTracksPage";
 
 export default async function TopTracksPageServer() {
-  return <TopTracksPage />;
+  const isStandalone = await getStandaloneCookieServer();
+  return <TopTracksPage isStandalone={isStandalone} />;
 }

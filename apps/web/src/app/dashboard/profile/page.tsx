@@ -3,7 +3,12 @@ import LogoutButton from "@/components/LogoutButton";
 import { auth } from "@/lib/auth";
 import { faUpload, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Metadata } from "next";
 import { headers } from "next/headers";
+
+export const metadata: Metadata = {
+  title: "Profile"
+};
 
 export default async function ProfilePage() {
   const session = await auth.api.getSession({

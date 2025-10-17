@@ -4,7 +4,7 @@ import TopItemsPage, { TopItem } from "@/components/top/TopItemsPage";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useTopArtists } from "@/hooks/useTopArtists";
 
-export default function TopArtistsPage() {
+export default function TopArtistsPage({ isStandalone }: { isStandalone: boolean }) {
   const {
     dateRange,
     currentPeriod,
@@ -41,6 +41,7 @@ export default function TopArtistsPage() {
       currentPeriod={currentPeriod}
       onPreviousPeriod={handlePreviousPeriod}
       onNextPeriod={handleNextPeriod}
+      isStandalone={isStandalone}
     />
   );
 }

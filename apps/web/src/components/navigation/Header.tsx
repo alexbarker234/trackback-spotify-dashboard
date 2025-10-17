@@ -1,38 +1,17 @@
 import { auth } from "@/lib/auth";
+import { getPageTitle } from "@/lib/utils/pageTitle";
 import { headers } from "next/headers";
-import Link from "next/link";
-import LoginButton from "../LoginButton";
-import LogoSvg from "../LogoSvg";
-import UserProfile from "../UserProfile";
+import HeaderClient from "./HeaderClient";
 
 export default async function Header() {
   const session = await auth.api.getSession({
     headers: await headers()
   });
-  return (
-    <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="group text-xl font-bold transition-opacity hover:opacity-50">
-            <LogoSvg className="inline-block h-8 w-8 fill-white" /> Trackback
-          </Link>
-          {/* Auth Section */}
-          <div className="flex items-center space-x-4">
-            {session?.user?.id ? (
-              <UserProfile
-                userInfo={{
-                  username: session.user.name,
-                  avatarURL: session.user.image
-                }}
-              />
-            ) : (
-              <div className="flex items-center space-x-3">
-                <LoginButton />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </header>
-  );
+
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "/";
+
+  const pageTitle = getPageTitle(pathname);
+
+  return <HeaderClient user={session?.user} pageTitle={pageTitle} />;
 }
