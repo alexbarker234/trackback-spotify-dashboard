@@ -1,6 +1,7 @@
 import SlidingIndicatorSelector from "./SlidingIndicatorSelector";
 
-export type ViewType = "grid" | "chart";
+export const viewTypeOptions = ["grid", "chart"] as const;
+export type ViewType = (typeof viewTypeOptions)[number];
 
 type ViewSelectorProps = {
   viewType: ViewType;
@@ -12,6 +13,5 @@ export default function ViewSelector({ viewType, onViewTypeChange }: ViewSelecto
     { value: "grid" as ViewType, label: "Grid" },
     { value: "chart" as ViewType, label: "Chart" }
   ];
-
   return <SlidingIndicatorSelector options={options} value={viewType} onChange={onViewTypeChange} />;
 }

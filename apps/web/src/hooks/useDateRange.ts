@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { parseAsInteger, parseAsStringLiteral, useQueryState } from "nuqs";
+import { useMemo } from "react";
 
-export type DateRange = "4weeks" | "6months" | "year" | "lifetime";
+const dateRangeOptions = ["4weeks", "6months", "year", "lifetime"] as const;
+export type DateRange = (typeof dateRangeOptions)[number];
 
 export type UseDateRangeOptions = {
   initialDateRange?: DateRange;
@@ -12,8 +14,11 @@ export type UseDateRangeOptions = {
 export function useDateRange(options: UseDateRangeOptions = {}) {
   const { initialDateRange = "4weeks", initialPeriod = 0 } = options;
 
-  const [dateRange, setDateRange] = useState<DateRange>(initialDateRange);
-  const [currentPeriod, setCurrentPeriod] = useState(initialPeriod);
+  const [dateRange, setDateRange] = useQueryState<DateRange>(
+    "dateRange",
+    parseAsStringLiteral(dateRangeOptions).withDefault(initialDateRange)
+  );
+  const [currentPeriod, setCurrentPeriod] = useQueryState("currentPeriod", parseAsInteger.withDefault(initialPeriod));
 
   // Calculate start and end dates based on dateRange and currentPeriod
   const { startDate, endDate } = useMemo(() => {

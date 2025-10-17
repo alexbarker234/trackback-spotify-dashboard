@@ -4,12 +4,12 @@ import { DateRange } from "@/hooks/useDateRange";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
 import StreamItemCard from "../itemCards/StreamItemCard";
-import ViewSelector, { ViewType } from "../ViewSelector";
+import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
 
 export type TopItem = {
   id: string;
@@ -46,7 +46,10 @@ export default function TopItemsPage({
   onNextPeriod,
   maxItems = 20
 }: TopItemsPageProps) {
-  const [viewType, setViewType] = useState<ViewType>("grid");
+  const [viewType, setViewType] = useQueryState<ViewType>(
+    "viewType",
+    parseAsStringLiteral(viewTypeOptions).withDefault("grid")
+  );
 
   const pathname = usePathname();
   return (
