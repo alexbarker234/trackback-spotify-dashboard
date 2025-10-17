@@ -3,13 +3,13 @@
 import { DateRange } from "@/hooks/useDateRange";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
 import StreamItemCard from "../itemCards/StreamItemCard";
-import ViewSelector, { ViewType } from "../ViewSelector";
+import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
 
 export type TopItem = {
   id: string;
@@ -34,6 +34,23 @@ export type TopItemsPageProps = {
   maxItems?: number;
 };
 
+const TopItemLink = ({ href, text }: { href: string; text: string }) => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const hrefWithParams = href + (searchParams.toString() ? `?${searchParams.toString()}` : "");
+  return (
+    <Link
+      href={hrefWithParams}
+      className={cn(
+        "text-sm text-gray-400 transition-colors hover:text-white",
+        pathname === href ? "cursor-default text-white" : ""
+      )}
+    >
+      {text}
+    </Link>
+  );
+};
+
 export default function TopItemsPage({
   title,
   items,
@@ -46,42 +63,20 @@ export default function TopItemsPage({
   onNextPeriod,
   maxItems = 20
 }: TopItemsPageProps) {
-  const [viewType, setViewType] = useState<ViewType>("grid");
+  const [viewType, setViewType] = useQueryState<ViewType>(
+    "viewType",
+    parseAsStringLiteral(viewTypeOptions).withDefault("grid")
+  );
 
-  const pathname = usePathname();
   return (
     <div className="flex-1 px-2 py-4 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white">{title}</h1>
           <div className="mt-4 flex gap-4">
-            <Link
-              href="/dashboard/top/artists"
-              className={cn(
-                "text-sm text-gray-400 transition-colors hover:text-white",
-                pathname === "/dashboard/top/artists" ? "cursor-default text-white" : ""
-              )}
-            >
-              Artists
-            </Link>
-            <Link
-              href="/dashboard/top/tracks"
-              className={cn(
-                "text-sm text-gray-400 transition-colors hover:text-white",
-                pathname === "/dashboard/top/tracks" ? "cursor-default text-white" : ""
-              )}
-            >
-              Tracks
-            </Link>
-            <Link
-              href="/dashboard/top/albums"
-              className={cn(
-                "text-sm text-gray-400 transition-colors hover:text-white",
-                pathname === "/dashboard/top/albums" ? "cursor-default text-white" : ""
-              )}
-            >
-              Albums
-            </Link>
+            <TopItemLink href="/dashboard/top/artists" text="Artists" />
+            <TopItemLink href="/dashboard/top/tracks" text="Tracks" />
+            <TopItemLink href="/dashboard/top/albums" text="Albums" />
           </div>
         </div>
 
