@@ -47,7 +47,7 @@ async function TopTracksSection() {
           title={track.trackName}
           subtitle={track.artists.map((a) => a.artistName).join(", ")}
           streams={track.listenCount}
-          minutes={Math.round(track.totalDuration / 60000)}
+          durationMs={track.totalDuration}
         />
       ))}
     </ItemCarousel>
@@ -76,7 +76,7 @@ async function TopArtistsSection() {
           title={artist.artistName}
           subtitle={`${artist.listenCount} streams`}
           streams={artist.listenCount}
-          minutes={artist.listenCount}
+          durationMs={artist.totalDuration}
         />
       ))}
     </ItemCarousel>
@@ -105,7 +105,7 @@ async function TopAlbumsSection() {
           title={album.albumName}
           subtitle={album.artistNames?.join(", ")}
           streams={album.listenCount}
-          minutes={album.listenCount}
+          durationMs={album.totalDuration}
         />
       ))}
     </ItemCarousel>
