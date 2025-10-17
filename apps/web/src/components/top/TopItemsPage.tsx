@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+import CompactRankListCard from "../cards/CompactRankListCard";
 import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
@@ -17,7 +18,7 @@ export type TopItem = {
   imageUrl: string | null;
   subtitle?: string;
   streams: number;
-  minutes: number;
+  durationMs: number;
   href: string;
 };
 
@@ -61,7 +62,7 @@ export default function TopItemsPage({
   currentPeriod,
   onPreviousPeriod,
   onNextPeriod,
-  maxItems = 20
+  maxItems = 250
 }: TopItemsPageProps) {
   const [viewType, setViewType] = useQueryState<ViewType>(
     "viewType",
@@ -110,21 +111,9 @@ export default function TopItemsPage({
           </div>
         ) : items && items.length > 0 ? (
           viewType === "grid" ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-              {items.slice(0, maxItems).map((item, index) => (
-                <StreamItemCard
-                  key={item.id}
-                  href={item.href}
-                  imageUrl={item.imageUrl}
-                  number={index + 1}
-                  title={item.name}
-                  subtitle={item.subtitle}
-                  streams={item.streams}
-                  minutes={item.minutes}
-                  className="w-auto"
-                />
-              ))}
-            </div>
+            <TopItemsGrid items={items} maxItems={maxItems} />
+          ) : viewType === "list" ? (
+            <TopItemsList items={items} maxItems={maxItems} />
           ) : (
             <TopItemsPieChart chartTitle={`${title} Distribution`} items={items} maxItems={12} />
           )
@@ -137,3 +126,33 @@ export default function TopItemsPage({
     </div>
   );
 }
+
+const TopItemsList = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
+  return (
+    <div className="flex flex-col gap-3">
+      {items.slice(0, maxItems).map((item, index) => (
+        <CompactRankListCard key={item.id} item={item} index={index} />
+      ))}
+    </div>
+  );
+};
+
+const TopItemsGrid = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+      {items.slice(0, maxItems).map((item, index) => (
+        <StreamItemCard
+          key={item.id}
+          href={item.href}
+          imageUrl={item.imageUrl}
+          number={index + 1}
+          title={item.name}
+          subtitle={item.subtitle}
+          streams={item.streams}
+          durationMs={item.durationMs}
+          className="w-auto"
+        />
+      ))}
+    </div>
+  );
+};

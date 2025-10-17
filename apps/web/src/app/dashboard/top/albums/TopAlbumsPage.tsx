@@ -27,7 +27,7 @@ export default function TopAlbumsPage() {
     imageUrl: album.albumImageUrl,
     subtitle: album.artistNames?.join(", "),
     streams: album.listenCount,
-    minutes: Math.round(album.totalDuration / 60000),
+    durationMs: album.totalDuration,
     href: `/dashboard/album/${album.albumId}`
   }));
 
