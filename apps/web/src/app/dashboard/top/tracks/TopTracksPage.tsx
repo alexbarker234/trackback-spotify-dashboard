@@ -4,7 +4,7 @@ import TopItemsPage, { TopItem } from "@/components/top/TopItemsPage";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useTopTracks } from "@/hooks/useTopTracks";
 
-export default function TopTracksPage() {
+export default function TopTracksPage({ isStandalone }: { isStandalone: boolean }) {
   const {
     dateRange,
     currentPeriod,
@@ -42,6 +42,7 @@ export default function TopTracksPage() {
       currentPeriod={currentPeriod}
       onPreviousPeriod={handlePreviousPeriod}
       onNextPeriod={handleNextPeriod}
+      isStandalone={isStandalone}
     />
   );
 }

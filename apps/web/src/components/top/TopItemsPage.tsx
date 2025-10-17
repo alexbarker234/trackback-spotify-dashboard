@@ -34,6 +34,7 @@ export type TopItemsPageProps = {
   onPreviousPeriod: () => void;
   onNextPeriod: () => void;
   maxItems?: number;
+  isStandalone?: boolean;
 };
 
 const TopItemLink = ({ href, text }: { href: string; text: string }) => {
@@ -63,7 +64,8 @@ export default function TopItemsPage({
   currentPeriod,
   onPreviousPeriod,
   onNextPeriod,
-  maxItems = 250
+  maxItems = 250,
+  isStandalone = false
 }: TopItemsPageProps) {
   const [viewType, setViewType] = useQueryState<ViewType>(
     "viewType",
@@ -75,7 +77,7 @@ export default function TopItemsPage({
       <div className="mx-auto max-w-6xl">
         <BackNav />
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white">{title}</h1>
+          {!isStandalone && <h1 className="text-4xl font-bold text-white">{title}</h1>}
           <div className="mt-4 flex gap-4">
             <TopItemLink href="/dashboard/top/artists" text="Artists" />
             <TopItemLink href="/dashboard/top/tracks" text="Tracks" />
