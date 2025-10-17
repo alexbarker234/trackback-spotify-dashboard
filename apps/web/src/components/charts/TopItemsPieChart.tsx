@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDuration } from "@/lib/utils/timeUtils";
+import Link from "next/link";
 import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { TopItem } from "../top/TopItemsPage";
@@ -13,10 +15,11 @@ interface TopItemsPieChartProps {
 }
 
 interface PieData {
+  href: string;
   name: string;
   value: number;
   streams: number;
-  minutes: number;
+  durationMs: number;
   imageUrl: string | null;
   subtitle?: string;
   id: string;
@@ -30,23 +33,15 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
   const topItems = items.slice(0, maxItems);
 
   const data: PieData[] = topItems.map((item) => ({
+    href: item.href,
     name: item.name,
     value: Number(item.streams),
     streams: Number(item.streams),
-    minutes: Number(item.minutes),
+    durationMs: Number(item.durationMs),
     imageUrl: item.imageUrl,
     subtitle: item.subtitle,
     id: item.id
   }));
-
-  const formatMinutes = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
-    }
-    return `${mins}m`;
-  };
 
   const CustomTooltip = ({
     active,
@@ -73,7 +68,7 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
               </p>
               <p className="text-white">
                 <span className="text-gray-400">Duration: </span>
-                {formatMinutes(item.minutes)}
+                {formatDuration(item.durationMs)}
               </p>
               <p className="text-sm font-medium text-pink-400">{percentage}% of total</p>
             </div>
@@ -145,7 +140,11 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
             const percentage = ((item.streams / totalStreams) * 100).toFixed(1);
 
             return (
-              <div key={item.id} className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1">
+              <Link
+                key={item.id}
+                href={item.href}
+                className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1 transition-all hover:bg-white/10"
+              >
                 <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
                 {item.imageUrl && (
                   <img
@@ -158,7 +157,7 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
                   <div className="truncate text-sm font-medium text-white">{item.name}</div>
                   <div className="text-xs text-gray-400">{percentage}%</div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

@@ -26,7 +26,7 @@ export default function TopArtistsPage() {
     name: artist.artistName,
     imageUrl: artist.artistImageUrl,
     streams: artist.listenCount,
-    minutes: Math.round(artist.totalDuration / 60000),
+    durationMs: artist.totalDuration,
     href: `/dashboard/artist/${artist.artistId}`
   }));
 

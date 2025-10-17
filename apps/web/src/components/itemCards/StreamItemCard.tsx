@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils/cn";
+import { formatDuration } from "@/lib/utils/timeUtils";
 import ItemCard from "./ItemCard";
 
 export type StreamItemCardProps = {
@@ -8,7 +9,7 @@ export type StreamItemCardProps = {
   title: string;
   subtitle: string;
   streams: number;
-  minutes: number;
+  durationMs: number;
   className?: string;
 };
 
@@ -19,7 +20,7 @@ export default function StreamItemCard({
   title,
   subtitle,
   streams,
-  minutes,
+  durationMs,
   className
 }: StreamItemCardProps) {
   return (
@@ -29,7 +30,7 @@ export default function StreamItemCard({
       number={number}
       title={title}
       subtitle={subtitle}
-      content={`${streams} streams • ${minutes} minutes`}
+      content={`${streams} streams • ${formatDuration(durationMs)}`}
       className={cn("w-42 shrink-0 grow-0 p-2", className)}
     />
   );

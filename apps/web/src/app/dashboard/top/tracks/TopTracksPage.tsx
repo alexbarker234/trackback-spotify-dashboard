@@ -27,7 +27,7 @@ export default function TopTracksPage() {
     imageUrl: track.imageUrl,
     subtitle: track.artists.map((a) => a.artistName).join(", "),
     streams: track.listenCount,
-    minutes: Math.round(track.totalDuration / 60000),
+    durationMs: track.totalDuration,
     href: `/dashboard/track/${track.trackIsrc}`
   }));
 
