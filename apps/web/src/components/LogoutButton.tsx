@@ -22,5 +22,14 @@ export default function LogoutButton() {
     }
   };
 
-  return <Button onClick={handleLogout} label="Sign out" icon={faSignOutAlt} variant="danger" className="w-full" />;
+  return (
+    <Button
+      loading={loading}
+      onClick={handleLogout}
+      label="Sign out"
+      icon={faSignOutAlt}
+      variant="danger"
+      className="w-full"
+    />
+  );
 }
