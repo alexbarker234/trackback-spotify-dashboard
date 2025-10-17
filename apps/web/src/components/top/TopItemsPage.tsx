@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
 import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
@@ -72,6 +73,7 @@ export default function TopItemsPage({
   return (
     <div className="flex-1 px-2 py-4 lg:px-8">
       <div className="mx-auto max-w-6xl">
+        <BackNav />
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white">{title}</h1>
           <div className="mt-4 flex gap-4">
