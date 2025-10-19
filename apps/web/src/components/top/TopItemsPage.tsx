@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
+import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
 import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
@@ -118,8 +119,10 @@ export default function TopItemsPage({
             <TopItemsGrid items={items} maxItems={maxItems} />
           ) : viewType === "list" ? (
             <TopItemsList items={items} maxItems={maxItems} />
-          ) : (
+          ) : viewType === "pie" ? (
             <TopItemsPieChart chartTitle={`${title} Distribution`} items={items} maxItems={12} />
+          ) : (
+            <TopItemsBubbleChart chartTitle={`${title} Bubble`} items={items} maxItems={20} />
           )
         ) : (
           <div className="flex h-64 items-center justify-center">
