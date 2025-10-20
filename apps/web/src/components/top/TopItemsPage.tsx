@@ -1,9 +1,10 @@
 "use client";
 
-import { DateRange } from "@/hooks/useDateRange";
+import { useDateRange } from "@/hooks/useDateRange";
+import { useTopItems } from "@/hooks/useTopItems";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
@@ -12,6 +13,7 @@ import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
 import StreamItemCard from "../itemCards/StreamItemCard";
+import ItemTypeSelector, { ItemType, itemTypeOptions } from "../ItemTypeSelector";
 import Loading from "../Loading";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
 
@@ -26,29 +28,24 @@ export type TopItem = {
 };
 
 export type TopItemsPageProps = {
-  title: string;
-  items: TopItem[];
-  isLoading: boolean;
-  error: string | null;
-  dateRange: DateRange;
-  onDateRangeChange: (dateRange: DateRange) => void;
-  currentPeriod: number;
-  onPreviousPeriod: () => void;
-  onNextPeriod: () => void;
-  maxItems?: number;
   isStandalone?: boolean;
 };
 
-const TopItemLink = ({ href, text }: { href: string; text: string }) => {
-  const pathname = usePathname();
+const TopItemLink = ({ itemType, text }: { itemType: ItemType; text: string }) => {
+  const [currentItemType] = useQueryState<ItemType>(
+    "type",
+    parseAsStringLiteral(itemTypeOptions).withDefault("artists")
+  );
   const searchParams = useSearchParams();
-  const hrefWithParams = href + (searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const newSearchParams = new URLSearchParams(searchParams);
+  newSearchParams.set("type", itemType);
+
   return (
     <Link
-      href={hrefWithParams}
+      href={`/dashboard/top?${newSearchParams.toString()}`}
       className={cn(
-        "text-sm text-gray-400 transition-colors hover:text-white",
-        pathname === href ? "cursor-default text-white" : ""
+        "cursor-pointer text-sm text-gray-400 transition-colors hover:text-white",
+        currentItemType === itemType ? "cursor-default text-white" : ""
       )}
     >
       {text}
@@ -56,42 +53,66 @@ const TopItemLink = ({ href, text }: { href: string; text: string }) => {
   );
 };
 
-export default function TopItemsPage({
-  title,
-  items,
-  isLoading,
-  error,
-  dateRange,
-  onDateRangeChange,
-  currentPeriod,
-  onPreviousPeriod,
-  onNextPeriod,
-  maxItems = 250,
-  isStandalone = false
-}: TopItemsPageProps) {
+export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps) {
+  const {
+    dateRange,
+    currentPeriod,
+    startDate,
+    endDate,
+    handleDateRangeChange,
+    handlePreviousPeriod,
+    handleNextPeriod
+  } = useDateRange();
+
   const [viewType, setViewType] = useQueryState<ViewType>(
     "viewType",
     parseAsStringLiteral(viewTypeOptions).withDefault("grid")
   );
+  const [itemType, setItemType] = useQueryState<ItemType>(
+    "type",
+    parseAsStringLiteral(itemTypeOptions).withDefault("artists").withOptions({ clearOnDefault: false })
+  );
+
+  const maxItems = 250;
+
+  // Fetch data based on item type
+  const { data, isLoading, error } = useTopItems({
+    itemType,
+    startDate,
+    endDate
+  });
+
+  const title = `Top ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
+
+  const onItemTypeChange = (newItemType: ItemType) => {
+    setItemType(newItemType);
+  };
 
   return (
     <div className="flex-1 px-2 py-4 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <BackNav />
-        <div className="mb-8">
-          {!isStandalone && <h1 className="text-4xl font-bold text-white">{title}</h1>}
-          <div className="mt-4 flex gap-4">
-            <TopItemLink href="/dashboard/top/artists" text="Artists" />
-            <TopItemLink href="/dashboard/top/tracks" text="Tracks" />
-            <TopItemLink href="/dashboard/top/albums" text="Albums" />
-          </div>
-        </div>
+        {/* Title & Controls */}
+        {!isStandalone && (
+          <>
+            <BackNav />
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold text-white">{title}</h1>
+              <div className="mt-4 flex gap-4">
+                <TopItemLink itemType="artists" text="Artists" />
+                <TopItemLink itemType="tracks" text="Tracks" />
+                <TopItemLink itemType="albums" text="Albums" />
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Controls */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="mb-2 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            {/* Item Type Selector */}
+            {isStandalone && <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />}
             {/* Date Range Selector */}
-            <DateRangeSelector dateRange={dateRange} onDateRangeChange={onDateRangeChange} />
+            <DateRangeSelector dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
 
             {/* View Selector */}
             <ViewSelector viewType={viewType} onViewTypeChange={setViewType} />
@@ -101,11 +122,10 @@ export default function TopItemsPage({
           <DateNavigationControls
             dateRange={dateRange}
             currentPeriod={currentPeriod}
-            onPreviousPeriod={onPreviousPeriod}
-            onNextPeriod={onNextPeriod}
+            onPreviousPeriod={handlePreviousPeriod}
+            onNextPeriod={handleNextPeriod}
           />
         </div>
-
         {/* Content */}
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
@@ -115,15 +135,15 @@ export default function TopItemsPage({
           <div className="flex h-64 items-center justify-center">
             <div className="text-red-400">Error loading data. Please try again.</div>
           </div>
-        ) : items && items.length > 0 ? (
+        ) : data && data.length > 0 ? (
           viewType === "grid" ? (
-            <TopItemsGrid items={items} maxItems={maxItems} />
+            <TopItemsGrid items={data} maxItems={maxItems} />
           ) : viewType === "list" ? (
-            <TopItemsList items={items} maxItems={maxItems} />
+            <TopItemsList items={data} maxItems={maxItems} />
           ) : viewType === "pie" ? (
-            <TopItemsPieChart chartTitle={`${title} Distribution`} items={items} maxItems={12} />
+            <TopItemsPieChart chartTitle={`${title} Distribution`} items={data} maxItems={12} />
           ) : (
-            <TopItemsBubbleChart chartTitle={`${title} Bubble`} items={items} maxItems={20} />
+            <TopItemsBubbleChart chartTitle={`${title} Bubble`} items={data} maxItems={20} />
           )
         ) : (
           <div className="flex h-64 items-center justify-center">

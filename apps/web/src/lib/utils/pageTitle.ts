@@ -1,4 +1,15 @@
-export const getPageTitle = (path: string) => {
+export const getPageTitle = (path: string, searchParams: URLSearchParams) => {
+  if (path == "/dashboard/top") {
+    const type = searchParams.get("type");
+    if (type === "tracks") {
+      return "Top Tracks";
+    } else if (type === "artists") {
+      return "Top Artists";
+    } else if (type === "albums") {
+      return "Top Albums";
+    }
+  }
+
   switch (path) {
     case "/":
       return "Trackback";
@@ -6,12 +17,6 @@ export const getPageTitle = (path: string) => {
       return "Trackback";
     case "/dashboard/profile":
       return "Profile";
-    case "/dashboard/top/tracks":
-      return "Top Tracks";
-    case "/dashboard/top/artists":
-      return "Top Artists";
-    case "/dashboard/top/albums":
-      return "Top Albums";
     case "/dashboard/search":
       return "Search";
     case "/dashboard/misc":

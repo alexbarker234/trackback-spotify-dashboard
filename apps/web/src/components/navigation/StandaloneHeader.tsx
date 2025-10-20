@@ -4,11 +4,12 @@ import { getPageTitle } from "@/lib/utils/pageTitle";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function StandaloneHeader({ user }: { user?: { name: string; image?: string } }) {
   const pathname = usePathname();
-  const pageTitle = getPageTitle(pathname);
+  const searchParams = useSearchParams();
+  const pageTitle = getPageTitle(pathname, searchParams);
   const router = useRouter();
 
   const handleBack = () => {

@@ -67,7 +67,7 @@ export default function SlidingIndicatorSelector<T extends string>({
             buttonsRef.current[option.value] = el;
           }}
           onClick={() => onChange(option.value)}
-          className={`relative z-10 flex-grow cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`relative z-10 flex-grow cursor-pointer rounded-lg px-4 py-1 text-sm font-medium transition-colors sm:py-2 ${
             value === option.value ? "text-white" : "text-gray-400 hover:text-white"
           }`}
         >

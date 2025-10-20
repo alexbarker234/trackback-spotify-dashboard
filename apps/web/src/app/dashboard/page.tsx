@@ -36,7 +36,7 @@ async function TopTracksSection() {
     <ItemCarousel
       title="Top Tracks"
       subtitle="Your top tracks from the past 4 weeks"
-      viewMoreUrl="dashboard/top/tracks"
+      viewMoreUrl="dashboard/top?type=tracks"
     >
       {topTracks.map((track, index) => (
         <StreamItemCard
@@ -65,7 +65,7 @@ async function TopArtistsSection() {
     <ItemCarousel
       title="Top Artists"
       subtitle="Your top artists from the past 4 weeks"
-      viewMoreUrl="dashboard/top/artists"
+      viewMoreUrl="dashboard/top?type=artists"
     >
       {topArtists.map((artist, index) => (
         <StreamItemCard
@@ -94,7 +94,7 @@ async function TopAlbumsSection() {
     <ItemCarousel
       title="Top Albums"
       subtitle="Your top albums from the past 4 weeks"
-      viewMoreUrl="dashboard/top/albums"
+      viewMoreUrl="dashboard/top?type=albums"
     >
       {topAlbums.map((album, index) => (
         <StreamItemCard
