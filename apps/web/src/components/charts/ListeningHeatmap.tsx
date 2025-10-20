@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { clampInBounds } from "@/lib/utils/tooltipUtils";
+import { useRef, useState } from "react";
 import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
 
@@ -19,10 +20,10 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
     date: string;
     streamCount: number;
     totalDuration: number;
-    x: number;
-    y: number;
   } | null>(null);
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
   // Create a map for quick lookup of daily data
   const dataMap = new Map(data.map((item) => [item.date, item]));
 
@@ -145,17 +146,57 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
     });
   }
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      if (hoveredDay && tooltipRef.current) {
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+
+        const x = mouseX + 10;
+        const y = mouseY + 10;
+
+        const clampedPosition = clampInBounds(x, y, tooltipRect, containerRect);
+        setMousePosition(clampedPosition);
+      } else {
+        setMousePosition({ x: mouseX, y: mouseY });
+      }
+    }
+  };
+
+  let leaveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  const handleMouseEnter = (day: (typeof yearData)[0]) => {
+    setHoveredDay(day);
+    if (leaveTimeout) {
+      clearTimeout(leaveTimeout);
+      leaveTimeout = null;
+    }
+  };
+
+  const handleMouseLeave = (day: (typeof yearData)[0]) => {
+    leaveTimeout = setTimeout(() => {
+      setHoveredDay((currentDay) => (currentDay?.date === day.date ? null : currentDay));
+    }, 100);
+  };
+
   return (
     <ExpandableChartContainer title="Listening Activity Heatmap" chartHeight="h-fit">
-      <div className="relative">
+      <div
+        className="relative flex h-full flex-col items-center justify-center"
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+      >
         {/* Tooltip */}
         {hoveredDay && (
           <div
-            className="absolute z-10"
+            className="animate-in fade-in-0 pointer-events-none absolute top-0 left-0 z-50 text-nowrap transition-all duration-200 ease-out"
+            ref={tooltipRef}
             style={{
-              left: hoveredDay.x,
-              top: hoveredDay.y,
-              transform: "translate(-50%, -100%)"
+              transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`
             }}
           >
             <ChartTooltip>
@@ -168,47 +209,33 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
           </div>
         )}
 
-        <div className="flex items-start gap-1 overflow-x-auto">
-          {/* Heatmap grid */}
-          <div className="flex-1">
-            {/* Month sections */}
-            <div className="mx-auto flex w-fit gap-2">
-              {months.map((month, monthIndex) => (
-                <div key={monthIndex} className="flex flex-col">
-                  {/* Month label */}
-                  <div className="mb-2 text-center text-xs text-gray-400">{month.monthName}</div>
+        <div className="mx-auto w-fit">
+          {/* Month sections - Responsive grid */}
+          <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
+            {months.map((month, monthIndex) => (
+              <div key={monthIndex} className="flex flex-col">
+                {/* Month label */}
+                <div className="mb-2 text-center text-xs text-gray-400">{month.monthName}</div>
 
-                  {/* Month grid */}
-                  <div className="flex gap-1">
-                    {month.weeks.map((week, weekIndex) => (
-                      <div key={weekIndex} className="flex flex-col gap-1">
-                        {week.map((day, dayIndex) => (
-                          <div
-                            key={`${monthIndex}-${weekIndex}-${dayIndex}`}
-                            className={`h-3 w-3 cursor-pointer rounded-sm transition-all duration-200 hover:ring-2 hover:ring-white/20 ${
-                              day ? getColorIntensity(day.streamCount) : "bg-gray-800"
-                            }`}
-                            onMouseEnter={(e) => {
-                              if (day) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setHoveredDay({
-                                  date: day.date,
-                                  streamCount: day.streamCount,
-                                  totalDuration: day.totalDuration,
-                                  x: rect.left + rect.width / 2,
-                                  y: rect.top
-                                });
-                              }
-                            }}
-                            onMouseLeave={() => setHoveredDay(null)}
-                          />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
+                {/* Month grid */}
+                <div className="flex justify-center gap-1">
+                  {month.weeks.map((week, weekIndex) => (
+                    <div key={weekIndex} className="flex flex-col gap-1">
+                      {week.map((day, dayIndex) => (
+                        <div
+                          key={`${monthIndex}-${weekIndex}-${dayIndex}`}
+                          className={`h-3 w-3 cursor-pointer rounded-sm transition-all duration-200 hover:ring-2 hover:ring-white/20 ${
+                            day ? getColorIntensity(day.streamCount) : "bg-white/10"
+                          }`}
+                          onMouseEnter={() => day && handleMouseEnter(day)}
+                          onMouseLeave={() => day && handleMouseLeave(day)}
+                        />
+                      ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -216,7 +243,7 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
         <div className="mt-4 flex items-center justify-end gap-2 text-xs text-gray-400">
           <span>Less</span>
           <div className="flex gap-1">
-            <div className="h-3 w-3 rounded-sm bg-gray-800"></div>
+            <div className="h-3 w-3 rounded-sm bg-white/10"></div>
             <div className="h-3 w-3 rounded-sm bg-purple-900"></div>
             <div className="h-3 w-3 rounded-sm bg-purple-700"></div>
             <div className="h-3 w-3 rounded-sm bg-purple-500"></div>
