@@ -2,6 +2,7 @@
 
 import { DailyData, useHeatmapData } from "@/hooks/useHeatmapData";
 import { MONTH_NAMES_SHORT } from "@/lib/constants";
+import { chunkArray } from "@/lib/utils/arrayUtils";
 import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import { useRef, useState } from "react";
 import DateNavigationControls from "../DateNavigationControls";
@@ -17,7 +18,6 @@ const LEGEND_COLORS = [
   "bg-purple-400"
 ];
 
-// Types
 type DayData = {
   date: string;
   streamCount: number;
@@ -75,7 +75,6 @@ function ListeningHeatmapContent({
   isLoading: boolean;
   error: string | null;
 }) {
-  // Refs
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const leaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,7 +82,6 @@ function ListeningHeatmapContent({
   const [hoveredDay, setHoveredDay] = useState<DayData | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  // Helper functions
   const generateYearData = (): DayData[] => {
     const startOfYear = new Date(Date.UTC(currentYear, 0, 1));
     const endOfYear = new Date(Date.UTC(currentYear, 11, 31, 23, 59, 59, 999));
@@ -145,24 +143,6 @@ function ListeningHeatmapContent({
     return months;
   };
 
-  const getColorIntensity = (streamCount: number, maxStreams: number): string => {
-    if (streamCount === 0 || maxStreams === 0) return "bg-white/10";
-
-    const intensity = streamCount / maxStreams;
-    if (intensity <= 0.25) return "bg-purple-900";
-    if (intensity <= 0.5) return "bg-purple-700";
-    if (intensity <= 0.75) return "bg-purple-500";
-    return "bg-purple-400";
-  };
-
-  const chunkArray = <T,>(array: T[], size: number): T[][] => {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
-    }
-    return chunks;
-  };
-
   const formatDate = (dateStr: string): string => {
     return new Date(dateStr).toLocaleDateString("en-US", {
       weekday: "long",
@@ -185,7 +165,7 @@ function ListeningHeatmapContent({
       const clampedPosition = clampInBounds(mouseX + 10, mouseY + 10, tooltipRect, containerRect);
       setMousePosition(clampedPosition);
     } else {
-      setMousePosition({ x: mouseX, y: mouseY });
+      setMousePosition({ x: mouseX + 10, y: mouseY + 10 });
     }
   };
 
@@ -203,7 +183,6 @@ function ListeningHeatmapContent({
     }, 100);
   };
 
-  // Data processing
   const yearData = generateYearData();
   const months = groupDataByMonths(yearData);
   const maxStreams = Math.max(...yearData.map((d) => d.streamCount));
@@ -238,47 +217,85 @@ function ListeningHeatmapContent({
           </ChartTooltip>
         </div>
       )}
-      {/* Heatmap */}
-      <div className="mx-auto w-fit">
-        <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-              <Loading />
+      <HeatmapGrid
+        months={months}
+        maxStreams={maxStreams}
+        isLoading={isLoading}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      />
+      <HeatmapLegend />
+    </div>
+  );
+}
+
+function HeatmapGrid({
+  months,
+  maxStreams,
+  isLoading,
+  onMouseEnter,
+  onMouseLeave
+}: {
+  months: MonthData[];
+  maxStreams: number;
+  isLoading: boolean;
+  onMouseEnter: (day: DayData) => void;
+  onMouseLeave: (day: DayData) => void;
+}) {
+  const getColorIntensity = (streamCount: number, maxStreams: number): string => {
+    if (streamCount === 0 || maxStreams === 0) return "bg-white/10";
+
+    const intensity = streamCount / maxStreams;
+    if (intensity <= 0.25) return "bg-purple-900";
+    if (intensity <= 0.5) return "bg-purple-700";
+    if (intensity <= 0.75) return "bg-purple-500";
+    return "bg-purple-400";
+  };
+
+  return (
+    <div className="mx-auto w-fit">
+      <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+            <Loading />
+          </div>
+        )}
+        {months.map((month, monthIndex) => (
+          <div key={monthIndex} className="flex flex-col">
+            <div className="mb-2 text-center text-xs text-gray-400">{month.monthName}</div>
+            <div className="flex justify-start gap-1">
+              {month.weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-1">
+                  {week.map((day, dayIndex) => (
+                    <div
+                      key={`${monthIndex}-${weekIndex}-${dayIndex}`}
+                      className={`h-3 w-3 cursor-pointer rounded-sm transition-all duration-200 hover:ring-2 hover:ring-white/20 ${
+                        day ? getColorIntensity(day.streamCount, maxStreams) : "bg-white/10"
+                      }`}
+                      onMouseEnter={() => day && onMouseEnter(day)}
+                      onMouseLeave={() => day && onMouseLeave(day)}
+                    />
+                  ))}
+                </div>
+              ))}
             </div>
-          )}
-          {months.map((month, monthIndex) => (
-            <div key={monthIndex} className="flex flex-col">
-              <div className="mb-2 text-center text-xs text-gray-400">{month.monthName}</div>
-              <div className="flex justify-start gap-1">
-                {month.weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex flex-col gap-1">
-                    {week.map((day, dayIndex) => (
-                      <div
-                        key={`${monthIndex}-${weekIndex}-${dayIndex}`}
-                        className={`h-3 w-3 cursor-pointer rounded-sm transition-all duration-200 hover:ring-2 hover:ring-white/20 ${
-                          day ? getColorIntensity(day.streamCount, maxStreams) : "bg-white/10"
-                        }`}
-                        onMouseEnter={() => day && handleMouseEnter(day)}
-                        onMouseLeave={() => day && handleMouseLeave(day)}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-      {/* Legend */}
-      <div className="mt-4 flex items-center justify-end gap-2 text-xs text-gray-400">
-        <span>Less</span>
-        <div className="flex gap-1">
-          {LEGEND_COLORS.map((color, index) => (
-            <div key={index} className={`h-3 w-3 rounded-sm ${color}`} />
-          ))}
-        </div>
-        <span>More</span>
+    </div>
+  );
+}
+
+function HeatmapLegend() {
+  return (
+    <div className="mt-4 flex items-center justify-end gap-2 text-xs text-gray-400">
+      <span>Less</span>
+      <div className="flex gap-1">
+        {LEGEND_COLORS.map((color, index) => (
+          <div key={index} className={`h-3 w-3 rounded-sm ${color}`} />
+        ))}
       </div>
+      <span>More</span>
     </div>
   );
 }
