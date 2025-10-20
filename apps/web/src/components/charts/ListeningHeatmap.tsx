@@ -1,21 +1,14 @@
 "use client";
 
+import { useHeatmapData } from "@/hooks/useHeatmapData";
 import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import { useRef, useState } from "react";
+import DateNavigationControls from "../DateNavigationControls";
+import Loading from "../Loading";
 import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
 
-interface DailyData {
-  date: string;
-  streamCount: number;
-  totalDuration: number;
-}
-
-interface ListeningHeatmapProps {
-  data: DailyData[];
-}
-
-export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
+export default function ListeningHeatmap() {
   const [hoveredDay, setHoveredDay] = useState<{
     date: string;
     streamCount: number;
@@ -24,12 +17,18 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const tooltipRef = useRef<HTMLDivElement>(null);
+
+  // Year navigation state
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
+  // Fetch data using the hook
+  const { data, isLoading, error } = useHeatmapData({ year: currentYear });
+
   // Create a map for quick lookup of daily data
   const dataMap = new Map(data.map((item) => [item.date, item]));
 
-  // Generate a full year of data for the current year
+  // Generate a full year of data for the selected year
   const generateYearData = () => {
-    const currentYear = new Date().getFullYear();
     const startOfYear = new Date(Date.UTC(currentYear, 0, 1)); // January 1st UTC
     const endOfYear = new Date(Date.UTC(currentYear, 11, 31, 23, 59, 59, 999)); // December 31st UTC (end of day)
 
@@ -67,6 +66,21 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
   };
 
   const yearData = generateYearData();
+
+  // Year navigation handlers
+  const handlePreviousYear = () => {
+    setCurrentYear((prev) => prev - 1);
+  };
+
+  const handleNextYear = () => {
+    const currentYearNow = new Date().getFullYear();
+    if (currentYear < currentYearNow) {
+      setCurrentYear((prev) => prev + 1);
+    }
+  };
+
+  // Calculate current period for DateNavigationControls (0 = current year, 1 = 1 year ago, etc.)
+  const currentPeriod = new Date().getFullYear() - currentYear;
 
   // Get the maximum stream count for color intensity calculation
   const maxStreams = Math.max(...yearData.map((d) => d.streamCount));
@@ -183,8 +197,101 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
     }, 100);
   };
 
+  // Render the heatmap grid (used for both loading and loaded states)
+  const renderHeatmapGrid = () => (
+    <div className="mx-auto w-fit">
+      {/* Month sections - Responsive grid */}
+      <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
+        {months.map((month, monthIndex) => (
+          <div key={monthIndex} className="flex flex-col">
+            {/* Month label */}
+            <div className="mb-2 text-center text-xs text-gray-400">{month.monthName}</div>
+
+            {/* Month grid */}
+            <div className="flex justify-start gap-1">
+              {month.weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-1">
+                  {week.map((day, dayIndex) => (
+                    <div
+                      key={`${monthIndex}-${weekIndex}-${dayIndex}`}
+                      className={`h-3 w-3 cursor-pointer rounded-sm transition-all duration-200 hover:ring-2 hover:ring-white/20 ${
+                        day ? getColorIntensity(day.streamCount) : "bg-white/10"
+                      }`}
+                      onMouseEnter={() => day && handleMouseEnter(day)}
+                      onMouseLeave={() => day && handleMouseLeave(day)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <ExpandableChartContainer title="Listening Activity Heatmap" chartHeight="h-fit">
+        <div className="mx-auto mb-4 w-fit">
+          <DateNavigationControls
+            dateRange="year"
+            currentPeriod={currentPeriod}
+            onPreviousPeriod={handlePreviousYear}
+            onNextPeriod={handleNextYear}
+          />
+        </div>
+        <div className="relative">
+          {renderHeatmapGrid()}
+          {/* Loading overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+            <Loading />
+          </div>
+        </div>
+        {/* Legend */}
+        <div className="mt-4 flex items-center justify-end gap-2 text-xs text-gray-400">
+          <span>Less</span>
+          <div className="flex gap-1">
+            <div className="h-3 w-3 rounded-sm bg-white/10"></div>
+            <div className="h-3 w-3 rounded-sm bg-purple-900"></div>
+            <div className="h-3 w-3 rounded-sm bg-purple-700"></div>
+            <div className="h-3 w-3 rounded-sm bg-purple-500"></div>
+            <div className="h-3 w-3 rounded-sm bg-purple-400"></div>
+          </div>
+          <span>More</span>
+        </div>
+      </ExpandableChartContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <ExpandableChartContainer title="Listening Activity Heatmap" chartHeight="h-fit">
+        <div className="mx-auto mb-4 w-fit">
+          <DateNavigationControls
+            dateRange="year"
+            currentPeriod={currentPeriod}
+            onPreviousPeriod={handlePreviousYear}
+            onNextPeriod={handleNextYear}
+          />
+        </div>
+        <div className="flex h-32 items-center justify-center">
+          <div className="text-red-400">Error: {error}</div>
+        </div>
+      </ExpandableChartContainer>
+    );
+  }
+
   return (
     <ExpandableChartContainer title="Listening Activity Heatmap" chartHeight="h-fit">
+      <div className="mx-auto mb-4 w-fit">
+        <DateNavigationControls
+          dateRange="year"
+          currentPeriod={currentPeriod}
+          onPreviousPeriod={handlePreviousYear}
+          onNextPeriod={handleNextYear}
+        />
+      </div>
       <div
         className="relative flex h-full flex-col items-center justify-center"
         ref={containerRef}
@@ -209,35 +316,7 @@ export default function ListeningHeatmap({ data }: ListeningHeatmapProps) {
           </div>
         )}
 
-        <div className="mx-auto w-fit">
-          {/* Month sections - Responsive grid */}
-          <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
-            {months.map((month, monthIndex) => (
-              <div key={monthIndex} className="flex flex-col">
-                {/* Month label */}
-                <div className="mb-2 text-center text-xs text-gray-400">{month.monthName}</div>
-
-                {/* Month grid */}
-                <div className="flex justify-center gap-1">
-                  {month.weeks.map((week, weekIndex) => (
-                    <div key={weekIndex} className="flex flex-col gap-1">
-                      {week.map((day, dayIndex) => (
-                        <div
-                          key={`${monthIndex}-${weekIndex}-${dayIndex}`}
-                          className={`h-3 w-3 cursor-pointer rounded-sm transition-all duration-200 hover:ring-2 hover:ring-white/20 ${
-                            day ? getColorIntensity(day.streamCount) : "bg-white/10"
-                          }`}
-                          onMouseEnter={() => day && handleMouseEnter(day)}
-                          onMouseLeave={() => day && handleMouseLeave(day)}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {renderHeatmapGrid()}
 
         {/* Legend */}
         <div className="mt-4 flex items-center justify-end gap-2 text-xs text-gray-400">

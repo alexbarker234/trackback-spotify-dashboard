@@ -9,7 +9,7 @@ import { useState } from "react";
 
 type DateRange = "4weeks" | "6months" | "lifetime";
 
-export default function ArtistRankingPage() {
+export default function MiscPageClient() {
   const [dateRange, setDateRange] = useState<DateRange>("4weeks");
   const [currentPeriod, setCurrentPeriod] = useState(0);
 
