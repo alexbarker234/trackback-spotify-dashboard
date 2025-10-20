@@ -159,7 +159,7 @@ export default async function Home() {
         <div className="bg-black/10 backdrop-blur-sm">
           <div className="mx-auto flex max-w-7xl items-center space-x-4 px-4 py-4 sm:py-16">
             <Image
-              src={session.user.image || "/default-avatar.png"}
+              src={session.user.image}
               alt={session.user.name || "User"}
               width={200}
               height={200}
