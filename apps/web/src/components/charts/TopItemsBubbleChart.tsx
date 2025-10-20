@@ -2,13 +2,14 @@
 
 import { formatDuration } from "@/lib/utils/timeUtils";
 import * as d3 from "d3";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { TopItem } from "../top/TopItemsPage";
+import ChartLegend from "./ChartLegend";
 import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
 import BubbleChart from "./d3/BubbleChart";
-import { BubbleNodeData } from "./d3/types";
+import { BubbleNodeData } from "./d3/BubbleNode";
 
 interface TopItemsBubbleChartProps {
   items: TopItem[];
@@ -23,7 +24,7 @@ function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxIte
   const [chartSize, setChartSize] = useState({ width: 400, height: 400 });
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
+  const router = useRouter();
   const topItems = items.slice(0, maxItems);
   const maxStreams = Math.max(...topItems.map((item) => Number(item.streams)));
 
@@ -100,12 +101,12 @@ function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxIte
 
   const handleNodeClick = (node: BubbleNodeData) => {
     if (node.href) {
-      window.open(node.href, "_blank");
+      router.push(node.href);
     }
   };
 
   return (
-    <div className="flex h-full w-full items-center justify-center" ref={containerRef}>
+    <div className="flex h-full w-full items-center justify-center overflow-hidden" ref={containerRef}>
       <div className="relative">
         <BubbleChart
           data={bubbleData}
@@ -114,7 +115,6 @@ function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxIte
           onNodeHover={handleNodeHover}
           onNodeClick={handleNodeClick}
         />
-
         {isHovering && hoveredItem && (
           <div
             ref={tooltipRef}
@@ -158,34 +158,7 @@ export default function TopItemsBubbleChart({ items, chartTitle, maxItems = 20 }
     <ExpandableChartContainer title={chartTitle} chartHeight="h-[700px] sm:h-[500px]">
       <div className="relative flex h-full flex-col">
         <BubbleChartContent items={items} maxItems={maxItems} />
-
-        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {items.slice(0, 12).map((item, index) => {
-            const totalStreams = items.reduce((sum, item) => sum + Number(item.streams), 0);
-            const percentage = ((Number(item.streams) / totalStreams) * 100).toFixed(1);
-
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1 transition-all hover:bg-white/10"
-              >
-                <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
-                {item.imageUrl && (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="aspect-square h-8 flex-shrink-0 rounded object-cover"
-                  />
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-white">{item.name}</div>
-                  <div className="text-xs text-gray-400">{percentage}%</div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <ChartLegend data={items} colors={colors} />
       </div>
     </ExpandableChartContainer>
   );

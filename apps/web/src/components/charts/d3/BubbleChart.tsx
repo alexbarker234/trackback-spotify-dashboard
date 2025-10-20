@@ -2,8 +2,14 @@
 
 import * as d3 from "d3";
 import React, { useCallback, useRef } from "react";
-import BubbleNode from "./BubbleNode";
-import { BubbleChartProps, BubbleNodeData } from "./types";
+import BubbleNode, { BubbleNodeData } from "./BubbleNode";
+export interface BubbleChartProps {
+  data: BubbleNodeData[];
+  width?: number;
+  height?: number;
+  onNodeClick?: (node: BubbleNodeData) => void;
+  onNodeHover?: (node: BubbleNodeData | null) => void;
+}
 
 export default function BubbleChart({ data, width = 600, height = 400, onNodeClick, onNodeHover }: BubbleChartProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);

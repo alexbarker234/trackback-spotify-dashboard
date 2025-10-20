@@ -1,6 +1,20 @@
 import * as d3 from "d3";
 import React, { useRef } from "react";
-import { BubbleNodeData } from "./types";
+
+export interface BubbleNodeData {
+  id: string;
+  name: string;
+  value: number;
+  x: number;
+  y: number;
+  radius: number;
+  imageUrl?: string;
+  href?: string;
+  subtitle?: string;
+  streams?: number;
+  durationMs?: number;
+  [key: string]: string | number | undefined;
+}
 
 interface BubbleNodeProps {
   node: BubbleNodeData;
@@ -34,6 +48,15 @@ export default function BubbleNode({
       onMouseOut={onMouseOut}
       onClick={(e) => onClick?.(e, node)}
     >
+      <animateTransform
+        attributeName="transform"
+        type="scale"
+        values="0;1"
+        dur="0.3s"
+        begin="0s"
+        fill="freeze"
+        additive="sum"
+      />
       {node.imageUrl ? (
         <>
           {/* Define clipping path for the image */}
@@ -51,7 +74,11 @@ export default function BubbleNode({
             x={-node.radius}
             y={-node.radius}
             clipPath={`url(#clip-${node.id})`}
-            style={{ objectFit: "cover" }}
+            style={{
+              objectFit: "cover",
+              objectPosition: "center"
+            }}
+            preserveAspectRatio="xMidYMid slice"
           />
 
           {/* Border circle */}
