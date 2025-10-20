@@ -3,6 +3,7 @@
 import ArtistRankingChart from "@/components/charts/ArtistRankingChart";
 import DateNavigationControls from "@/components/DateNavigationControls";
 import DateRangeSelector from "@/components/DateRangeSelector";
+import Loading from "@/components/Loading";
 import { useArtistRanking } from "@/hooks/useArtistRanking";
 import { useState } from "react";
 
@@ -52,7 +53,7 @@ export default function ArtistRankingPage() {
         {/* Chart */}
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <div className="text-gray-400">Loading...</div>
+            <Loading />
           </div>
         ) : error ? (
           <div className="flex h-64 items-center justify-center">
