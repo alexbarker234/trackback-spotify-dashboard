@@ -22,7 +22,7 @@ interface Tab {
 const tabs: Tab[] = [
   { name: "Home", path: "/dashboard", icon: faHome },
   { name: "Trends", path: "/dashboard/misc", icon: faChartLine },
-  { name: "Dashboard", path: "/dashboard/top/tracks", icon: faTableColumns },
+  { name: "Dashboard", path: "/dashboard/top", icon: faTableColumns },
   { name: "Search", path: "/dashboard/search", icon: faMagnifyingGlass }
 ];
 
