@@ -80,10 +80,12 @@ type GetDailyStreamDataOptions = {
   albumId?: string;
   trackIsrc?: string;
   days?: number;
+  startDate?: Date;
+  endDate?: Date;
 };
 
 export async function getDailyStreamData(options: GetDailyStreamDataOptions = {}) {
-  const { artistId, albumId, trackIsrc, days = -1 } = options;
+  const { artistId, albumId, trackIsrc, days = -1, startDate, endDate } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
@@ -95,13 +97,17 @@ export async function getDailyStreamData(options: GetDailyStreamDataOptions = {}
       whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
     }
 
-    let startDate: Date | null = null;
-
-    // Only add date filter if days is not -1 (get all data)
-    if (days !== -1) {
-      startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+    // Handle date filtering - priority: startDate/endDate > days > all data
+    if (startDate) {
       whereConditions.push(gte(listen.playedAt, startDate));
+    } else if (days !== -1) {
+      const calculatedStartDate = new Date();
+      calculatedStartDate.setDate(calculatedStartDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, calculatedStartDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
     }
 
     const dailyStreams = await db
