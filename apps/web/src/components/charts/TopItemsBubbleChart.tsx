@@ -1,8 +1,8 @@
 "use client";
 
 import { formatDuration } from "@/lib/utils/timeUtils";
+import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import * as d3 from "d3";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { TopItem } from "../top/TopItemsPage";
 import ChartLegend from "./ChartLegend";
@@ -22,9 +22,11 @@ function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxIte
   const [hoveredItem, setHoveredItem] = useState<BubbleNodeData | null>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [chartSize, setChartSize] = useState({ width: 400, height: 400 });
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+
   const topItems = items.slice(0, maxItems);
   const maxStreams = Math.max(...topItems.map((item) => Number(item.streams)));
 
@@ -99,56 +101,73 @@ function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxIte
     setIsHovering(!!node);
   };
 
-  const handleNodeClick = (node: BubbleNodeData) => {
-    if (node.href) {
-      router.push(node.href);
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      if (isHovering && tooltipRef.current) {
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+
+        const x = mouseX + 10;
+        const y = mouseY + 10;
+
+        const clampedPosition = clampInBounds(x, y, tooltipRect, containerRect);
+        setMousePosition(clampedPosition);
+      } else {
+        setMousePosition({ x: mouseX, y: mouseY });
+      }
     }
   };
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden" ref={containerRef}>
+    <div
+      className="flex h-full w-full items-center justify-center overflow-hidden"
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+    >
       <div className="relative">
         <BubbleChart
           data={bubbleData}
           width={chartSize.width}
           height={chartSize.height}
           onNodeHover={handleNodeHover}
-          onNodeClick={handleNodeClick}
         />
-        {isHovering && hoveredItem && (
-          <div
-            ref={tooltipRef}
-            className="animate-in fade-in-0 pointer-events-none absolute top-4 left-4 z-50 text-nowrap transition-all duration-200 ease-out"
-          >
-            <ChartTooltip>
-              <div className="flex items-center gap-3">
-                {hoveredItem.imageUrl && (
-                  <img
-                    src={hoveredItem.imageUrl}
-                    alt={hoveredItem.name}
-                    className="h-12 w-12 rounded-lg object-cover"
-                  />
-                )}
-                <div>
-                  <p className="text-sm font-medium text-white">{hoveredItem.name}</p>
-                  {hoveredItem.subtitle && <p className="text-xs text-gray-300">{hoveredItem.subtitle}</p>}
-                  <p className="text-white">
-                    <span className="text-gray-400">Streams: </span>
-                    {hoveredItem.streams?.toLocaleString()}
-                  </p>
-                  <p className="text-white">
-                    <span className="text-gray-400">Duration: </span>
-                    {hoveredItem.durationMs && formatDuration(hoveredItem.durationMs)}
-                  </p>
-                  <p className="text-sm font-medium text-pink-400">
-                    {hoveredItem.streams && ((hoveredItem.streams / maxStreams) * 100).toFixed(1)}% of max
-                  </p>
-                </div>
-              </div>
-            </ChartTooltip>
-          </div>
-        )}
       </div>
+      {isHovering && hoveredItem && (
+        <div
+          ref={tooltipRef}
+          className="animate-in fade-in-0 pointer-events-none absolute top-0 left-0 z-50 text-nowrap transition-all duration-200 ease-out"
+          style={{
+            transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`
+          }}
+        >
+          <ChartTooltip>
+            <div className="flex items-center gap-3">
+              {hoveredItem.imageUrl && (
+                <img src={hoveredItem.imageUrl} alt={hoveredItem.name} className="h-12 w-12 rounded-lg object-cover" />
+              )}
+              <div>
+                <p className="text-sm font-medium text-white">{hoveredItem.name}</p>
+                {hoveredItem.subtitle && <p className="text-xs text-gray-300">{hoveredItem.subtitle}</p>}
+                <p className="text-white">
+                  <span className="text-gray-400">Streams: </span>
+                  {hoveredItem.streams?.toLocaleString()}
+                </p>
+                <p className="text-white">
+                  <span className="text-gray-400">Duration: </span>
+                  {hoveredItem.durationMs && formatDuration(hoveredItem.durationMs)}
+                </p>
+                <p className="text-sm font-medium text-pink-400">
+                  {hoveredItem.streams && ((hoveredItem.streams / maxStreams) * 100).toFixed(1)}% of max
+                </p>
+              </div>
+            </div>
+          </ChartTooltip>
+        </div>
+      )}
     </div>
   );
 }

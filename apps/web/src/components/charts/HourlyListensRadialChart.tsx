@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils/cn";
 import { formatDuration } from "@/lib/utils/timeUtils";
+import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import { useEffect, useRef, useState } from "react";
 import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
@@ -106,22 +107,11 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
       const containerRect = containerRef.current.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
 
-      let x = mouseX + 10;
-      let y = mouseY + 10;
+      const x = mouseX + 10;
+      const y = mouseY + 10;
 
-      // Keep the tooltip within the right and bottom bounds of the container
-      if (x + tooltipRect.width > containerRect.width) {
-        x = containerRect.width - tooltipRect.width;
-      }
-      if (y + tooltipRect.height > containerRect.height) {
-        y = containerRect.height - tooltipRect.height;
-      }
-
-      // Keep the tooltip within the top and left bounds of the container
-      x = Math.max(0, x);
-      y = Math.max(0, y);
-
-      setTooltipPosition({ x, y });
+      const clampedPosition = clampInBounds(x, y, tooltipRect, containerRect);
+      setTooltipPosition(clampedPosition);
     }
   };
 
