@@ -1,6 +1,7 @@
 "use client";
 
 import ErrorPage from "@/components/ErrorPage";
+import Loading from "@/components/Loading";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -18,7 +19,7 @@ function AuthErrorContent() {
 
 export default function AuthErrorPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<Loading />}>
       <AuthErrorContent />
     </Suspense>
   );

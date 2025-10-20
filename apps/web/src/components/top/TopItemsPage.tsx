@@ -12,6 +12,7 @@ import TopItemsPieChart from "../charts/TopItemsPieChart";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
 import StreamItemCard from "../itemCards/StreamItemCard";
+import Loading from "../Loading";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
 
 export type TopItem = {
@@ -108,7 +109,7 @@ export default function TopItemsPage({
         {/* Content */}
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <div className="text-gray-400">Loading...</div>
+            <Loading />
           </div>
         ) : error ? (
           <div className="flex h-64 items-center justify-center">
