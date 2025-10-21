@@ -4,6 +4,7 @@ import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
+import ListeningHeatmap from "@/components/charts/ListeningHeatmap";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
@@ -23,7 +24,11 @@ import { getTopAlbums } from "@workspace/core/queries/albums";
 import { getArtistData } from "@workspace/core/queries/artists";
 import { Suspense } from "react";
 
-async function ArtistHeader({ artistData }: { artistData: Awaited<ReturnType<typeof getArtistData>> }) {
+async function ArtistHeader({
+  artistData
+}: {
+  artistData: Awaited<ReturnType<typeof getArtistData>>;
+}) {
   const { artist } = artistData;
   return (
     <ItemHeader
@@ -40,19 +45,23 @@ async function StatsSection({ artistId }: { artistId: string }) {
 }
 
 async function ChartsSection({ artistId, artistName }: { artistId: string; artistName: string }) {
-  const [dailyStreamData, cumulativeStreamData, yearlyPercentageData, hourlyListenData] = await Promise.all([
-    getDailyStreamData({ artistId }),
-    getCumulativeStreamData({ artistId }),
-    getYearlyPercentageData({ artistId }),
-    getHourlyListenData({ artistId })
-  ]);
+  const [dailyStreamData, cumulativeStreamData, yearlyPercentageData, hourlyListenData] =
+    await Promise.all([
+      getDailyStreamData({ artistId }),
+      getCumulativeStreamData({ artistId }),
+      getYearlyPercentageData({ artistId }),
+      getHourlyListenData({ artistId })
+    ]);
 
   return (
     <>
       {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
       {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
-      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={artistName} />}
+      {yearlyPercentageData.length > 0 && (
+        <YearlyPercentageChart data={yearlyPercentageData} itemName={artistName} />
+      )}
       {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
+      <ListeningHeatmap artistId={artistId} />
     </>
   );
 }

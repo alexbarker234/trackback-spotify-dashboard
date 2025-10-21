@@ -11,10 +11,13 @@ export interface DailyData {
 
 export interface UseHeatmapDataOptions {
   year?: number;
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
 }
 
 export function useHeatmapData(options: UseHeatmapDataOptions = {}) {
-  const { year } = options;
+  const { year, artistId, albumId, trackIsrc } = options;
   const [data, setData] = useState<DailyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +32,15 @@ export function useHeatmapData(options: UseHeatmapDataOptions = {}) {
         const params: { [key: string]: string } = {};
         if (year) {
           params["year"] = year.toString();
+        }
+        if (artistId) {
+          params["artistId"] = artistId;
+        }
+        if (albumId) {
+          params["albumId"] = albumId;
+        }
+        if (trackIsrc) {
+          params["trackIsrc"] = trackIsrc;
         }
 
         const response = await axios.get<DailyData[]>("/api/heatmap", { params });
@@ -47,7 +59,7 @@ export function useHeatmapData(options: UseHeatmapDataOptions = {}) {
     };
 
     fetchData();
-  }, [year]);
+  }, [year, artistId, albumId, trackIsrc]);
 
   return { data, isLoading, error };
 }

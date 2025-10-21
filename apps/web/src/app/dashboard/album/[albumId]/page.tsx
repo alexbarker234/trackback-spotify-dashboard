@@ -4,6 +4,7 @@ import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
 import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
+import ListeningHeatmap from "@/components/charts/ListeningHeatmap";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
@@ -41,19 +42,23 @@ async function StatsSection({ albumId }: { albumId: string }) {
 }
 
 async function ChartsSection({ albumId, albumName }: { albumId: string; albumName: string }) {
-  const [dailyStreamData, cumulativeStreamData, yearlyPercentageData, hourlyListenData] = await Promise.all([
-    getDailyStreamData({ albumId }),
-    getCumulativeStreamData({ albumId }),
-    getYearlyPercentageData({ albumId }),
-    getHourlyListenData({ albumId })
-  ]);
+  const [dailyStreamData, cumulativeStreamData, yearlyPercentageData, hourlyListenData] =
+    await Promise.all([
+      getDailyStreamData({ albumId }),
+      getCumulativeStreamData({ albumId }),
+      getYearlyPercentageData({ albumId }),
+      getHourlyListenData({ albumId })
+    ]);
 
   return (
     <>
       {dailyStreamData.length > 0 && <DailyStreamChart data={dailyStreamData} />}
       {cumulativeStreamData.length > 0 && <CumulativeStreamChart data={cumulativeStreamData} />}
-      {yearlyPercentageData.length > 0 && <YearlyPercentageChart data={yearlyPercentageData} itemName={albumName} />}
+      {yearlyPercentageData.length > 0 && (
+        <YearlyPercentageChart data={yearlyPercentageData} itemName={albumName} />
+      )}
       {hourlyListenData.length > 0 && <HourlyListensRadialChart data={hourlyListenData} />}
+      <ListeningHeatmap albumId={albumId} />
     </>
   );
 }

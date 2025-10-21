@@ -15,6 +15,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const year = searchParams.get("year");
+    const artistId = searchParams.get("artistId");
+    const albumId = searchParams.get("albumId");
+    const trackIsrc = searchParams.get("trackIsrc");
 
     let startDate: Date | undefined;
     let endDate: Date | undefined;
@@ -30,6 +33,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const data = await getDailyStreamData({
+      artistId: artistId || undefined,
+      albumId: albumId || undefined,
+      trackIsrc: trackIsrc || undefined,
       startDate,
       endDate
     });

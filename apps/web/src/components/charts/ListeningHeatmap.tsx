@@ -31,10 +31,21 @@ type MonthData = {
   weeks: Array<Array<DayData | null>>;
 };
 
-export default function ListeningHeatmap() {
+interface ListeningHeatmapProps {
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
+}
+
+export default function ListeningHeatmap({ artistId, albumId, trackIsrc }: ListeningHeatmapProps) {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const currentPeriod = new Date().getFullYear() - currentYear;
-  const { data, isLoading, error } = useHeatmapData({ year: currentYear });
+  const { data, isLoading, error } = useHeatmapData({
+    year: currentYear,
+    artistId,
+    albumId,
+    trackIsrc
+  });
 
   const handlePreviousYear = () => setCurrentYear((prev) => prev - 1);
   const handleNextYear = () => {
