@@ -48,6 +48,9 @@ export default function UserProfile({ userInfo }: { userInfo: { username: string
     { href: "/dashboard/import", icon: faFileImport, label: "Import" }
     //{ href: "/settings", icon: FaCog, label: "Settings" }
   ];
+  if (process.env.NODE_ENV === "development") {
+    menuItems.push({ href: "/dashboard/test", icon: faMagnifyingGlass, label: "Test" });
+  }
 
   menuItems.push({
     onClick: async () => {

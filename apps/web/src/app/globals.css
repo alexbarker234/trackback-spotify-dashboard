@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --gradient-primary: linear-gradient(to bottom right, #111827, #1f193c, #111827);
 }
 
 @theme {
@@ -23,6 +24,14 @@
 }
 @layer components {
   .bg-gradient-primary {
-    background-image: linear-gradient(to bottom right, #111827, #1f193c, #111827);
+    background: var(--gradient-primary);
   }
+}
+
+html:before {
+  content: "";
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  background: var(--gradient-primary);
 }
