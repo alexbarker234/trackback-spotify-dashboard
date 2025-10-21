@@ -28,9 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body
           className={`${poppins.variable} ${poppins.className} font-poppins relative flex min-h-screen flex-col text-zinc-100`}
         >
-          <div className="bg-gradient-primary flex h-full min-h-0 flex-grow flex-col">
+          <div className="flex h-full min-h-0 flex-grow flex-col">
             <Header />
-            <main className="flex min-h-0 w-full flex-grow flex-col overflow-x-hidden pb-16 sm:pb-0">{children}</main>
+            <main className="flex min-h-0 w-full flex-grow flex-col overflow-x-hidden pb-16 sm:pb-0">
+              {children}
+            </main>
             <TabsNavigation />
           </div>
         </body>
