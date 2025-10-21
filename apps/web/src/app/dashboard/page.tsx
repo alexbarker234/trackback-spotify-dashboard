@@ -5,11 +5,16 @@ import StreamItemCard from "@/components/itemCards/StreamItemCard";
 import ItemCarousel from "@/components/ItemCarousel";
 import Loading from "@/components/Loading";
 import NowPlaying from "@/components/NowPlaying";
+import ListeningAnalytics from "@/components/statsGrid/ListeningAnalytics";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
 import { faCalendar, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getTopAlbums } from "@workspace/core/queries/albums";
+import {
+  getLongestListeningSession,
+  getLongestListeningStreak
+} from "@workspace/core/queries/analytics";
 import { getTopArtists } from "@workspace/core/queries/artists";
 import {
   getBasicListenStats,
@@ -27,7 +32,7 @@ function OnThisDaySection() {
   return (
     <Link
       href="/dashboard/throwback"
-      className="group block rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-900/20 to-pink-900/20 p-6 backdrop-blur-sm transition-all duration-300 hover:from-purple-900/30 hover:to-pink-900/30"
+      className="group block rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 p-6 backdrop-blur-sm transition-all duration-300 hover:from-purple-900/30 hover:to-pink-900/30"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -52,8 +57,17 @@ function OnThisDaySection() {
 }
 
 async function MetricsSection() {
-  const listenStats = await getBasicListenStats();
-  return <ListeningMetricsGrid stats={listenStats} />;
+  const [listenStats, longestStreak, longestSession] = await Promise.all([
+    getBasicListenStats(),
+    getLongestListeningStreak(),
+    getLongestListeningSession()
+  ]);
+  return (
+    <div className="flex flex-col gap-4 lg:gap-6">
+      <ListeningMetricsGrid stats={listenStats} />
+      <ListeningAnalytics stats={{ longestStreak, longestSession }} />
+    </div>
+  );
 }
 
 async function TopTracksSection() {
