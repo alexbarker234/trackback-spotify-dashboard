@@ -1,6 +1,7 @@
 "use client";
 
 import ArtistRankingChart from "@/components/charts/ArtistRankingChart";
+import ListeningHeatmap from "@/components/charts/ListeningHeatmap";
 import DateNavigationControls from "@/components/DateNavigationControls";
 import DateRangeSelector from "@/components/DateRangeSelector";
 import Loading from "@/components/Loading";
@@ -66,6 +67,11 @@ export default function MiscPageClient() {
             <div className="text-gray-400">No data available for this period</div>
           </div>
         )}
+
+        {/* Listening Heatmap */}
+        <div className="mt-12">
+          <ListeningHeatmap />
+        </div>
       </div>
     </div>
   );
