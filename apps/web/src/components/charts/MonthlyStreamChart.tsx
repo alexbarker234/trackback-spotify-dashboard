@@ -34,13 +34,11 @@ function MonthlyStreamChartContent({ data }: MonthlyStreamChartProps) {
 
   useEffect(() => {
     const container = containerRef.current;
-    console.log(container);
     if (!container) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        console.log(width, height);
         setIsVertical(height > width);
       }
     });
