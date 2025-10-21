@@ -4,6 +4,7 @@ import { formatDuration } from "@/lib/utils/timeUtils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
+import ResizableChartContent from "./ResizableChartContent";
 
 interface ArtistRankingData {
   artistId: string;
@@ -18,6 +19,31 @@ interface ArtistRankingChartProps {
 }
 
 export default function ArtistRankingChart({ data }: ArtistRankingChartProps) {
+  const chartData = data.slice(0, 15).map((artist, index) => ({
+    ...artist,
+    rank: index + 1,
+    displayName:
+      artist.artistName?.length > 15
+        ? `${artist.artistName?.substring(0, 15)}...`
+        : artist.artistName
+  }));
+
+  return (
+    <ExpandableChartContainer title="Top Artists by Streams" chartHeight="h-[500px]">
+      <ResizableChartContent>
+        {(isVertical) => <ArtistRankingChartContent data={chartData} isVertical={isVertical} />}
+      </ResizableChartContent>
+    </ExpandableChartContainer>
+  );
+}
+
+function ArtistRankingChartContent({
+  data,
+  isVertical
+}: {
+  data: ArtistRankingData[];
+  isVertical: boolean;
+}) {
   const formatDurationFromMS = (ms: number) => {
     return formatDuration(ms);
   };
@@ -58,38 +84,56 @@ export default function ArtistRankingChart({ data }: ArtistRankingChartProps) {
     return null;
   };
 
-  // Take top 15 for better visualization in column chart
-  const chartData = data.slice(0, 15).map((artist, index) => ({
-    ...artist,
-    rank: index + 1,
-    displayName: artist.artistName?.length > 15 ? `${artist.artistName?.substring(0, 15)}...` : artist.artistName
-  }));
-
   return (
-    <ExpandableChartContainer title="Top Artists by Streams" chartHeight="h-[500px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={chartData}
-          margin={{
-            top: 10,
-            right: 30,
-            left: 20,
-            bottom: 60
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-          <XAxis dataKey="displayName" stroke="#9CA3AF" fontSize={12} angle={-45} textAnchor="end" height={60} />
-          <YAxis stroke="#9CA3AF" fontSize={12} />
-          <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="streamCount" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-          <defs>
-            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ec4899" stopOpacity={1} />
-              <stop offset="100%" stopColor="#a855f7" stopOpacity={1} />
-            </linearGradient>
-          </defs>
-        </BarChart>
-      </ResponsiveContainer>
-    </ExpandableChartContainer>
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={data}
+        layout={isVertical ? "vertical" : "horizontal"}
+        margin={{
+          top: 10,
+          right: 10,
+          left: -10,
+          bottom: isVertical ? 0 : 30
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+        {isVertical ? (
+          <>
+            <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
+            <YAxis
+              type="category"
+              dataKey="displayName"
+              stroke="#9CA3AF"
+              fontSize={12}
+              width={120}
+            />
+          </>
+        ) : (
+          <>
+            <XAxis
+              dataKey="displayName"
+              stroke="#9CA3AF"
+              fontSize={12}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis stroke="#9CA3AF" fontSize={12} />
+          </>
+        )}
+        <Tooltip content={<CustomTooltip />} />
+        <Bar
+          dataKey="streamCount"
+          fill="url(#colorGradient)"
+          radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+        />
+        <defs>
+          <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ec4899" stopOpacity={1} />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity={1} />
+          </linearGradient>
+        </defs>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }

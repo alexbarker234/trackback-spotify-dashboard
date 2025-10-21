@@ -1,10 +1,10 @@
 "use client";
 
 import { formatDuration } from "@/lib/utils/timeUtils";
-import { useEffect, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
+import ResizableChartContent from "./ResizableChartContent";
 
 interface MonthlyStreamData {
   month: string;
@@ -23,33 +23,20 @@ export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
 
   return (
     <ExpandableChartContainer title="Streams by month">
-      <MonthlyStreamChartContent data={sortedData} />
+      <ResizableChartContent>
+        {(isVertical) => <MonthlyStreamChartContent data={sortedData} isVertical={isVertical} />}
+      </ResizableChartContent>
     </ExpandableChartContainer>
   );
 }
 
-function MonthlyStreamChartContent({ data }: MonthlyStreamChartProps) {
-  const [isVertical, setIsVertical] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        setIsVertical(height > width);
-      }
-    });
-
-    resizeObserver.observe(container);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
+function MonthlyStreamChartContent({
+  data,
+  isVertical
+}: {
+  data: MonthlyStreamData[];
+  isVertical: boolean;
+}) {
   const formatShortMonth = (monthStr: string) => {
     return monthStr.trim().slice(0, 3);
   };
@@ -90,49 +77,47 @@ function MonthlyStreamChartContent({ data }: MonthlyStreamChartProps) {
   };
 
   return (
-    <div ref={containerRef} className="h-full w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          layout={isVertical ? "vertical" : "horizontal"}
-          margin={{
-            top: 10,
-            right: 10,
-            left: -10,
-            bottom: 0
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-          {isVertical ? (
-            <>
-              <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
-              <YAxis
-                type="category"
-                dataKey="month"
-                tickFormatter={formatShortMonth}
-                stroke="#9CA3AF"
-                fontSize={12}
-              />
-            </>
-          ) : (
-            <>
-              <XAxis
-                dataKey="month"
-                tickFormatter={formatShortMonth}
-                stroke="#9CA3AF"
-                fontSize={12}
-              />
-              <YAxis stroke="#9CA3AF" fontSize={12} />
-            </>
-          )}
-          <Tooltip content={<CustomTooltip />} />
-          <Bar
-            dataKey="streamCount"
-            fill="#a855f7"
-            radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={data}
+        layout={isVertical ? "vertical" : "horizontal"}
+        margin={{
+          top: 10,
+          right: 10,
+          left: -10,
+          bottom: 0
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+        {isVertical ? (
+          <>
+            <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
+            <YAxis
+              type="category"
+              dataKey="month"
+              tickFormatter={formatShortMonth}
+              stroke="#9CA3AF"
+              fontSize={12}
+            />
+          </>
+        ) : (
+          <>
+            <XAxis
+              dataKey="month"
+              tickFormatter={formatShortMonth}
+              stroke="#9CA3AF"
+              fontSize={12}
+            />
+            <YAxis stroke="#9CA3AF" fontSize={12} />
+          </>
+        )}
+        <Tooltip content={<CustomTooltip />} />
+        <Bar
+          dataKey="streamCount"
+          fill="#a855f7"
+          radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+        />
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
