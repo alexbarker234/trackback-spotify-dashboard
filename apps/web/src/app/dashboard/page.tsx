@@ -7,6 +7,8 @@ import Loading from "@/components/Loading";
 import NowPlaying from "@/components/NowPlaying";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
+import { faCalendar, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getTopAlbums } from "@workspace/core/queries/albums";
 import { getTopArtists } from "@workspace/core/queries/artists";
 import {
@@ -18,7 +20,36 @@ import {
 import { getTopTracks } from "@workspace/core/queries/tracks";
 import { headers } from "next/headers";
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
+
+function OnThisDaySection() {
+  return (
+    <Link
+      href="/dashboard/throwback"
+      className="group block rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-900/20 to-pink-900/20 p-6 backdrop-blur-sm transition-all duration-300 hover:from-purple-900/30 hover:to-pink-900/30"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="rounded-full bg-gradient-to-br from-purple-500 to-pink-500 p-3 text-2xl transition-transform duration-300 group-hover:scale-110">
+            <FontAwesomeIcon icon={faCalendar} />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-zinc-100 transition-colors duration-300 group-hover:text-purple-300">
+              On This Day
+            </h3>
+            <p className="text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">
+              Discover what you were listening to on this date in previous years
+            </p>
+          </div>
+        </div>
+        <div className="text-2xl text-purple-400 transition-colors duration-300 group-hover:text-purple-300">
+          <FontAwesomeIcon icon={faChevronRight} />
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 async function MetricsSection() {
   const listenStats = await getBasicListenStats();
@@ -113,7 +144,10 @@ async function TopAlbumsSection() {
 }
 
 async function StreamChartsSection() {
-  const [monthlyStreamData, yearlyStreamData] = await Promise.all([getMonthlyStreamData(), getYearlyStreamData()]);
+  const [monthlyStreamData, yearlyStreamData] = await Promise.all([
+    getMonthlyStreamData(),
+    getYearlyStreamData()
+  ]);
 
   if (monthlyStreamData.length === 0 && yearlyStreamData.length === 0) return null;
 
@@ -166,7 +200,9 @@ export default async function Home() {
               className="max-h-48 max-w-48 min-w-0 shrink grow rounded-full"
             />
             <div className="shrink-0">
-              <h2 className="xs:text-2xl text-xl font-bold text-zinc-100 sm:text-3xl">{session.user.name}</h2>
+              <h2 className="xs:text-2xl text-xl font-bold text-zinc-100 sm:text-3xl">
+                {session.user.name}
+              </h2>
               <p className="xs:text-lg text-base text-zinc-400 sm:text-xl">{session.user.email}</p>
             </div>
           </div>
@@ -181,6 +217,9 @@ export default async function Home() {
         <Suspense fallback={<Loading />}>
           <MetricsSection />
         </Suspense>
+
+        {/* On This Day Section */}
+        <OnThisDaySection />
 
         {/* Top Tracks Section */}
         <Suspense fallback={<Loading />}>
