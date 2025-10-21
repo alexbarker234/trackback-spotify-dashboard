@@ -12,7 +12,12 @@ import {
   track,
   trackArtist
 } from "@workspace/database";
-import { AlbumListenStats, ArtistListenStats, BaseListenStats, TrackListenStats } from "../types/listenStatTypes";
+import {
+  AlbumListenStats,
+  ArtistListenStats,
+  BaseListenStats,
+  TrackListenStats
+} from "../types/listenStatTypes";
 
 type GetRecentListensOptions = {
   artistId?: string;
@@ -45,7 +50,9 @@ export async function getRecentListens(options: GetRecentListensOptions = {}) {
         trackIsrc: track.isrc,
         imageUrl: album.imageUrl,
         trackDurationMS: track.durationMS,
-        artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
+        artistNames: sql<
+          string[]
+        >`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
         albumName: album.name
       })
       .from(listen)
@@ -263,7 +270,10 @@ export async function getMonthlyStreamData(options: GetDailyStreamDataOptions = 
       .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
       .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
       .where(and(...whereConditions))
-      .groupBy(sql`to_char(${listen.playedAt}, 'Month')`, sql`extract(month from ${listen.playedAt})`)
+      .groupBy(
+        sql`to_char(${listen.playedAt}, 'Month')`,
+        sql`extract(month from ${listen.playedAt})`
+      )
       .orderBy(sql`extract(month from ${listen.playedAt})`);
 
     // Convert string values to numbers
@@ -371,8 +381,12 @@ export async function getYearlyPercentageData(options: GetYearlyPercentageDataOp
       .orderBy(sql`to_char(${listen.playedAt}, 'YYYY')`);
 
     // Create a map for quick lookup
-    const totalMap = new Map(totalListensPerYear.map((item) => [item.year, Number(item.totalListens)]));
-    const itemMap = new Map(itemListensPerYear.map((item) => [item.year, Number(item.itemListens)]));
+    const totalMap = new Map(
+      totalListensPerYear.map((item) => [item.year, Number(item.totalListens)])
+    );
+    const itemMap = new Map(
+      itemListensPerYear.map((item) => [item.year, Number(item.itemListens)])
+    );
 
     // Combine data and calculate percentages
     const allYears = new Set([...totalMap.keys(), ...itemMap.keys()]);
@@ -550,13 +564,19 @@ async function calculateBaseStats(
   const totalDuration = listens.reduce((sum, l) => sum + l.durationMS, 0);
 
   const yearListens = listens.filter((l) => l.playedAt >= oneYearAgo).length;
-  const yearDuration = listens.filter((l) => l.playedAt >= oneYearAgo).reduce((sum, l) => sum + l.durationMS, 0);
+  const yearDuration = listens
+    .filter((l) => l.playedAt >= oneYearAgo)
+    .reduce((sum, l) => sum + l.durationMS, 0);
 
   const monthListens = listens.filter((l) => l.playedAt >= oneMonthAgo).length;
-  const monthDuration = listens.filter((l) => l.playedAt >= oneMonthAgo).reduce((sum, l) => sum + l.durationMS, 0);
+  const monthDuration = listens
+    .filter((l) => l.playedAt >= oneMonthAgo)
+    .reduce((sum, l) => sum + l.durationMS, 0);
 
   const weekListens = listens.filter((l) => l.playedAt >= oneWeekAgo).length;
-  const weekDuration = listens.filter((l) => l.playedAt >= oneWeekAgo).reduce((sum, l) => sum + l.durationMS, 0);
+  const weekDuration = listens
+    .filter((l) => l.playedAt >= oneWeekAgo)
+    .reduce((sum, l) => sum + l.durationMS, 0);
 
   const firstListen = listens.length > 0 ? listens[listens.length - 1]!.playedAt : null;
   const lastListen = listens.length > 0 ? listens[0]!.playedAt : null;
