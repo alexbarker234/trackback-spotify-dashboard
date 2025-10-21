@@ -24,6 +24,50 @@ A comprehensive Spotify dashboard that visualises and tracks listening history o
 - ⏰ **Date Range Filtering** - Analyse your listening habits across custom time periods
 - 🏆 **Artist Rankings** - Track how your favorite artists' popularity changes over time
 
+## Charts
+
+### 📈 Stream Analytics
+<p>
+  <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/cumulative-streams.png?raw=true" alt="Cumulative Streams Chart" width="400">
+  <br>
+  <em>Cumulative streams over time showing your total listening growth</em>
+</p>
+
+<p>
+  <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/daily-streams.png?raw=true" alt="Daily Streams Chart" width="400">
+  <br>
+  <em>Daily streaming activity to track your listening patterns</em>
+</p>
+<p>
+  <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/streams-by-month.png?raw=true" alt="Monthly Streams Chart" width="400">
+  <br>
+  <em>Monthly breakdown of your listening activity</em>
+</p>
+
+<p>
+  <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/streams-by-year.png?raw=true" alt="Yearly Streams Chart" width="400">
+  <br>
+  <em>Yearly trends showing your music consumption evolution</em>
+</p>
+
+<p>
+  <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/listen-clock.png?raw=true" alt="Listen Clock Chart" width="400">
+  <br>
+  <em>24-hour listening clock showing when you're most active</em>
+</p>
+
+<p>
+  <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/listen-distribution.png?raw=true" alt="Listen Distribution Chart" width="400">
+  <br>
+  <em>Distribution of your listening activity across different time periods</em>
+</p>
+
+<p>
+  <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/heatmap.png?raw=true" alt="Activity Heatmap" width="400">
+  <br>
+  <em>Interactive heatmap visualizing your listening intensity over time</em>
+</p>
+
 ## 📋 Prerequisites
 - **Node.js** 20 or higher
 - **pnpm** 9.15.9 or higher
