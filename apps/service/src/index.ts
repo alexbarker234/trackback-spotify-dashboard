@@ -3,7 +3,9 @@ import { fetchRecentlyPlayedTracksService, populateImportedListensService } from
 
 console.log("🚀 Starting Trackback service...");
 
-if (process.env.USE_EXTERNAL_CRON != "true") {
+const useInternalCron = process.env.USE_EXTERNAL_CRON != "true";
+
+if (useInternalCron) {
   console.log("🕑 Starting Trackback cron service...");
   cron.schedule("*/2 * * * *", fetchRecentlyPlayedTracksService);
   cron.schedule("*/30 * * * *", populateImportedListensService);
@@ -11,13 +13,18 @@ if (process.env.USE_EXTERNAL_CRON != "true") {
   console.log("🕑 Using external cron service...");
 }
 
-// Run initial fetch immediately
-fetchRecentlyPlayedTracksService();
-populateImportedListensService();
+Promise.all([fetchRecentlyPlayedTracksService(), populateImportedListensService()]).then(() => {
+  if (!useInternalCron) {
+    console.log("✅ Fetching complete. Exiting.");
+    process.exit(0);
+  }
+});
 
 process.on("SIGINT", () => {
   console.log(`\n🛑 Shutting down Trackback service...`);
   process.exit(0);
 });
 
-console.log(`⏰ Trackback service is running.`);
+if (useInternalCron) {
+  console.log(`⏰ Trackback service is running.`);
+}
