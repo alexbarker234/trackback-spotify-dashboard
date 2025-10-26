@@ -24,9 +24,20 @@ A comprehensive Spotify dashboard that visualises and tracks listening history o
 - ⏰ **Date Range Filtering** - Analyse your listening habits across custom time periods
 - 🏆 **Artist Rankings** - Track how your favorite artists' popularity changes over time
 
-## Charts
+## 🌐 Example Deployment: How I Host Trackback
 
-### 📈 Stream Analytics
+Here's how I host Trackback in production. Feel free to adapt to your own infrastructure!
+
+### 🗄️ Database
+- [Railway](https://railway.com) - running a PostgreSQL instance
+
+### ⚙️ Backend Service
+- [Railway](https://railway.com) - deploys the service with [scheduled cron jobs](https://docs.railway.com/reference/cron-jobs) to handle periodic sync of listening history from Spotify
+
+### 🌐 Frontend (Web App)
+- [Vercel](https://vercel.com) - easy deployment and global CDN for the Next.js frontend
+
+## 📊 Charts
 <p>
   <img src="https://github.com/alexbarker234/trackback-spotify-dashboard/blob/main/assets/charts/cumulative-streams.png?raw=true" alt="Cumulative Streams Chart" width="400">
   <br>

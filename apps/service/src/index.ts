@@ -1,11 +1,17 @@
 import cron from "node-cron";
 import { fetchRecentlyPlayedTracksService, populateImportedListensService } from "./services";
 
-cron.schedule("*/2 * * * *", fetchRecentlyPlayedTracksService);
-cron.schedule("*/30 * * * *", populateImportedListensService);
+console.log("🚀 Starting Trackback service...");
+
+if (process.env.USE_EXTERNAL_CRON != "true") {
+  console.log("🕑 Starting Trackback cron service...");
+  cron.schedule("*/2 * * * *", fetchRecentlyPlayedTracksService);
+  cron.schedule("*/30 * * * *", populateImportedListensService);
+} else {
+  console.log("🕑 Using external cron service...");
+}
 
 // Run initial fetch immediately
-console.log("🚀 Starting Trackback service...");
 fetchRecentlyPlayedTracksService();
 populateImportedListensService();
 
