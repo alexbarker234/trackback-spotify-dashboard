@@ -9,9 +9,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { WeeklyTopArtist } from "@workspace/core/queries/artists";
-import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExpandableChartContainer from "../ExpandableChartContainer";
+import EvolutionChartItem from "./EvolutionChartItem";
 
 const formatWeek = (weekString: string) => {
   const date = new Date(weekString);
@@ -39,6 +39,38 @@ function IconButton({ onClick, disabled = false, title, icon }: IconButtonProps)
     >
       <FontAwesomeIcon icon={icon} className="h-5 w-5" />
     </button>
+  );
+}
+
+function EvolutionChartSlider({
+  currentWeekIndex,
+  weeks,
+  setCurrentWeekIndex
+}: {
+  currentWeekIndex: number;
+  weeks: string[];
+  setCurrentWeekIndex: (index: number) => void;
+}) {
+  return (
+    <div className="w-full">
+      <div className="relative">
+        <input
+          type="range"
+          min="0"
+          max={weeks.length - 1}
+          value={currentWeekIndex}
+          onChange={(e) => setCurrentWeekIndex(parseInt(e.target.value))}
+          className="slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:outline-none"
+          style={{
+            background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 100%)`
+          }}
+        />
+        <div className="mt-2 flex justify-between text-xs text-gray-400">
+          <span>{weeks.length > 0 ? formatWeek(weeks[0]) : ""}</span>
+          <span>{weeks.length > 0 ? formatWeek(weeks[weeks.length - 1]) : ""}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -123,6 +155,11 @@ function EvolutionChartContent({
     return Array.from(artistSet);
   }, [data]);
 
+  // Calculate max listen count for bar scaling
+  const maxListenCount = useMemo(() => {
+    return Math.max(...currentData.map((a) => a.listenCount));
+  }, [currentData]);
+
   return (
     <div className="flex h-full w-full flex-col">
       {/* Controls */}
@@ -165,25 +202,11 @@ function EvolutionChartContent({
         </div>
 
         {/* Timeline Slider */}
-        <div className="w-full">
-          <div className="relative">
-            <input
-              type="range"
-              min="0"
-              max={weeks.length - 1}
-              value={currentWeekIndex}
-              onChange={(e) => setCurrentWeekIndex(parseInt(e.target.value))}
-              className="slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:outline-none"
-              style={{
-                background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 100%)`
-              }}
-            />
-            <div className="mt-2 flex justify-between text-xs text-gray-400">
-              <span>{weeks.length > 0 ? formatWeek(weeks[0]) : ""}</span>
-              <span>{weeks.length > 0 ? formatWeek(weeks[weeks.length - 1]) : ""}</span>
-            </div>
-          </div>
-        </div>
+        <EvolutionChartSlider
+          currentWeekIndex={currentWeekIndex}
+          weeks={weeks}
+          setCurrentWeekIndex={setCurrentWeekIndex}
+        />
       </div>
 
       {/* Chart */}
@@ -200,113 +223,21 @@ function EvolutionChartContent({
             const currentPosition =
               artistPositions.get(artistId) ?? (artist ? currentData.indexOf(artist) : 10);
             const targetPosition = artist ? currentData.indexOf(artist) : 10; // 10 = off-screen bottom
-            const isMoving = currentPosition !== targetPosition;
-            const isEntering = !wasVisible && isVisible;
-            const isExiting = wasVisible && !isVisible;
-
-            // Ensure entering artists always start from bottom
-            const startY = isEntering ? 600 : currentPosition * itemSpacing;
 
             return (
-              <motion.div
+              <EvolutionChartItem
                 key={artistId}
-                animate={{
-                  y: targetPosition * itemSpacing, // Dynamic spacing based on container height
-                  opacity: isVisible ? 1 : 0,
-                  scale: isMoving ? 1.02 : 1
-                }}
-                initial={{
-                  y: startY, // Start from bottom if entering, otherwise current position
-                  opacity: isEntering ? 0 : 0.8,
-                  scale: isEntering ? 0.8 : 1 // Start smaller if entering
-                }}
-                exit={{
-                  y: 600, // Exit to bottom
-                  opacity: 0,
-                  scale: 0.8
-                }}
-                transition={{
-                  duration: isEntering || isExiting ? 1.2 : 0.8,
-                  ease: isEntering ? "easeOut" : "easeInOut",
-                  delay: isEntering ? 0 : Math.abs(targetPosition - currentPosition) * 0.05
-                }}
-                className="absolute right-0 left-0 flex items-center gap-4 rounded-lg bg-[#312f49] px-2"
-                style={{ height: `${itemHeight}px`, margin: "6px 0" }}
-              >
-                {/* Rank */}
-                <div className="flex w-8 items-center justify-center">
-                  <motion.span
-                    key={`rank-${artist?.rank}-${currentWeek}`}
-                    initial={{ scale: 1.2, color: "#ec4899" }}
-                    animate={{ scale: 1, color: "#ffffff" }}
-                    transition={{ duration: 0.3 }}
-                    className="text-sm font-bold"
-                  >
-                    #{artist?.rank || "?"}
-                  </motion.span>
-                </div>
-
-                {/* Artist Image */}
-                <div
-                  className="flex aspect-square items-center justify-center py-1"
-                  style={{ height: `${itemHeight - 8}px` }}
-                >
-                  <div className="h-full rounded-full">
-                    {artist?.artistImageUrl ? (
-                      <img
-                        src={artist.artistImageUrl}
-                        alt={`${artist.artistName} profile`}
-                        className="aspect-square h-full w-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex aspect-square h-full items-center justify-center rounded-full bg-gray-600">
-                        <span className="text-xs text-gray-300">
-                          {artist?.artistName?.charAt(0).toUpperCase() || "?"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Artist Name */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-white">
-                      {artist?.artistName || "Unknown Artist"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Bar */}
-                <div className="flex-1">
-                  <div className="relative h-6 w-full overflow-hidden rounded-full bg-gray-700">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: artist
-                          ? `${(artist.listenCount / Math.max(...currentData.map((a) => a.listenCount))) * 100}%`
-                          : "0%"
-                      }}
-                      transition={{
-                        duration: 1.2,
-                        ease: "easeOut",
-                        delay: Math.abs(targetPosition - currentPosition) * 0.1
-                      }}
-                      className="h-full rounded-full bg-gradient-to-r from-pink-500 to-purple-600"
-                    />
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                      className="absolute inset-0 flex items-center justify-end pr-2"
-                    >
-                      <span className="text-xs font-medium text-white">
-                        {artist?.listenCount?.toLocaleString() || "0"}
-                      </span>
-                    </motion.div>
-                  </div>
-                </div>
-              </motion.div>
+                artist={artist}
+                artistId={artistId}
+                isVisible={isVisible}
+                wasVisible={wasVisible}
+                currentPosition={currentPosition}
+                targetPosition={targetPosition}
+                itemHeight={itemHeight}
+                itemSpacing={itemSpacing}
+                currentWeek={currentWeek}
+                maxListenCount={maxListenCount}
+              />
             );
           })}
         </div>
