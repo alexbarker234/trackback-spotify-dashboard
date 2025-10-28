@@ -5,7 +5,7 @@ import {
   faChartLine,
   faHome,
   faMagnifyingGlass,
-  faTableColumns,
+  faRankingStar,
   IconDefinition
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -21,8 +21,8 @@ interface Tab {
 
 const tabs: Tab[] = [
   { name: "Home", path: "/dashboard", icon: faHome },
-  { name: "Trends", path: "/dashboard/misc", icon: faChartLine },
-  { name: "Dashboard", path: "/dashboard/top", icon: faTableColumns },
+  { name: "Top", path: "/dashboard/top", icon: faRankingStar },
+  { name: "Other", path: "/dashboard/misc", icon: faChartLine },
   { name: "Search", path: "/dashboard/search", icon: faMagnifyingGlass }
 ];
 

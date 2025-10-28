@@ -21,6 +21,12 @@ export const getPageTitle = (path: string, searchParams: URLSearchParams) => {
       return "Search";
     case "/dashboard/misc":
       return "Misc";
+    case "/dashboard/evolution":
+      return "Evolution";
+    case "/dashboard/heatmap":
+      return "Heatmap";
+    case "/dashboard/throwback":
+      return "On This Day";
     default:
       return "Trackback";
   }
