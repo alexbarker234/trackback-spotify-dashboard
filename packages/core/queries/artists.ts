@@ -1,4 +1,16 @@
-import { albumTrack, and, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import {
+  albumTrack,
+  and,
+  artist,
+  db,
+  desc,
+  eq,
+  gte,
+  listen,
+  sql,
+  track,
+  trackArtist
+} from "@workspace/database";
 import { TopArtist } from "../types";
 
 export type TopArtistsOptions = {
