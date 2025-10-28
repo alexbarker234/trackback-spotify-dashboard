@@ -10,10 +10,18 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { WeeklyTopArtist } from "@workspace/core/queries/artists";
 import { motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ExpandableChartContainer from "./ExpandableChartContainer";
 
-// Reusable Icon Button Component
+const formatWeek = (weekString: string) => {
+  const date = new Date(weekString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+};
+
 interface IconButtonProps {
   onClick: () => void;
   disabled?: boolean;
@@ -38,6 +46,261 @@ interface RaceBarChartProps {
   data: WeeklyTopArtist[];
   animationSpeed?: number; // milliseconds between frames
   movingAverageWeeks?: number; // number of weeks for moving average
+}
+
+function RaceBarChartContent({
+  data,
+  isPlaying,
+  handlePlayPause,
+  handlePrevious,
+  handleNext,
+  currentWeekIndex,
+  movingAverageWeeks,
+  weeks,
+  currentWeek,
+  setCurrentWeekIndex,
+  visibleArtists,
+  previousVisibleArtists,
+  artistPositions,
+  currentData
+}: {
+  data: WeeklyTopArtist[];
+  isPlaying: boolean;
+  handlePlayPause: () => void;
+  handlePrevious: () => void;
+  handleNext: () => void;
+  currentWeekIndex: number;
+  movingAverageWeeks: number;
+  weeks: string[];
+  currentWeek: string;
+  setCurrentWeekIndex: (index: number) => void;
+  visibleArtists: Set<string>;
+  previousVisibleArtists: Set<string>;
+  artistPositions: Map<string, number>;
+  currentData: WeeklyTopArtist[];
+}) {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate dynamic item height based on container height
+  const itemHeight = useMemo(() => {
+    if (!chartContainerRef.current) return 60;
+    const containerHeight = chartContainerRef.current.clientHeight;
+    const maxItems = 10; // Maximum number of items to display
+    const minItemHeight = 40; // Minimum item height
+    const calculatedHeight = Math.max(minItemHeight, containerHeight / maxItems);
+    return Math.min(calculatedHeight, 60); // Cap at 60px
+  }, []); // No dependencies needed as we'll recalculate on resize
+
+  const itemSpacing = useMemo(() => itemHeight + 12, [itemHeight]);
+
+  // Get all unique artists across all weeks for tracking
+  const allArtists = useMemo(() => {
+    const artistSet = new Set<string>();
+    data.forEach((item) => artistSet.add(item.artistId));
+    return Array.from(artistSet);
+  }, [data]);
+
+  return (
+    <div className="flex h-full w-full flex-col">
+      {/* Controls */}
+      <div className="mb-4 flex flex-col gap-4">
+        {/* Play/Pause and Info */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <IconButton
+              onClick={handlePlayPause}
+              title={isPlaying ? "Pause" : "Play"}
+              icon={isPlaying ? faPause : faPlay}
+            ></IconButton>
+
+            <IconButton
+              onClick={handlePrevious}
+              disabled={currentWeekIndex === 0}
+              title="Previous Week"
+              icon={faChevronLeft}
+            ></IconButton>
+
+            <IconButton
+              onClick={handleNext}
+              disabled={currentWeekIndex === weeks.length - 1}
+              title="Next Week"
+              icon={faChevronRight}
+            ></IconButton>
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm text-gray-400">
+              Week {currentWeekIndex + 1} of {weeks.length}
+            </p>
+            <p className="text-lg font-semibold text-white">
+              {currentWeek ? formatWeek(currentWeek) : "No data"}
+            </p>
+            <p className="text-xs text-gray-500">
+              Showing {movingAverageWeeks}-week moving average
+            </p>
+          </div>
+        </div>
+
+        {/* Timeline Slider */}
+        <div className="w-full">
+          <div className="relative">
+            <input
+              type="range"
+              min="0"
+              max={weeks.length - 1}
+              value={currentWeekIndex}
+              onChange={(e) => setCurrentWeekIndex(parseInt(e.target.value))}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:ring-2 focus:ring-pink-500 focus:outline-none"
+              style={{
+                background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 100%)`
+              }}
+            />
+            <div className="mt-2 flex justify-between text-xs text-gray-400">
+              <span>{weeks.length > 0 ? formatWeek(weeks[0]) : ""}</span>
+              <span>{weeks.length > 0 ? formatWeek(weeks[weeks.length - 1]) : ""}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div ref={chartContainerRef} className="h-full w-full">
+        <div className="relative h-full w-full overflow-hidden rounded-lg">
+          {/* Background grid lines */}
+          <div className="absolute inset-0">
+            {Array.from({ length: 10 }, (_, i) => (
+              <div
+                key={i}
+                className="absolute right-0 left-0 border-b border-gray-700/30"
+                style={{ top: `${i * 60}px` }}
+              />
+            ))}
+          </div>
+
+          {allArtists.map((artistId) => {
+            const artist = currentData.find((a) => a.artistId === artistId);
+            const isVisible = visibleArtists.has(artistId);
+            const wasVisible = previousVisibleArtists.has(artistId);
+
+            // Only render if artist is currently visible or was visible (for exit animation)
+            if (!isVisible && !wasVisible) return null;
+
+            const currentPosition =
+              artistPositions.get(artistId) ?? (artist ? currentData.indexOf(artist) : 10);
+            const targetPosition = artist ? currentData.indexOf(artist) : 10; // 10 = off-screen bottom
+            const isMoving = currentPosition !== targetPosition;
+            const isEntering = !wasVisible && isVisible;
+            const isExiting = wasVisible && !isVisible;
+
+            // Ensure entering artists always start from bottom
+            const startY = isEntering ? 600 : currentPosition * itemSpacing;
+
+            return (
+              <motion.div
+                key={artistId}
+                animate={{
+                  y: targetPosition * itemSpacing, // Dynamic spacing based on container height
+                  opacity: isVisible ? 1 : 0,
+                  scale: isMoving ? 1.02 : 1
+                }}
+                initial={{
+                  y: startY, // Start from bottom if entering, otherwise current position
+                  opacity: isEntering ? 0 : 0.8,
+                  scale: isEntering ? 0.8 : 1 // Start smaller if entering
+                }}
+                exit={{
+                  y: 600, // Exit to bottom
+                  opacity: 0,
+                  scale: 0.8
+                }}
+                transition={{
+                  duration: isEntering || isExiting ? 1.2 : 0.8,
+                  ease: isEntering ? "easeOut" : "easeInOut",
+                  delay: isEntering ? 0 : Math.abs(targetPosition - currentPosition) * 0.05
+                }}
+                className="absolute right-0 left-0 flex items-center gap-4 rounded-lg bg-[#312f49] px-2"
+                style={{ height: `${itemHeight}px`, margin: "6px 0" }}
+              >
+                {/* Rank */}
+                <div className="flex w-8 items-center justify-center">
+                  <motion.span
+                    key={`rank-${artist?.rank}-${currentWeek}`}
+                    initial={{ scale: 1.2, color: "#ec4899" }}
+                    animate={{ scale: 1, color: "#ffffff" }}
+                    transition={{ duration: 0.3 }}
+                    className="text-sm font-bold"
+                  >
+                    #{artist?.rank || "?"}
+                  </motion.span>
+                </div>
+
+                {/* Artist Image */}
+                <div
+                  className="flex aspect-square items-center justify-center py-1"
+                  style={{ height: `${itemHeight - 8}px` }}
+                >
+                  <div className="h-full rounded-full">
+                    {artist?.artistImageUrl ? (
+                      <img
+                        src={artist.artistImageUrl}
+                        alt={`${artist.artistName} profile`}
+                        className="aspect-square h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-square h-full items-center justify-center rounded-full bg-gray-600">
+                        <span className="text-xs text-gray-300">
+                          {artist?.artistName?.charAt(0).toUpperCase() || "?"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Artist Name */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium text-white">
+                      {artist?.artistName || "Unknown Artist"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bar */}
+                <div className="flex-1">
+                  <div className="relative h-6 w-full rounded-full bg-gray-700">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{
+                        width: artist
+                          ? `${(artist.listenCount / Math.max(...currentData.map((a) => a.listenCount))) * 100}%`
+                          : "0%"
+                      }}
+                      transition={{
+                        duration: 1.2,
+                        ease: "easeOut",
+                        delay: Math.abs(targetPosition - currentPosition) * 0.1
+                      }}
+                      className="h-full rounded-full bg-gradient-to-r from-pink-500 to-purple-600"
+                    />
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                      className="absolute inset-0 flex items-center justify-end pr-2"
+                    >
+                      <span className="text-xs font-medium text-white">
+                        {artist?.listenCount?.toLocaleString() || "0"}
+                      </span>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function RaceBarChart({
@@ -71,7 +334,6 @@ export default function RaceBarChart({
   // Update artist positions when week changes
   useEffect(() => {
     if (currentData.length === 0) return;
-
     // Update positions after a short delay to allow for smooth transitions
     const timeout = setTimeout(() => {
       const newPositions = new Map<string, number>();
@@ -84,13 +346,6 @@ export default function RaceBarChart({
     return () => clearTimeout(timeout);
   }, [currentWeek, currentData]);
 
-  // Get all unique artists across all weeks for tracking
-  const allArtists = useMemo(() => {
-    const artistSet = new Set<string>();
-    data.forEach((item) => artistSet.add(item.artistId));
-    return Array.from(artistSet);
-  }, [data]);
-
   // Track which artists were visible in the previous week
   const [previousVisibleArtists, setPreviousVisibleArtists] = useState<Set<string>>(new Set());
 
@@ -100,8 +355,9 @@ export default function RaceBarChart({
 
   // Update previous visible artists when week changes
   useEffect(() => {
+    // TODO causing max update depth error
     setPreviousVisibleArtists(visibleArtists);
-  }, [currentWeek, visibleArtists]);
+  }, [currentWeek]);
 
   // Auto-play animation
   useEffect(() => {
@@ -126,216 +382,27 @@ export default function RaceBarChart({
     setCurrentWeekIndex((prev) => (prev + 1) % weeks.length);
   };
 
-  const formatWeek = (weekString: string) => {
-    const date = new Date(weekString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
-  };
-
   return (
     <ExpandableChartContainer
       title={`Top Artists Race Over Time (${movingAverageWeeks}-Week Moving Average)`}
       chartHeight="h-fit"
     >
-      <div className="h-full w-full">
-        {/* Controls */}
-        <div className="mb-4 flex flex-col gap-4">
-          {/* Play/Pause and Info */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <IconButton
-                onClick={handlePlayPause}
-                title={isPlaying ? "Pause" : "Play"}
-                icon={isPlaying ? faPause : faPlay}
-              ></IconButton>
-
-              <IconButton
-                onClick={handlePrevious}
-                disabled={currentWeekIndex === 0}
-                title="Previous Week"
-                icon={faChevronLeft}
-              ></IconButton>
-
-              <IconButton
-                onClick={handleNext}
-                disabled={currentWeekIndex === weeks.length - 1}
-                title="Next Week"
-                icon={faChevronRight}
-              ></IconButton>
-            </div>
-
-            <div className="text-right">
-              <p className="text-sm text-gray-400">
-                Week {currentWeekIndex + 1} of {weeks.length}
-              </p>
-              <p className="text-lg font-semibold text-white">
-                {currentWeek ? formatWeek(currentWeek) : "No data"}
-              </p>
-              <p className="text-xs text-gray-500">
-                Showing {movingAverageWeeks}-week moving average
-              </p>
-            </div>
-          </div>
-
-          {/* Timeline Slider */}
-          <div className="w-full">
-            <div className="relative">
-              <input
-                type="range"
-                min="0"
-                max={weeks.length - 1}
-                value={currentWeekIndex}
-                onChange={(e) => setCurrentWeekIndex(parseInt(e.target.value))}
-                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:ring-2 focus:ring-pink-500 focus:outline-none"
-                style={{
-                  background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 100%)`
-                }}
-              />
-              <div className="mt-2 flex justify-between text-xs text-gray-400">
-                <span>{weeks.length > 0 ? formatWeek(weeks[0]) : ""}</span>
-                <span>{weeks.length > 0 ? formatWeek(weeks[weeks.length - 1]) : ""}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Chart */}
-        <div className="h-[600px] w-full">
-          <div className="relative h-full w-full overflow-hidden rounded-lg">
-            {/* Background grid lines */}
-            <div className="absolute inset-0">
-              {Array.from({ length: 10 }, (_, i) => (
-                <div
-                  key={i}
-                  className="absolute right-0 left-0 border-b border-gray-700/30"
-                  style={{ top: `${i * 60}px` }}
-                />
-              ))}
-            </div>
-
-            {allArtists.map((artistId) => {
-              const artist = currentData.find((a) => a.artistId === artistId);
-              const isVisible = visibleArtists.has(artistId);
-              const wasVisible = previousVisibleArtists.has(artistId);
-
-              // Only render if artist is currently visible or was visible (for exit animation)
-              if (!isVisible && !wasVisible) return null;
-
-              const currentPosition =
-                artistPositions.get(artistId) ?? (artist ? currentData.indexOf(artist) : 10);
-              const targetPosition = artist ? currentData.indexOf(artist) : 10; // 10 = off-screen bottom
-              const isMoving = currentPosition !== targetPosition;
-              const isEntering = !wasVisible && isVisible;
-              const isExiting = wasVisible && !isVisible;
-
-              // Ensure entering artists always start from bottom
-              const startY = isEntering ? 600 : currentPosition * 60;
-
-              return (
-                <motion.div
-                  key={artistId}
-                  animate={{
-                    y: targetPosition * 60, // 60px per row (48px height + 12px gap)
-                    opacity: isVisible ? 1 : 0,
-                    scale: isMoving ? 1.02 : 1
-                  }}
-                  initial={{
-                    y: startY, // Start from bottom if entering, otherwise current position
-                    opacity: isEntering ? 0 : 0.8,
-                    scale: isEntering ? 0.8 : 1 // Start smaller if entering
-                  }}
-                  exit={{
-                    y: 600, // Exit to bottom
-                    opacity: 0,
-                    scale: 0.8
-                  }}
-                  transition={{
-                    duration: isEntering || isExiting ? 1.2 : 0.8,
-                    ease: isEntering ? "easeOut" : "easeInOut",
-                    delay: isEntering ? 0 : Math.abs(targetPosition - currentPosition) * 0.05
-                  }}
-                  className="absolute right-0 left-0 flex h-12 items-center gap-4 rounded-lg bg-[#312f49] px-2"
-                  style={{ margin: "6px 0" }}
-                >
-                  {/* Rank */}
-                  <div className="flex w-8 items-center justify-center">
-                    <motion.span
-                      key={`rank-${artist?.rank}-${currentWeek}`}
-                      initial={{ scale: 1.2, color: "#ec4899" }}
-                      animate={{ scale: 1, color: "#ffffff" }}
-                      transition={{ duration: 0.3 }}
-                      className="text-sm font-bold"
-                    >
-                      #{artist?.rank || "?"}
-                    </motion.span>
-                  </div>
-
-                  {/* Artist Image */}
-                  <div className="flex aspect-square h-full items-center justify-center py-1">
-                    <div className="h-full rounded-full">
-                      {artist?.artistImageUrl ? (
-                        <img
-                          src={artist.artistImageUrl}
-                          alt={`${artist.artistName} profile`}
-                          className="aspect-square h-full w-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex aspect-square h-full items-center justify-center rounded-full bg-gray-600">
-                          <span className="text-xs text-gray-300">
-                            {artist?.artistName?.charAt(0).toUpperCase() || "?"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Artist Name */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium text-white">
-                        {artist?.artistName || "Unknown Artist"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Bar */}
-                  <div className="flex-1">
-                    <div className="relative h-6 w-full rounded-full bg-gray-700">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{
-                          width: artist
-                            ? `${(artist.listenCount / Math.max(...currentData.map((a) => a.listenCount))) * 100}%`
-                            : "0%"
-                        }}
-                        transition={{
-                          duration: 1.2,
-                          ease: "easeOut",
-                          delay: Math.abs(targetPosition - currentPosition) * 0.1
-                        }}
-                        className="h-full rounded-full bg-gradient-to-r from-pink-500 to-purple-600"
-                      />
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="absolute inset-0 flex items-center justify-end pr-2"
-                      >
-                        <span className="text-xs font-medium text-white">
-                          {artist?.listenCount?.toLocaleString() || "0"}
-                        </span>
-                      </motion.div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <RaceBarChartContent
+        data={data}
+        isPlaying={isPlaying}
+        handlePlayPause={handlePlayPause}
+        handlePrevious={handlePrevious}
+        handleNext={handleNext}
+        currentWeekIndex={currentWeekIndex}
+        movingAverageWeeks={movingAverageWeeks}
+        weeks={weeks}
+        currentWeek={currentWeek}
+        setCurrentWeekIndex={setCurrentWeekIndex}
+        visibleArtists={visibleArtists}
+        previousVisibleArtists={previousVisibleArtists}
+        artistPositions={artistPositions}
+        currentData={currentData}
+      />
     </ExpandableChartContainer>
   );
 }
