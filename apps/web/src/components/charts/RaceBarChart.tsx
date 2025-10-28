@@ -1,9 +1,38 @@
 "use client";
 
+import {
+  faChevronLeft,
+  faChevronRight,
+  faPause,
+  faPlay,
+  IconDefinition
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { WeeklyTopArtist } from "@workspace/core/queries/artists";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import ExpandableChartContainer from "./ExpandableChartContainer";
+
+// Reusable Icon Button Component
+interface IconButtonProps {
+  onClick: () => void;
+  disabled?: boolean;
+  title: string;
+  icon: IconDefinition;
+}
+
+function IconButton({ onClick, disabled = false, title, icon }: IconButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+      title={title}
+      disabled={disabled}
+    >
+      <FontAwesomeIcon icon={icon} className="h-5 w-5" />
+    </button>
+  );
+}
 
 interface RaceBarChartProps {
   data: WeeklyTopArtist[];
@@ -109,80 +138,72 @@ export default function RaceBarChart({
   return (
     <ExpandableChartContainer
       title={`Top Artists Race Over Time (${movingAverageWeeks}-Week Moving Average)`}
-      chartHeight="h-[600px]"
+      chartHeight="h-fit"
     >
       <div className="h-full w-full">
         {/* Controls */}
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handlePlayPause}
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed"
-              title={isPlaying ? "Pause" : "Play"}
-            >
-              {isPlaying ? (
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : (
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </button>
+        <div className="mb-4 flex flex-col gap-4">
+          {/* Play/Pause and Info */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <IconButton
+                onClick={handlePlayPause}
+                title={isPlaying ? "Pause" : "Play"}
+                icon={isPlaying ? faPause : faPlay}
+              ></IconButton>
 
-            <button
-              onClick={handlePrevious}
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed"
-              disabled={currentWeekIndex === 0}
-            >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
+              <IconButton
+                onClick={handlePrevious}
+                disabled={currentWeekIndex === 0}
+                title="Previous Week"
+                icon={faChevronLeft}
+              ></IconButton>
 
-            <button
-              onClick={handleNext}
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed"
-              disabled={currentWeekIndex === weeks.length - 1}
-            >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
+              <IconButton
+                onClick={handleNext}
+                disabled={currentWeekIndex === weeks.length - 1}
+                title="Next Week"
+                icon={faChevronRight}
+              ></IconButton>
+            </div>
+
+            <div className="text-right">
+              <p className="text-sm text-gray-400">
+                Week {currentWeekIndex + 1} of {weeks.length}
+              </p>
+              <p className="text-lg font-semibold text-white">
+                {currentWeek ? formatWeek(currentWeek) : "No data"}
+              </p>
+              <p className="text-xs text-gray-500">
+                Showing {movingAverageWeeks}-week moving average
+              </p>
+            </div>
           </div>
 
-          <div className="text-right">
-            <p className="text-sm text-gray-400">
-              Week {currentWeekIndex + 1} of {weeks.length}
-            </p>
-            <p className="text-lg font-semibold text-white">
-              {currentWeek ? formatWeek(currentWeek) : "No data"}
-            </p>
-            <p className="text-xs text-gray-500">
-              Showing {movingAverageWeeks}-week moving average
-            </p>
+          {/* Timeline Slider */}
+          <div className="w-full">
+            <div className="relative">
+              <input
+                type="range"
+                min="0"
+                max={weeks.length - 1}
+                value={currentWeekIndex}
+                onChange={(e) => setCurrentWeekIndex(parseInt(e.target.value))}
+                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:ring-2 focus:ring-pink-500 focus:outline-none"
+                style={{
+                  background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 100%)`
+                }}
+              />
+              <div className="mt-2 flex justify-between text-xs text-gray-400">
+                <span>{weeks.length > 0 ? formatWeek(weeks[0]) : ""}</span>
+                <span>{weeks.length > 0 ? formatWeek(weeks[weeks.length - 1]) : ""}</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Chart */}
-        <div className="h-[calc(100%-4rem)] w-full">
+        <div className="h-[600px] w-full">
           <div className="relative h-full w-full overflow-hidden rounded-lg">
             {/* Background grid lines */}
             <div className="absolute inset-0">
@@ -212,9 +233,6 @@ export default function RaceBarChart({
 
               // Ensure entering artists always start from bottom
               const startY = isEntering ? 600 : currentPosition * 60;
-
-              // Add extra visual feedback for truly new artists
-              const isNewArtist = isEntering && !artistPositions.has(artistId);
 
               return (
                 <motion.div
@@ -257,18 +275,7 @@ export default function RaceBarChart({
 
                   {/* Artist Image */}
                   <div className="flex aspect-square h-full items-center justify-center py-1">
-                    <motion.div
-                      animate={{
-                        boxShadow:
-                          isMoving && currentPosition > targetPosition
-                            ? "0 0 20px rgba(34, 197, 94, 0.5)"
-                            : isNewArtist
-                              ? "0 0 25px rgba(59, 130, 246, 0.6)"
-                              : "0 0 0px rgba(0, 0, 0, 0)"
-                      }}
-                      transition={{ duration: 0.3 }}
-                      className="h-full rounded-full"
-                    >
+                    <div className="h-full rounded-full">
                       {artist?.artistImageUrl ? (
                         <img
                           src={artist.artistImageUrl}
@@ -282,7 +289,7 @@ export default function RaceBarChart({
                           </span>
                         </div>
                       )}
-                    </motion.div>
+                    </div>
                   </div>
 
                   {/* Artist Name */}
@@ -291,24 +298,6 @@ export default function RaceBarChart({
                       <p className="truncate text-sm font-medium text-white">
                         {artist?.artistName || "Unknown Artist"}
                       </p>
-                      {isMoving && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0 }}
-                          className="flex items-center"
-                        >
-                          {isEntering ? (
-                            <span className="text-xs text-blue-400">NEW</span>
-                          ) : isExiting ? (
-                            <span className="text-xs text-orange-400">EXIT</span>
-                          ) : currentPosition > targetPosition ? (
-                            <span className="text-xs text-green-400">↑</span>
-                          ) : currentPosition < targetPosition ? (
-                            <span className="text-xs text-red-400">↓</span>
-                          ) : null}
-                        </motion.div>
-                      )}
                     </div>
                   </div>
 
