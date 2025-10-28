@@ -1,11 +1,11 @@
 "use client";
 
-import { WeeklyTopArtist } from "@workspace/core/queries/artists";
+import { EvolutionItem } from "@workspace/core/queries/evolution";
 import { motion } from "motion/react";
 
 interface EvolutionChartItemProps {
-  artist: WeeklyTopArtist | undefined;
-  artistId: string;
+  item: EvolutionItem | undefined;
+  itemId: string;
   isVisible: boolean;
   wasVisible: boolean;
   currentPosition: number;
@@ -17,8 +17,8 @@ interface EvolutionChartItemProps {
 }
 
 export default function EvolutionChartItem({
-  artist,
-  artistId,
+  item,
+  itemId,
   isVisible,
   wasVisible,
   currentPosition,
@@ -37,7 +37,7 @@ export default function EvolutionChartItem({
 
   return (
     <motion.div
-      key={artistId}
+      key={itemId}
       animate={{
         y: targetPosition * itemSpacing,
         opacity: isVisible ? 1 : 0,
@@ -64,13 +64,13 @@ export default function EvolutionChartItem({
       {/* Rank */}
       <div className="flex w-8 items-center justify-center">
         <motion.span
-          key={`rank-${artist?.rank}-${currentWeek}`}
+          key={`rank-${item?.rank}-${currentWeek}`}
           initial={{ scale: 1.2, color: "#ec4899" }}
           animate={{ scale: 1, color: "#ffffff" }}
           transition={{ duration: 0.3 }}
           className="text-sm font-bold"
         >
-          #{artist?.rank || "?"}
+          #{item?.rank || "?"}
         </motion.span>
       </div>
 
@@ -80,16 +80,16 @@ export default function EvolutionChartItem({
         style={{ height: `${itemHeight - 8}px` }}
       >
         <div className="h-full rounded-full">
-          {artist?.artistImageUrl ? (
+          {item?.itemImageUrl ? (
             <img
-              src={artist.artistImageUrl}
-              alt={`${artist.artistName} profile`}
+              src={item?.itemImageUrl}
+              alt={`${item.itemName} profile`}
               className="aspect-square h-full w-full rounded-full object-cover"
             />
           ) : (
             <div className="flex aspect-square h-full items-center justify-center rounded-full bg-gray-600">
               <span className="text-xs text-gray-300">
-                {artist?.artistName?.charAt(0).toUpperCase() || "?"}
+                {item?.itemName?.charAt(0).toUpperCase() || "?"}
               </span>
             </div>
           )}
@@ -100,7 +100,7 @@ export default function EvolutionChartItem({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-medium text-white">
-            {artist?.artistName || "Unknown Artist"}
+            {item?.itemName || "Unknown Item"}
           </p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function EvolutionChartItem({
           <motion.div
             initial={{ width: 0 }}
             animate={{
-              width: artist ? `${(artist.listenCount / maxListenCount) * 100}%` : "0%"
+              width: item ? `${(item?.listenCount / maxListenCount) * 100}%` : "0%"
             }}
             transition={{
               duration: 1.2,
@@ -127,7 +127,7 @@ export default function EvolutionChartItem({
             className="absolute inset-0 flex items-center justify-end pr-2"
           >
             <span className="text-xs font-medium text-white">
-              {artist?.listenCount?.toLocaleString() || "0"}
+              {item?.listenCount.toLocaleString() || "0"}
             </span>
           </motion.div>
         </div>

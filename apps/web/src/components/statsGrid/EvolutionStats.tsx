@@ -1,8 +1,14 @@
 import CompactRankListCard from "@/components/cards/CompactRankListCard";
 import MetricCard from "@/components/statsGrid/MetricCard";
-import { EvolutionStatsItem } from "@workspace/core/queries/artists";
+import { EvolutionStatsItem, ItemType } from "@workspace/core/queries/evolution";
 
-export default function EvolutionStats({ data }: { data: EvolutionStatsItem[] }) {
+export default function EvolutionStats({
+  data,
+  itemType
+}: {
+  data: EvolutionStatsItem[];
+  itemType: ItemType;
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="rounded-2xl bg-gradient-to-br from-gray-500/10 to-gray-600/10 p-6 backdrop-blur-sm">
@@ -26,7 +32,7 @@ export default function EvolutionStats({ data }: { data: EvolutionStatsItem[] })
         <MetricCard
           title="Longest Streak"
           mainText={longestStreakArtist.longestStreak}
-          secondaryText={`by ${longestStreakArtist.artistName}`}
+          secondaryText={`by ${longestStreakArtist.itemName}`}
           gradientFrom="from-pink-500/10"
           gradientTo="to-rose-500/10"
           blurColor="bg-pink-500/20"
@@ -36,7 +42,7 @@ export default function EvolutionStats({ data }: { data: EvolutionStatsItem[] })
         <MetricCard
           title="Most Total Weeks"
           mainText={topArtist.weeksAtNumberOne}
-          secondaryText={`by ${topArtist.artistName}`}
+          secondaryText={`by ${topArtist.itemName}`}
           gradientFrom="from-purple-500/10"
           gradientTo="to-pink-500/10"
           blurColor="bg-purple-500/20"
@@ -46,15 +52,15 @@ export default function EvolutionStats({ data }: { data: EvolutionStatsItem[] })
       {/* Top Artists List */}
       <h3 className="text-lg font-semibold text-white">Top Artists by Weeks at #1</h3>
       <div className="space-y-3">
-        {data.slice(0, 10).map((artist, index) => (
+        {data.slice(0, 10).map((item, index) => (
           <CompactRankListCard
-            key={artist.artistId}
-            href={`/dashboard/artist/${artist.artistId}`}
-            imageUrl={artist.artistImageUrl}
-            name={artist.artistName}
-            subtitle={`${artist.longestStreak} week streak • ${new Date(artist.firstWeekAtNumberOne).toLocaleDateString()} - ${new Date(artist.lastWeekAtNumberOne).toLocaleDateString()}`}
+            key={item.itemId}
+            href={`/dashboard/${itemType}/${item.itemId}`}
+            imageUrl={item.itemImageUrl}
+            name={item.itemName}
+            subtitle={`${item.longestStreak} week streak • ${new Date(item.firstWeekAtNumberOne).toLocaleDateString()} - ${new Date(item.lastWeekAtNumberOne).toLocaleDateString()}`}
             rank={index + 1}
-            primaryText={`${artist.weeksAtNumberOne} weeks`}
+            primaryText={`${item.weeksAtNumberOne} weeks`}
             secondaryText="at #1"
           />
         ))}

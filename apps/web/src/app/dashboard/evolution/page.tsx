@@ -3,7 +3,7 @@ import EvolutionStats from "@/components/statsGrid/EvolutionStats";
 import {
   getTopArtistsByNumberOneWeeks,
   getWeeklyTopArtists
-} from "@workspace/core/queries/artists";
+} from "@workspace/core/queries/evolution";
 
 export default async function EvolutionPage() {
   const weeklyTopArtists = await getWeeklyTopArtists({ limit: 10, movingAverageWeeks: 4 });
@@ -26,7 +26,7 @@ export default async function EvolutionPage() {
         {/* Evolution Stats */}
         <div className="mb-8">
           <h2 className="mb-4 text-2xl font-bold text-white">Evolution Statistics</h2>
-          <EvolutionStats data={numberOneWeeksData} />
+          <EvolutionStats data={numberOneWeeksData} itemType="artists" />
         </div>
       </div>
     </div>

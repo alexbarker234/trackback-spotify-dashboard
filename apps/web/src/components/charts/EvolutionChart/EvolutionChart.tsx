@@ -8,7 +8,7 @@ import {
   IconDefinition
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { WeeklyTopArtist } from "@workspace/core/queries/artists";
+import { EvolutionItem } from "@workspace/core/queries/evolution";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExpandableChartContainer from "../ExpandableChartContainer";
 import EvolutionChartItem from "./EvolutionChartItem";
@@ -75,7 +75,7 @@ function EvolutionChartSlider({
 }
 
 interface EvolutionChartProps {
-  data: WeeklyTopArtist[];
+  data: EvolutionItem[];
   animationSpeed?: number; // milliseconds between frames
   movingAverageWeeks?: number; // number of weeks for moving average
 }
@@ -91,12 +91,12 @@ function EvolutionChartContent({
   weeks,
   currentWeek,
   setCurrentWeekIndex,
-  visibleArtists,
-  previousVisibleArtists,
-  artistPositions,
+  visibleItems,
+  previousVisibleItems,
+  itemPositions,
   currentData
 }: {
-  data: WeeklyTopArtist[];
+  data: EvolutionItem[];
   isPlaying: boolean;
   handlePlayPause: () => void;
   handlePrevious: () => void;
@@ -106,10 +106,10 @@ function EvolutionChartContent({
   weeks: string[];
   currentWeek: string;
   setCurrentWeekIndex: (index: number) => void;
-  visibleArtists: Set<string>;
-  previousVisibleArtists: Set<string>;
-  artistPositions: Map<string, number>;
-  currentData: WeeklyTopArtist[];
+  visibleItems: Set<string>;
+  previousVisibleItems: Set<string>;
+  itemPositions: Map<string, number>;
+  currentData: EvolutionItem[];
 }) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
@@ -148,11 +148,11 @@ function EvolutionChartContent({
 
   const itemSpacing = useMemo(() => itemHeight + 12, [itemHeight]);
 
-  // Get all unique artists across all weeks for tracking
-  const allArtists = useMemo(() => {
-    const artistSet = new Set<string>();
-    data.forEach((item) => artistSet.add(item.artistId));
-    return Array.from(artistSet);
+  // Get all unique items across all weeks for tracking
+  const allItems = useMemo(() => {
+    const itemSet = new Set<string>();
+    data.forEach((item) => itemSet.add(item.itemId));
+    return Array.from(itemSet);
   }, [data]);
 
   // Calculate max listen count for bar scaling
@@ -212,23 +212,23 @@ function EvolutionChartContent({
       {/* Chart */}
       <div ref={chartContainerRef} className="h-full w-full">
         <div className="relative h-full w-full overflow-hidden rounded-lg">
-          {allArtists.map((artistId) => {
-            const artist = currentData.find((a) => a.artistId === artistId);
-            const isVisible = visibleArtists.has(artistId);
-            const wasVisible = previousVisibleArtists.has(artistId);
+          {allItems.map((itemId) => {
+            const item = currentData.find((i) => i.itemId === itemId);
+            const isVisible = visibleItems.has(itemId);
+            const wasVisible = previousVisibleItems.has(itemId);
 
-            // Only render if artist is currently visible or was visible (for exit animation)
+            // Only render if item is currently visible or was visible (for exit animation)
             if (!isVisible && !wasVisible) return null;
 
             const currentPosition =
-              artistPositions.get(artistId) ?? (artist ? currentData.indexOf(artist) : 10);
-            const targetPosition = artist ? currentData.indexOf(artist) : 10; // 10 = off-screen bottom
+              itemPositions.get(itemId) ?? (item ? currentData.indexOf(item) : 10);
+            const targetPosition = item ? currentData.indexOf(item) : 10; // 10 = off-screen bottom
 
             return (
               <EvolutionChartItem
-                key={artistId}
-                artist={artist}
-                artistId={artistId}
+                key={itemId}
+                itemId={itemId}
+                item={item}
                 isVisible={isVisible}
                 wasVisible={wasVisible}
                 currentPosition={currentPosition}
@@ -253,7 +253,7 @@ export default function EvolutionChart({
 }: EvolutionChartProps) {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [previousVisibleArtists, setPreviousVisibleArtists] = useState<Set<string>>(new Set());
+  const [previousVisibleItems, setPreviousVisibleItems] = useState<Set<string>>(new Set());
 
   // Group data by week
   const weeklyData = data.reduce(
@@ -264,7 +264,7 @@ export default function EvolutionChart({
       acc[item.week].push(item);
       return acc;
     },
-    {} as Record<string, WeeklyTopArtist[]>
+    {} as Record<string, EvolutionItem[]>
   );
 
   const weeks = Object.keys(weeklyData).sort();
@@ -274,22 +274,22 @@ export default function EvolutionChart({
     [currentWeek, weeklyData]
   );
 
-  // Update artist positions when week changes
-  const artistPositions = useMemo(() => {
+  // Update item positions when week changes
+  const itemPositions = useMemo(() => {
     const newPositions = new Map<string, number>();
-    currentData.forEach((artist, index) => {
-      newPositions.set(artist.artistId, index);
+    currentData.forEach((item, index) => {
+      newPositions.set(item.itemId, index);
     });
     return newPositions;
   }, [currentData]);
 
-  const visibleArtists = useMemo(() => {
-    return new Set(currentData.map((artist) => artist.artistId));
+  const visibleItems = useMemo(() => {
+    return new Set(currentData.map((item) => item.itemId));
   }, [currentData]);
 
-  // Update previous visible artists when week changes
+  // Update previous visible items when week changes
   useEffect(() => {
-    setPreviousVisibleArtists(visibleArtists);
+    setPreviousVisibleItems(visibleItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWeek]);
 
@@ -316,7 +316,7 @@ export default function EvolutionChart({
   };
 
   return (
-    <ExpandableChartContainer title={`Top Artists Evolution Over Time`} chartHeight="h-[600px]">
+    <ExpandableChartContainer title={`Top Artists Evolution Over Time`} chartHeight="h-[660px]">
       <EvolutionChartContent
         data={data}
         isPlaying={isPlaying}
@@ -328,9 +328,9 @@ export default function EvolutionChart({
         weeks={weeks}
         currentWeek={currentWeek}
         setCurrentWeekIndex={setCurrentWeekIndex}
-        visibleArtists={visibleArtists}
-        previousVisibleArtists={previousVisibleArtists}
-        artistPositions={artistPositions}
+        visibleItems={visibleItems}
+        previousVisibleItems={previousVisibleItems}
+        itemPositions={itemPositions}
         currentData={currentData}
       />
     </ExpandableChartContainer>
