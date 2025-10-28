@@ -126,7 +126,7 @@ export async function getWeeklyTopArtists(
           artistId: artist.artistId!,
           artistName: artist.artistName!,
           artistImageUrl: artist.artistImageUrl,
-          listenCount: artist.listenCount,
+          listenCount: Number(artist.listenCount),
           rank: index + 1
         });
       });

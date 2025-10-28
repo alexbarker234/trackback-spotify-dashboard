@@ -1,9 +1,8 @@
 "use client";
 
 import { WeeklyTopArtist } from "@workspace/core/queries/artists";
-import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
-import ChartTooltip from "./ChartTooltip";
+import { motion } from "motion/react";
+import { useEffect, useMemo, useState } from "react";
 import ExpandableChartContainer from "./ExpandableChartContainer";
 
 interface RaceBarChartProps {
@@ -14,6 +13,7 @@ interface RaceBarChartProps {
 export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarChartProps) {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [artistPositions, setArtistPositions] = useState<Map<string, number>>(new Map());
 
   // Group data by week
   const weeklyData = data.reduce(
@@ -29,7 +29,26 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
 
   const weeks = Object.keys(weeklyData).sort();
   const currentWeek = weeks[currentWeekIndex];
-  const currentData = currentWeek ? weeklyData[currentWeek] : [];
+  const currentData = useMemo(
+    () => (currentWeek ? weeklyData[currentWeek] : []),
+    [currentWeek, weeklyData]
+  );
+
+  // Update artist positions when week changes
+  useEffect(() => {
+    if (currentData.length === 0) return;
+
+    // Update positions after a short delay to allow for smooth transitions
+    const timeout = setTimeout(() => {
+      const newPositions = new Map<string, number>();
+      currentData.forEach((artist, index) => {
+        newPositions.set(artist.artistId, index);
+      });
+      setArtistPositions(newPositions);
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, [currentWeek, currentData]);
 
   // Auto-play animation
   useEffect(() => {
@@ -61,34 +80,6 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
       day: "numeric",
       year: "numeric"
     });
-  };
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const artist = payload[0].payload;
-      return (
-        <ChartTooltip>
-          <div className="mb-2 flex items-center gap-3">
-            {artist.artistImageUrl && (
-              <img
-                src={artist.artistImageUrl}
-                alt={`${artist.artistName} profile`}
-                className="h-8 w-8 rounded-full object-cover"
-              />
-            )}
-            <p className="text-sm font-medium text-white">{artist.artistName}</p>
-          </div>
-          <p className="text-white">
-            <span className="text-gray-400">Rank: </span>#{artist.rank}
-          </p>
-          <p className="text-white">
-            <span className="text-gray-400">Streams: </span>
-            {artist.listenCount.toLocaleString()}
-          </p>
-        </ChartTooltip>
-      );
-    }
-    return null;
   };
 
   return (
@@ -162,82 +153,137 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
 
         {/* Chart */}
         <div className="h-[calc(100%-4rem)] w-full">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentWeek}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="h-full w-full"
-            >
-              <div className="h-full w-full space-y-2">
-                {currentData.map((artist, index) => (
-                  <motion.div
-                    key={`${artist.artistId}-${currentWeek}`}
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      duration: 0.5,
-                      delay: index * 0.1,
-                      ease: "easeOut"
-                    }}
-                    className="flex items-center gap-4"
-                  >
-                    {/* Rank */}
-                    <div className="flex w-8 items-center justify-center">
-                      <span className="text-sm font-bold text-white">#{artist.rank}</span>
-                    </div>
+          <div className="relative h-full w-full overflow-hidden rounded-lg">
+            {/* Background grid lines */}
+            <div className="absolute inset-0">
+              {Array.from({ length: 10 }, (_, i) => (
+                <div
+                  key={i}
+                  className="absolute right-0 left-0 border-b border-gray-700/30"
+                  style={{ top: `${i * 60}px` }}
+                />
+              ))}
+            </div>
 
-                    {/* Artist Image */}
-                    <div className="flex h-12 w-12 items-center justify-center">
+            {currentData.map((artist, index) => {
+              const currentPosition = artistPositions.get(artist.artistId) ?? index;
+              const targetPosition = index;
+              const isMoving = currentPosition !== targetPosition;
+
+              return (
+                <motion.div
+                  key={artist.artistId}
+                  animate={{
+                    y: targetPosition * 60, // 60px per row (48px height + 12px gap)
+                    opacity: 1,
+                    scale: isMoving ? 1.02 : 1
+                  }}
+                  initial={{
+                    y: currentPosition * 60,
+                    opacity: 0.8,
+                    scale: 1
+                  }}
+                  transition={{
+                    duration: 0.8,
+                    ease: "easeInOut",
+                    delay: Math.abs(targetPosition - currentPosition) * 0.05
+                  }}
+                  className="absolute right-0 left-0 flex h-12 items-center gap-4 rounded-lg bg-[#312f49] px-2"
+                  style={{ margin: "6px 0" }}
+                >
+                  {/* Rank */}
+                  <div className="flex w-8 items-center justify-center">
+                    <motion.span
+                      key={`rank-${artist.rank}-${currentWeek}`}
+                      initial={{ scale: 1.2, color: "#ec4899" }}
+                      animate={{ scale: 1, color: "#ffffff" }}
+                      transition={{ duration: 0.3 }}
+                      className="text-sm font-bold"
+                    >
+                      #{artist.rank}
+                    </motion.span>
+                  </div>
+
+                  {/* Artist Image */}
+                  <div className="flex aspect-square h-full items-center justify-center py-1">
+                    <motion.div
+                      animate={{
+                        boxShadow:
+                          isMoving && currentPosition > targetPosition
+                            ? "0 0 20px rgba(34, 197, 94, 0.5)"
+                            : "0 0 0px rgba(0, 0, 0, 0)"
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className="h-full rounded-full"
+                    >
                       {artist.artistImageUrl ? (
                         <img
                           src={artist.artistImageUrl}
                           alt={`${artist.artistName} profile`}
-                          className="h-12 w-12 rounded-full object-cover"
+                          className="aspect-square h-full w-full rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-600">
+                        <div className="flex aspect-square h-full items-center justify-center rounded-full bg-gray-600">
                           <span className="text-xs text-gray-300">
                             {artist.artistName.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
+                  </div>
 
-                    {/* Artist Name */}
-                    <div className="min-w-0 flex-1">
+                  {/* Artist Name */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-medium text-white">{artist.artistName}</p>
-                    </div>
-
-                    {/* Bar */}
-                    <div className="flex-1">
-                      <div className="relative h-6 w-full rounded-full bg-gray-700">
+                      {isMoving && (
                         <motion.div
-                          initial={{ width: 0 }}
-                          animate={{
-                            width: `${(artist.listenCount / Math.max(...currentData.map((a) => a.listenCount))) * 100}%`
-                          }}
-                          transition={{
-                            duration: 0.8,
-                            delay: index * 0.1,
-                            ease: "easeOut"
-                          }}
-                          className="h-full rounded-full bg-gradient-to-r from-pink-500 to-purple-600"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-end pr-2">
-                          <span className="text-xs font-medium text-white">
-                            {artist.listenCount.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0 }}
+                          className="flex items-center"
+                        >
+                          {currentPosition > targetPosition ? (
+                            <span className="text-xs text-green-400">↑</span>
+                          ) : currentPosition < targetPosition ? (
+                            <span className="text-xs text-red-400">↓</span>
+                          ) : null}
+                        </motion.div>
+                      )}
                     </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>
+                  </div>
+
+                  {/* Bar */}
+                  <div className="flex-1">
+                    <div className="relative h-6 w-full rounded-full bg-gray-700">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${(artist.listenCount / Math.max(...currentData.map((a) => a.listenCount))) * 100}%`
+                        }}
+                        transition={{
+                          duration: 1.2,
+                          ease: "easeOut",
+                          delay: Math.abs(targetPosition - currentPosition) * 0.1
+                        }}
+                        className="h-full rounded-full bg-gradient-to-r from-pink-500 to-purple-600"
+                      />
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="absolute inset-0 flex items-center justify-end pr-2"
+                      >
+                        <span className="text-xs font-medium text-white">
+                          {artist.listenCount.toLocaleString()}
+                        </span>
+                      </motion.div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </ExpandableChartContainer>
