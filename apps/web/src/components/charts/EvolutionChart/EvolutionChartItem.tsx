@@ -54,7 +54,7 @@ export default function EvolutionChartItem({
         scale: 0.8
       }}
       transition={{
-        duration: isEntering || isExiting ? 1.2 : 0.8,
+        duration: isEntering || isExiting ? 0.6 : 0.4,
         ease: isEntering ? "easeOut" : "easeInOut",
         delay: isEntering ? 0 : Math.abs(targetPosition - currentPosition) * 0.05
       }}
