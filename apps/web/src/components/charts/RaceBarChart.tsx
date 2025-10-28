@@ -82,14 +82,33 @@ function RaceBarChartContent({
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   // Calculate dynamic item height based on container height
-  const itemHeight = useMemo(() => {
-    if (!chartContainerRef.current) return 60;
-    const containerHeight = chartContainerRef.current.clientHeight;
-    const maxItems = 10; // Maximum number of items to display
-    const minItemHeight = 40; // Minimum item height
-    const calculatedHeight = Math.max(minItemHeight, containerHeight / maxItems);
-    return Math.min(calculatedHeight, 60); // Cap at 60px
-  }, []); // No dependencies needed as we'll recalculate on resize
+  const [itemHeight, setItemHeight] = useState(60);
+
+  // Use ResizeObserver to update item height when container size changes
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    const updateItemHeight = () => {
+      if (!chartContainerRef.current) return;
+      const containerHeight = chartContainerRef.current.clientHeight;
+      const maxItems = 10; // Maximum number of items to display
+      const minItemHeight = 40; // Minimum item height
+      const calculatedHeight = Math.max(minItemHeight, containerHeight / maxItems);
+      const newHeight = Math.min(calculatedHeight, 60); // Cap at 60px
+      setItemHeight(newHeight);
+    };
+
+    // Initial calculation
+    updateItemHeight();
+
+    // Set up ResizeObserver
+    const resizeObserver = new ResizeObserver(updateItemHeight);
+    resizeObserver.observe(chartContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   const itemSpacing = useMemo(() => itemHeight + 12, [itemHeight]);
 
@@ -111,21 +130,21 @@ function RaceBarChartContent({
               onClick={handlePlayPause}
               title={isPlaying ? "Pause" : "Play"}
               icon={isPlaying ? faPause : faPlay}
-            ></IconButton>
+            />
 
             <IconButton
               onClick={handlePrevious}
               disabled={currentWeekIndex === 0}
               title="Previous Week"
               icon={faChevronLeft}
-            ></IconButton>
+            />
 
             <IconButton
               onClick={handleNext}
               disabled={currentWeekIndex === weeks.length - 1}
               title="Next Week"
               icon={faChevronRight}
-            ></IconButton>
+            />
           </div>
 
           <div className="text-right">
@@ -150,7 +169,7 @@ function RaceBarChartContent({
               max={weeks.length - 1}
               value={currentWeekIndex}
               onChange={(e) => setCurrentWeekIndex(parseInt(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:ring-2 focus:ring-pink-500 focus:outline-none"
+              className="slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:outline-none"
               style={{
                 background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 100%)`
               }}
@@ -267,7 +286,7 @@ function RaceBarChartContent({
 
                 {/* Bar */}
                 <div className="flex-1">
-                  <div className="relative h-6 w-full rounded-full bg-gray-700">
+                  <div className="relative h-6 w-full overflow-hidden rounded-full bg-gray-700">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{
@@ -310,7 +329,7 @@ export default function RaceBarChart({
 }: RaceBarChartProps) {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [artistPositions, setArtistPositions] = useState<Map<string, number>>(new Map());
+  const [previousVisibleArtists, setPreviousVisibleArtists] = useState<Set<string>>(new Set());
 
   // Group data by week
   const weeklyData = data.reduce(
@@ -332,22 +351,13 @@ export default function RaceBarChart({
   );
 
   // Update artist positions when week changes
-  useEffect(() => {
-    if (currentData.length === 0) return;
-    // Update positions after a short delay to allow for smooth transitions
-    const timeout = setTimeout(() => {
-      const newPositions = new Map<string, number>();
-      currentData.forEach((artist, index) => {
-        newPositions.set(artist.artistId, index);
-      });
-      setArtistPositions(newPositions);
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [currentWeek, currentData]);
-
-  // Track which artists were visible in the previous week
-  const [previousVisibleArtists, setPreviousVisibleArtists] = useState<Set<string>>(new Set());
+  const artistPositions = useMemo(() => {
+    const newPositions = new Map<string, number>();
+    currentData.forEach((artist, index) => {
+      newPositions.set(artist.artistId, index);
+    });
+    return newPositions;
+  }, [currentData]);
 
   const visibleArtists = useMemo(() => {
     return new Set(currentData.map((artist) => artist.artistId));
@@ -355,14 +365,13 @@ export default function RaceBarChart({
 
   // Update previous visible artists when week changes
   useEffect(() => {
-    // TODO causing max update depth error
     setPreviousVisibleArtists(visibleArtists);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWeek]);
 
   // Auto-play animation
   useEffect(() => {
     if (!isPlaying || weeks.length === 0) return;
-
     const interval = setInterval(() => {
       setCurrentWeekIndex((prev) => (prev + 1) % weeks.length);
     }, animationSpeed);
@@ -385,7 +394,7 @@ export default function RaceBarChart({
   return (
     <ExpandableChartContainer
       title={`Top Artists Race Over Time (${movingAverageWeeks}-Week Moving Average)`}
-      chartHeight="h-fit"
+      chartHeight="h-[600px]"
     >
       <RaceBarChartContent
         data={data}
