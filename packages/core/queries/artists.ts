@@ -1,4 +1,16 @@
-import { albumTrack, and, artist, db, desc, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
+import {
+  albumTrack,
+  and,
+  artist,
+  db,
+  desc,
+  eq,
+  gte,
+  listen,
+  sql,
+  track,
+  trackArtist
+} from "@workspace/database";
 import { TopArtist } from "../types";
 
 export type TopArtistsOptions = {
@@ -58,6 +70,71 @@ export async function getTopArtists(options: TopArtistsOptions = {}): Promise<To
     return validArtists;
   } catch (error) {
     console.error("Error fetching top artists:", error);
+    return [];
+  }
+}
+
+export type WeeklyTopArtist = {
+  week: string;
+  artistId: string;
+  artistName: string;
+  artistImageUrl: string | null;
+  listenCount: number;
+  rank: number;
+};
+
+export async function getWeeklyTopArtists(
+  options: { limit?: number } = {}
+): Promise<WeeklyTopArtist[]> {
+  const { limit = 10 } = options;
+
+  try {
+    const weeklyData = await db
+      .select({
+        week: sql<string>`DATE_TRUNC('week', ${listen.playedAt})`.as("week"),
+        artistName: artist.name,
+        artistId: artist.id,
+        artistImageUrl: artist.imageUrl,
+        listenCount: sql<number>`count(*)`.as("listenCount")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
+      .where(and(gte(listen.durationMS, 30000), sql`${artist.name} IS NOT NULL`))
+      .groupBy(sql`DATE_TRUNC('week', ${listen.playedAt})`, artist.name, artist.id, artist.imageUrl)
+      .orderBy(sql`DATE_TRUNC('week', ${listen.playedAt})`, desc(sql<number>`count(*)`));
+
+    // Add ranking for each week
+    const weeklyRankings: WeeklyTopArtist[] = [];
+    const weekGroups = new Map<string, typeof weeklyData>();
+
+    // Group by week
+    weeklyData.forEach((row) => {
+      if (!weekGroups.has(row.week)) {
+        weekGroups.set(row.week, []);
+      }
+      weekGroups.get(row.week)!.push(row);
+    });
+
+    // Add rankings and limit to top N per week
+    weekGroups.forEach((weekData, week) => {
+      weekData.slice(0, limit).forEach((artist, index) => {
+        weeklyRankings.push({
+          week,
+          artistId: artist.artistId!,
+          artistName: artist.artistName!,
+          artistImageUrl: artist.artistImageUrl,
+          listenCount: artist.listenCount,
+          rank: index + 1
+        });
+      });
+    });
+
+    return weeklyRankings.sort((a, b) => a.week.localeCompare(b.week));
+  } catch (error) {
+    console.error("Error fetching weekly top artists:", error);
     return [];
   }
 }
