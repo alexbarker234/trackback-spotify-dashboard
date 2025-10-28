@@ -88,99 +88,85 @@ export async function getWeeklyTopArtists(
 ): Promise<WeeklyTopArtist[]> {
   const { limit = 10, movingAverageWeeks = 4 } = options;
 
+  const totalStart = Date.now();
+
   try {
-    // First, get all weekly data
-    const weeklyData = await db
-      .select({
-        week: sql<string>`DATE_TRUNC('week', ${listen.playedAt})`.as("week"),
-        artistName: artist.name,
-        artistId: artist.id,
-        artistImageUrl: artist.imageUrl,
-        listenCount: sql<number>`count(*)`.as("listenCount")
-      })
-      .from(listen)
-      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
-      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
-      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
-      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
-      .where(and(gte(listen.durationMS, 30000), sql`${artist.name} IS NOT NULL`))
-      .groupBy(sql`DATE_TRUNC('week', ${listen.playedAt})`, artist.name, artist.id, artist.imageUrl)
-      .orderBy(sql`DATE_TRUNC('week', ${listen.playedAt})`, desc(sql<number>`count(*)`));
+    const dbStart = Date.now();
 
-    // Group by week and artist
-    const weekGroups = new Map<string, Map<string, (typeof weeklyData)[0]>>();
-    const allWeeks = new Set<string>();
-    const allArtists = new Set<string>();
+    // Bastard query of pain and suffering
+    // Using window functions to calculate the moving average
+    const result = await db.execute(sql`
+      WITH weekly_counts AS (
+        SELECT 
+          DATE_TRUNC('week', l.played_at) as week,
+          a.id as artist_id,
+          a.name as artist_name,
+          a.image_url as artist_image_url,
+          COUNT(*) as listen_count
+        FROM listen l
+        LEFT JOIN album_track at ON l.track_id = at.track_id
+        LEFT JOIN track t ON at.track_isrc = t.isrc
+        LEFT JOIN track_artist ta ON ta.track_isrc = t.isrc
+        LEFT JOIN artist a ON ta.artist_id = a.id
+        WHERE l.duration_ms >= 30000 
+          AND a.name IS NOT NULL
+        GROUP BY DATE_TRUNC('week', l.played_at), a.id, a.name, a.image_url
+      ),
+      moving_averages AS (
+        SELECT 
+          week,
+          artist_id,
+          artist_name,
+          artist_image_url,
+          listen_count,
+          ROUND(AVG(listen_count) OVER (
+            PARTITION BY artist_id 
+            ORDER BY week 
+            ROWS BETWEEN ${movingAverageWeeks - 1} PRECEDING AND CURRENT ROW
+          )) as moving_avg_count
+        FROM weekly_counts
+      ),
+      ranked_artists AS (
+        SELECT 
+          week,
+          artist_id,
+          artist_name,
+          artist_image_url,
+          moving_avg_count as listen_count,
+          ROW_NUMBER() OVER (
+            PARTITION BY week 
+            ORDER BY moving_avg_count DESC
+          ) as rank
+        FROM moving_averages
+        WHERE moving_avg_count > 0
+      )
+      SELECT 
+        week::text,
+        artist_id,
+        artist_name,
+        artist_image_url,
+        listen_count,
+        rank
+      FROM ranked_artists
+      WHERE rank <= ${limit}
+      ORDER BY week, rank
+    `);
 
-    weeklyData.forEach((row) => {
-      if (!weekGroups.has(row.week)) {
-        weekGroups.set(row.week, new Map());
-      }
-      weekGroups.get(row.week)!.set(row.artistId!, row);
-      allWeeks.add(row.week);
-      allArtists.add(row.artistId!);
-    });
+    const dbEnd = Date.now();
+    console.log(`[getWeeklyTopArtists] DB query took ${(dbEnd - dbStart).toLocaleString()}ms`);
 
-    // Calculate moving averages
-    const sortedWeeks = Array.from(allWeeks).sort();
-    const movingAverageData: WeeklyTopArtist[] = [];
+    const totalEnd = Date.now();
+    console.log(`[getWeeklyTopArtists] TOTAL time: ${(totalEnd - totalStart).toLocaleString()}ms`);
 
-    sortedWeeks.forEach((currentWeek, weekIndex) => {
-      const artistAverages = new Map<string, { total: number; count: number }>();
-
-      // Look back the specified number of weeks (including current week)
-      const startWeekIndex = Math.max(0, weekIndex - (movingAverageWeeks - 1));
-      const relevantWeeks = sortedWeeks.slice(startWeekIndex, weekIndex + 1);
-
-      // Calculate moving average for each artist
-      allArtists.forEach((artistId) => {
-        let totalListens = 0;
-        let weekCount = 0;
-
-        relevantWeeks.forEach((week) => {
-          const weekData = weekGroups.get(week);
-          if (weekData && weekData.has(artistId)) {
-            const artistData = weekData.get(artistId)!;
-            totalListens += Number(artistData.listenCount);
-            weekCount++;
-          }
-        });
-
-        if (weekCount > 0) {
-          const averageListens = Math.round(totalListens / weekCount);
-          artistAverages.set(artistId, { total: averageListens, count: weekCount });
-        }
-      });
-
-      // Convert to array and sort by moving average
-      const sortedArtists = Array.from(artistAverages.entries())
-        .map(([artistId, data]) => {
-          const artistData = weeklyData.find((row) => row.artistId === artistId);
-          return {
-            artistId,
-            artistName: artistData?.artistName || "Unknown",
-            artistImageUrl: artistData?.artistImageUrl || null,
-            listenCount: data.total,
-            weekCount: data.count
-          };
-        })
-        .sort((a, b) => b.listenCount - a.listenCount)
-        .slice(0, limit);
-
-      // Add rankings
-      sortedArtists.forEach((artist, index) => {
-        movingAverageData.push({
-          week: currentWeek,
-          artistId: artist.artistId,
-          artistName: artist.artistName,
-          artistImageUrl: artist.artistImageUrl,
-          listenCount: artist.listenCount,
-          rank: index + 1
-        });
-      });
-    });
-
-    return movingAverageData.sort((a, b) => a.week.localeCompare(b.week));
+    // Convert the result to the expected format
+    return result.rows.map((row: Record<string, unknown>) => ({
+      week: String(row.week),
+      artistId: String(row.artist_id),
+      artistName: String(row.artist_name),
+      artistImageUrl: row.artist_image_url as string | null,
+      listenCount: Number(row.listen_count),
+      rank: Number(row.rank)
+    }));
   } catch (error) {
     console.error("Error fetching weekly top artists:", error);
     return [];

@@ -11,7 +11,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { WeeklyTopArtist } from "@workspace/core/queries/artists";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import ExpandableChartContainer from "./ExpandableChartContainer";
+import ExpandableChartContainer from "../ExpandableChartContainer";
 
 const formatWeek = (weekString: string) => {
   const date = new Date(weekString);
@@ -42,13 +42,13 @@ function IconButton({ onClick, disabled = false, title, icon }: IconButtonProps)
   );
 }
 
-interface RaceBarChartProps {
+interface EvolutionChartProps {
   data: WeeklyTopArtist[];
   animationSpeed?: number; // milliseconds between frames
   movingAverageWeeks?: number; // number of weeks for moving average
 }
 
-function RaceBarChartContent({
+function EvolutionChartContent({
   data,
   isPlaying,
   handlePlayPause,
@@ -91,11 +91,15 @@ function RaceBarChartContent({
     const updateItemHeight = () => {
       if (!chartContainerRef.current) return;
       const containerHeight = chartContainerRef.current.clientHeight;
-      const maxItems = 10; // Maximum number of items to display
-      const minItemHeight = 40; // Minimum item height
+      const maxItems = 10;
+      const itemMargin = 6;
+      const minItemHeight = 30;
+      const maxItemHeight = 60;
       const calculatedHeight = Math.max(minItemHeight, containerHeight / maxItems);
-      const newHeight = Math.min(calculatedHeight, 60); // Cap at 60px
-      setItemHeight(newHeight);
+      const newHeight = Math.min(calculatedHeight, maxItemHeight);
+      const finalHeight = newHeight - itemMargin * 2;
+      console.log(finalHeight);
+      setItemHeight(finalHeight);
     };
 
     // Initial calculation
@@ -185,17 +189,6 @@ function RaceBarChartContent({
       {/* Chart */}
       <div ref={chartContainerRef} className="h-full w-full">
         <div className="relative h-full w-full overflow-hidden rounded-lg">
-          {/* Background grid lines */}
-          <div className="absolute inset-0">
-            {Array.from({ length: 10 }, (_, i) => (
-              <div
-                key={i}
-                className="absolute right-0 left-0 border-b border-gray-700/30"
-                style={{ top: `${i * 60}px` }}
-              />
-            ))}
-          </div>
-
           {allArtists.map((artistId) => {
             const artist = currentData.find((a) => a.artistId === artistId);
             const isVisible = visibleArtists.has(artistId);
@@ -322,11 +315,11 @@ function RaceBarChartContent({
   );
 }
 
-export default function RaceBarChart({
+export default function EvolutionChart({
   data,
   animationSpeed = 1000,
   movingAverageWeeks = 4
-}: RaceBarChartProps) {
+}: EvolutionChartProps) {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [previousVisibleArtists, setPreviousVisibleArtists] = useState<Set<string>>(new Set());
@@ -396,7 +389,7 @@ export default function RaceBarChart({
       title={`Top Artists Race Over Time (${movingAverageWeeks}-Week Moving Average)`}
       chartHeight="h-[600px]"
     >
-      <RaceBarChartContent
+      <EvolutionChartContent
         data={data}
         isPlaying={isPlaying}
         handlePlayPause={handlePlayPause}
