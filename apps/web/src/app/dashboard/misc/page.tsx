@@ -42,7 +42,7 @@ function LinkCard({
       href={href}
       className="group block rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 p-6 backdrop-blur-sm transition-all duration-300 hover:from-purple-900/30 hover:to-pink-900/30"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex h-full items-center justify-between">
         <div className="flex h-full items-center space-x-4">
           <div className="rounded-full bg-gradient-to-br from-purple-500 to-pink-500 p-3 text-2xl transition-transform duration-300 group-hover:scale-110">
             <FontAwesomeIcon icon={icon} />
