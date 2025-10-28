@@ -173,6 +173,135 @@ export async function getWeeklyTopArtists(
   }
 }
 
+export type EvolutionStatsItem = {
+  artistId: string;
+  artistName: string;
+  artistImageUrl: string | null;
+  weeksAtNumberOne: number;
+  firstWeekAtNumberOne: string;
+  lastWeekAtNumberOne: string;
+  longestStreak: number;
+  longestStreakStart: string;
+  longestStreakEnd: string;
+};
+
+export async function getTopArtistsByNumberOneWeeks(
+  options: { limit?: number; movingAverageWeeks?: number } = {}
+): Promise<EvolutionStatsItem[]> {
+  const { limit = 25, movingAverageWeeks = 4 } = options;
+
+  try {
+    // Get all weekly data to calculate number 1 weeks
+    const weeklyData = await getWeeklyTopArtists({ limit: 1000, movingAverageWeeks });
+
+    // Group by artist and calculate weeks at number 1
+    const artistStats = new Map<
+      string,
+      {
+        artistId: string;
+        artistName: string;
+        artistImageUrl: string | null;
+        weeksAtNumberOne: number;
+        firstWeekAtNumberOne: string | null;
+        lastWeekAtNumberOne: string | null;
+        numberOneWeeks: string[];
+      }
+    >();
+
+    weeklyData.forEach((week) => {
+      if (week.rank === 1) {
+        const existing = artistStats.get(week.artistId);
+        if (existing) {
+          existing.weeksAtNumberOne++;
+          existing.lastWeekAtNumberOne = week.week;
+          existing.numberOneWeeks.push(week.week);
+        } else {
+          artistStats.set(week.artistId, {
+            artistId: week.artistId,
+            artistName: week.artistName,
+            artistImageUrl: week.artistImageUrl,
+            weeksAtNumberOne: 1,
+            firstWeekAtNumberOne: week.week,
+            lastWeekAtNumberOne: week.week,
+            numberOneWeeks: [week.week]
+          });
+        }
+      }
+    });
+
+    // Calculate longest streak for each artist
+    const calculateLongestStreak = (weeks: string[]) => {
+      if (weeks.length === 0) return { streak: 0, start: "", end: "" };
+      if (weeks.length === 1) return { streak: 1, start: weeks[0], end: weeks[0] };
+
+      // Sort weeks chronologically
+      const sortedWeeks = [...weeks].sort();
+
+      let longestStreak = 1;
+      let currentStreak = 1;
+      let streakStart = sortedWeeks[0];
+      let streakEnd = sortedWeeks[0];
+      let currentStart = sortedWeeks[0];
+
+      for (let i = 1; i < sortedWeeks.length; i++) {
+        const currentWeek = new Date(sortedWeeks[i]!);
+        const previousWeek = new Date(sortedWeeks[i - 1]!);
+
+        // Check if weeks are consecutive (within 7 days)
+        const daysDiff = (currentWeek.getTime() - previousWeek.getTime()) / (1000 * 60 * 60 * 24);
+
+        if (daysDiff <= 7) {
+          currentStreak++;
+          streakEnd = sortedWeeks[i]!;
+        } else {
+          if (currentStreak > longestStreak) {
+            longestStreak = currentStreak;
+            streakStart = currentStart;
+            streakEnd = sortedWeeks[i - 1]!;
+          }
+          currentStreak = 1;
+          currentStart = sortedWeeks[i]!;
+          streakEnd = sortedWeeks[i]!;
+        }
+      }
+
+      // Check if the last streak is the longest
+      if (currentStreak > longestStreak) {
+        longestStreak = currentStreak;
+        streakStart = currentStart;
+        streakEnd = sortedWeeks[sortedWeeks.length - 1];
+      }
+
+      return { streak: longestStreak, start: streakStart || "", end: streakEnd || "" };
+    };
+
+    // Convert to array and sort by weeks at number 1
+    const result = Array.from(artistStats.values())
+      .filter((artist) => artist.weeksAtNumberOne > 0)
+      .sort((a, b) => b.weeksAtNumberOne - a.weeksAtNumberOne)
+      .slice(0, limit)
+      .map((artist) => {
+        const streakInfo = calculateLongestStreak(artist.numberOneWeeks);
+        return {
+          artistId: artist.artistId,
+          artistName: artist.artistName,
+          artistImageUrl: artist.artistImageUrl,
+          weeksAtNumberOne: artist.weeksAtNumberOne,
+          firstWeekAtNumberOne: artist.firstWeekAtNumberOne!,
+          lastWeekAtNumberOne: artist.lastWeekAtNumberOne!,
+          longestStreak: streakInfo.streak,
+          longestStreakStart: streakInfo.start || "",
+          longestStreakEnd: streakInfo.end || ""
+        };
+      });
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching top artists by number one weeks:", error);
+    return [];
+  }
+}
+
 export async function getArtistData(artistId: string) {
   try {
     // Get artist data

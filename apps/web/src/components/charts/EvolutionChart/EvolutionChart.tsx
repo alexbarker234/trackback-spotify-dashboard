@@ -316,10 +316,7 @@ export default function EvolutionChart({
   };
 
   return (
-    <ExpandableChartContainer
-      title={`Top Artists Race Over Time (${movingAverageWeeks}-Week Moving Average)`}
-      chartHeight="h-[600px]"
-    >
+    <ExpandableChartContainer title={`Top Artists Evolution Over Time`} chartHeight="h-[600px]">
       <EvolutionChartContent
         data={data}
         isPlaying={isPlaying}

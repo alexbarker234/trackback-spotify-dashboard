@@ -3,6 +3,7 @@
 import { useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
 import { cn } from "@/lib/utils/cn";
+import { formatDuration } from "@/lib/utils/timeUtils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
@@ -70,7 +71,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
   );
   const [itemType, setItemType] = useQueryState<ItemType>(
     "type",
-    parseAsStringLiteral(itemTypeOptions).withDefault("artists").withOptions({ clearOnDefault: false })
+    parseAsStringLiteral(itemTypeOptions)
+      .withDefault("artists")
+      .withOptions({ clearOnDefault: false })
   );
 
   const maxItems = 250;
@@ -110,7 +113,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
         <div className="mb-2 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             {/* Item Type Selector */}
-            {isStandalone && <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />}
+            {isStandalone && (
+              <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />
+            )}
             {/* Date Range Selector */}
             <DateRangeSelector dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
 
@@ -159,7 +164,16 @@ const TopItemsList = ({ items, maxItems }: { items: TopItem[]; maxItems: number 
   return (
     <div className="flex flex-col gap-3">
       {items.slice(0, maxItems).map((item, index) => (
-        <CompactRankListCard key={item.id} item={item} index={index} />
+        <CompactRankListCard
+          key={item.id}
+          href={item.href}
+          imageUrl={item.imageUrl}
+          name={item.name}
+          subtitle={item.subtitle}
+          rank={index + 1}
+          primaryText={`${item.streams.toLocaleString()} streams`}
+          secondaryText={formatDuration(item.durationMs)}
+        />
       ))}
     </div>
   );
