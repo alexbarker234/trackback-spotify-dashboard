@@ -50,6 +50,25 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
     return () => clearTimeout(timeout);
   }, [currentWeek, currentData]);
 
+  // Get all unique artists across all weeks for tracking
+  const allArtists = useMemo(() => {
+    const artistSet = new Set<string>();
+    data.forEach((item) => artistSet.add(item.artistId));
+    return Array.from(artistSet);
+  }, [data]);
+
+  // Track which artists were visible in the previous week
+  const [previousVisibleArtists, setPreviousVisibleArtists] = useState<Set<string>>(new Set());
+
+  const visibleArtists = useMemo(() => {
+    return new Set(currentData.map((artist) => artist.artistId));
+  }, [currentData]);
+
+  // Update previous visible artists when week changes
+  useEffect(() => {
+    setPreviousVisibleArtists(visibleArtists);
+  }, [currentWeek, visibleArtists]);
+
   // Auto-play animation
   useEffect(() => {
     if (!isPlaying || weeks.length === 0) return;
@@ -165,28 +184,49 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
               ))}
             </div>
 
-            {currentData.map((artist, index) => {
-              const currentPosition = artistPositions.get(artist.artistId) ?? index;
-              const targetPosition = index;
+            {allArtists.map((artistId) => {
+              const artist = currentData.find((a) => a.artistId === artistId);
+              const isVisible = visibleArtists.has(artistId);
+              const wasVisible = previousVisibleArtists.has(artistId);
+
+              // Only render if artist is currently visible or was visible (for exit animation)
+              if (!isVisible && !wasVisible) return null;
+
+              const currentPosition =
+                artistPositions.get(artistId) ?? (artist ? currentData.indexOf(artist) : 10);
+              const targetPosition = artist ? currentData.indexOf(artist) : 10; // 10 = off-screen bottom
               const isMoving = currentPosition !== targetPosition;
+              const isEntering = !wasVisible && isVisible;
+              const isExiting = wasVisible && !isVisible;
+
+              // Ensure entering artists always start from bottom
+              const startY = isEntering ? 600 : currentPosition * 60;
+
+              // Add extra visual feedback for truly new artists
+              const isNewArtist = isEntering && !artistPositions.has(artistId);
 
               return (
                 <motion.div
-                  key={artist.artistId}
+                  key={artistId}
                   animate={{
                     y: targetPosition * 60, // 60px per row (48px height + 12px gap)
-                    opacity: 1,
+                    opacity: isVisible ? 1 : 0,
                     scale: isMoving ? 1.02 : 1
                   }}
                   initial={{
-                    y: currentPosition * 60,
-                    opacity: 0.8,
-                    scale: 1
+                    y: startY, // Start from bottom if entering, otherwise current position
+                    opacity: isEntering ? 0 : 0.8,
+                    scale: isEntering ? 0.8 : 1 // Start smaller if entering
+                  }}
+                  exit={{
+                    y: 600, // Exit to bottom
+                    opacity: 0,
+                    scale: 0.8
                   }}
                   transition={{
-                    duration: 0.8,
-                    ease: "easeInOut",
-                    delay: Math.abs(targetPosition - currentPosition) * 0.05
+                    duration: isEntering || isExiting ? 1.2 : 0.8,
+                    ease: isEntering ? "easeOut" : "easeInOut",
+                    delay: isEntering ? 0 : Math.abs(targetPosition - currentPosition) * 0.05
                   }}
                   className="absolute right-0 left-0 flex h-12 items-center gap-4 rounded-lg bg-[#312f49] px-2"
                   style={{ margin: "6px 0" }}
@@ -194,13 +234,13 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
                   {/* Rank */}
                   <div className="flex w-8 items-center justify-center">
                     <motion.span
-                      key={`rank-${artist.rank}-${currentWeek}`}
+                      key={`rank-${artist?.rank}-${currentWeek}`}
                       initial={{ scale: 1.2, color: "#ec4899" }}
                       animate={{ scale: 1, color: "#ffffff" }}
                       transition={{ duration: 0.3 }}
                       className="text-sm font-bold"
                     >
-                      #{artist.rank}
+                      #{artist?.rank || "?"}
                     </motion.span>
                   </div>
 
@@ -211,12 +251,14 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
                         boxShadow:
                           isMoving && currentPosition > targetPosition
                             ? "0 0 20px rgba(34, 197, 94, 0.5)"
-                            : "0 0 0px rgba(0, 0, 0, 0)"
+                            : isNewArtist
+                              ? "0 0 25px rgba(59, 130, 246, 0.6)"
+                              : "0 0 0px rgba(0, 0, 0, 0)"
                       }}
                       transition={{ duration: 0.3 }}
                       className="h-full rounded-full"
                     >
-                      {artist.artistImageUrl ? (
+                      {artist?.artistImageUrl ? (
                         <img
                           src={artist.artistImageUrl}
                           alt={`${artist.artistName} profile`}
@@ -225,7 +267,7 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
                       ) : (
                         <div className="flex aspect-square h-full items-center justify-center rounded-full bg-gray-600">
                           <span className="text-xs text-gray-300">
-                            {artist.artistName.charAt(0).toUpperCase()}
+                            {artist?.artistName?.charAt(0).toUpperCase() || "?"}
                           </span>
                         </div>
                       )}
@@ -235,7 +277,9 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
                   {/* Artist Name */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium text-white">{artist.artistName}</p>
+                      <p className="truncate text-sm font-medium text-white">
+                        {artist?.artistName || "Unknown Artist"}
+                      </p>
                       {isMoving && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0 }}
@@ -243,7 +287,11 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
                           exit={{ opacity: 0, scale: 0 }}
                           className="flex items-center"
                         >
-                          {currentPosition > targetPosition ? (
+                          {isEntering ? (
+                            <span className="text-xs text-blue-400">NEW</span>
+                          ) : isExiting ? (
+                            <span className="text-xs text-orange-400">EXIT</span>
+                          ) : currentPosition > targetPosition ? (
                             <span className="text-xs text-green-400">↑</span>
                           ) : currentPosition < targetPosition ? (
                             <span className="text-xs text-red-400">↓</span>
@@ -259,7 +307,9 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{
-                          width: `${(artist.listenCount / Math.max(...currentData.map((a) => a.listenCount))) * 100}%`
+                          width: artist
+                            ? `${(artist.listenCount / Math.max(...currentData.map((a) => a.listenCount))) * 100}%`
+                            : "0%"
                         }}
                         transition={{
                           duration: 1.2,
@@ -275,7 +325,7 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
                         className="absolute inset-0 flex items-center justify-end pr-2"
                       >
                         <span className="text-xs font-medium text-white">
-                          {artist.listenCount.toLocaleString()}
+                          {artist?.listenCount?.toLocaleString() || "0"}
                         </span>
                       </motion.div>
                     </div>
