@@ -84,11 +84,12 @@ export type WeeklyTopArtist = {
 };
 
 export async function getWeeklyTopArtists(
-  options: { limit?: number } = {}
+  options: { limit?: number; movingAverageWeeks?: number } = {}
 ): Promise<WeeklyTopArtist[]> {
-  const { limit = 10 } = options;
+  const { limit = 10, movingAverageWeeks = 4 } = options;
 
   try {
+    // First, get all weekly data
     const weeklyData = await db
       .select({
         week: sql<string>`DATE_TRUNC('week', ${listen.playedAt})`.as("week"),
@@ -106,33 +107,80 @@ export async function getWeeklyTopArtists(
       .groupBy(sql`DATE_TRUNC('week', ${listen.playedAt})`, artist.name, artist.id, artist.imageUrl)
       .orderBy(sql`DATE_TRUNC('week', ${listen.playedAt})`, desc(sql<number>`count(*)`));
 
-    // Add ranking for each week
-    const weeklyRankings: WeeklyTopArtist[] = [];
-    const weekGroups = new Map<string, typeof weeklyData>();
+    // Group by week and artist
+    const weekGroups = new Map<string, Map<string, (typeof weeklyData)[0]>>();
+    const allWeeks = new Set<string>();
+    const allArtists = new Set<string>();
 
-    // Group by week
     weeklyData.forEach((row) => {
       if (!weekGroups.has(row.week)) {
-        weekGroups.set(row.week, []);
+        weekGroups.set(row.week, new Map());
       }
-      weekGroups.get(row.week)!.push(row);
+      weekGroups.get(row.week)!.set(row.artistId!, row);
+      allWeeks.add(row.week);
+      allArtists.add(row.artistId!);
     });
 
-    // Add rankings and limit to top N per week
-    weekGroups.forEach((weekData, week) => {
-      weekData.slice(0, limit).forEach((artist, index) => {
-        weeklyRankings.push({
-          week,
-          artistId: artist.artistId!,
-          artistName: artist.artistName!,
+    // Calculate moving averages
+    const sortedWeeks = Array.from(allWeeks).sort();
+    const movingAverageData: WeeklyTopArtist[] = [];
+
+    sortedWeeks.forEach((currentWeek, weekIndex) => {
+      const artistAverages = new Map<string, { total: number; count: number }>();
+
+      // Look back the specified number of weeks (including current week)
+      const startWeekIndex = Math.max(0, weekIndex - (movingAverageWeeks - 1));
+      const relevantWeeks = sortedWeeks.slice(startWeekIndex, weekIndex + 1);
+
+      // Calculate moving average for each artist
+      allArtists.forEach((artistId) => {
+        let totalListens = 0;
+        let weekCount = 0;
+
+        relevantWeeks.forEach((week) => {
+          const weekData = weekGroups.get(week);
+          if (weekData && weekData.has(artistId)) {
+            const artistData = weekData.get(artistId)!;
+            totalListens += Number(artistData.listenCount);
+            weekCount++;
+          }
+        });
+
+        if (weekCount > 0) {
+          const averageListens = Math.round(totalListens / weekCount);
+          artistAverages.set(artistId, { total: averageListens, count: weekCount });
+        }
+      });
+
+      // Convert to array and sort by moving average
+      const sortedArtists = Array.from(artistAverages.entries())
+        .map(([artistId, data]) => {
+          const artistData = weeklyData.find((row) => row.artistId === artistId);
+          return {
+            artistId,
+            artistName: artistData?.artistName || "Unknown",
+            artistImageUrl: artistData?.artistImageUrl || null,
+            listenCount: data.total,
+            weekCount: data.count
+          };
+        })
+        .sort((a, b) => b.listenCount - a.listenCount)
+        .slice(0, limit);
+
+      // Add rankings
+      sortedArtists.forEach((artist, index) => {
+        movingAverageData.push({
+          week: currentWeek,
+          artistId: artist.artistId,
+          artistName: artist.artistName,
           artistImageUrl: artist.artistImageUrl,
-          listenCount: Number(artist.listenCount),
+          listenCount: artist.listenCount,
           rank: index + 1
         });
       });
     });
 
-    return weeklyRankings.sort((a, b) => a.week.localeCompare(b.week));
+    return movingAverageData.sort((a, b) => a.week.localeCompare(b.week));
   } catch (error) {
     console.error("Error fetching weekly top artists:", error);
     return [];

@@ -8,9 +8,14 @@ import ExpandableChartContainer from "./ExpandableChartContainer";
 interface RaceBarChartProps {
   data: WeeklyTopArtist[];
   animationSpeed?: number; // milliseconds between frames
+  movingAverageWeeks?: number; // number of weeks for moving average
 }
 
-export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarChartProps) {
+export default function RaceBarChart({
+  data,
+  animationSpeed = 1000,
+  movingAverageWeeks = 4
+}: RaceBarChartProps) {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [artistPositions, setArtistPositions] = useState<Map<string, number>>(new Map());
@@ -102,7 +107,10 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
   };
 
   return (
-    <ExpandableChartContainer title="Top Artists Race Over Time" chartHeight="h-[600px]">
+    <ExpandableChartContainer
+      title={`Top Artists Race Over Time (${movingAverageWeeks}-Week Moving Average)`}
+      chartHeight="h-[600px]"
+    >
       <div className="h-full w-full">
         {/* Controls */}
         <div className="mb-4 flex items-center justify-between">
@@ -166,6 +174,9 @@ export default function RaceBarChart({ data, animationSpeed = 1000 }: RaceBarCha
             </p>
             <p className="text-lg font-semibold text-white">
               {currentWeek ? formatWeek(currentWeek) : "No data"}
+            </p>
+            <p className="text-xs text-gray-500">
+              Showing {movingAverageWeeks}-week moving average
             </p>
           </div>
         </div>
