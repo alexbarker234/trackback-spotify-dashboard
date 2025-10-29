@@ -1,3 +1,4 @@
+import { getStandaloneCookieServer } from "@/lib/utils/serverCookies";
 import {
   getOnThisDayAlbums,
   getOnThisDayArtists,
@@ -12,5 +13,14 @@ export default async function OnThisDayPage() {
     getOnThisDayAlbums()
   ]);
 
-  return <ThrowbackClientPage artists={artists} tracks={tracks} albums={albums} />;
+  const isStandalone = await getStandaloneCookieServer();
+
+  return (
+    <ThrowbackClientPage
+      artists={artists}
+      tracks={tracks}
+      albums={albums}
+      isStandalone={isStandalone}
+    />
+  );
 }

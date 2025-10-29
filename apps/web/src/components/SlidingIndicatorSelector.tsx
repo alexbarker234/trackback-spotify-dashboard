@@ -47,7 +47,10 @@ export default function SlidingIndicatorSelector<T extends string>({
   }, [value, isInitialised]);
 
   return (
-    <div ref={containerRef} className="relative flex gap-1 rounded-xl bg-white/5 p-1 backdrop-blur-sm">
+    <div
+      ref={containerRef}
+      className="relative flex gap-1 rounded-xl bg-white/5 p-1 backdrop-blur-sm"
+    >
       {/* Sliding indicator */}
       <div
         className={`absolute top-1 h-[calc(100%-8px)] rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 ${

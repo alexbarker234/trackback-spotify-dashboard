@@ -11,6 +11,7 @@ type ThrowbackClientPageProps = {
   artists: OnThisDayArtist[];
   tracks: OnThisDayTrack[];
   albums: OnThisDayAlbum[];
+  isStandalone: boolean;
 };
 
 function ArtistsSection({ artists }: { artists: OnThisDayArtist[] }) {
@@ -142,7 +143,12 @@ function AlbumsSection({ albums }: { albums: OnThisDayAlbum[] }) {
   );
 }
 
-export default function ThrowbackClientPage({ artists, tracks, albums }: ThrowbackClientPageProps) {
+export default function ThrowbackClientPage({
+  artists,
+  tracks,
+  albums,
+  isStandalone
+}: ThrowbackClientPageProps) {
   const [selectedItemType, setSelectedItemType] = useState<ItemType>("artists");
 
   const hasData = artists.length > 0 || tracks.length > 0 || albums.length > 0;
@@ -175,17 +181,16 @@ export default function ThrowbackClientPage({ artists, tracks, albums }: Throwba
   };
 
   return (
-    <div className="mx-auto my-4 flex w-full max-w-7xl flex-1 flex-col gap-5 p-4">
-      <div className="text-center">
-        <h1 className="mb-4 text-3xl font-bold text-white">On This Day</h1>
-        <p className="text-lg text-gray-400">
-          Your listening history on this day in previous years
-        </p>
-      </div>
+    <div className="mx-auto my-4 flex w-full max-w-7xl flex-1 flex-col gap-4 p-4">
+      {!isStandalone && <h1 className="text-center text-3xl font-bold text-white">On This Day</h1>}
 
       <div className="flex justify-center">
         <ItemTypeSelector itemType={selectedItemType} onItemTypeChange={setSelectedItemType} />
       </div>
+
+      <p className="text-center text-lg text-gray-400">
+        Your listening history on this day in previous years
+      </p>
 
       {renderSelectedContent()}
     </div>
