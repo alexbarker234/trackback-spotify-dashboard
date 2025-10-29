@@ -3,7 +3,7 @@ import { faCalendar, faGrip, faRankingStar } from "@fortawesome/free-solid-svg-i
 
 export default async function MiscPage() {
   return (
-    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-2 py-4 md:grid-cols-2 lg:px-8">
+    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 p-4 md:grid-cols-2">
       <LinkCard
         href="/dashboard/evolution"
         title="Evolution"

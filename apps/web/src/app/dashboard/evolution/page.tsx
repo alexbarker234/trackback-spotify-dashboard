@@ -13,21 +13,19 @@ export default async function EvolutionPage() {
   });
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto flex max-w-7xl flex-col gap-y-6">
-        <h1 className="mb-8 text-3xl font-bold text-white">Top Artists Evolution Over Time</h1>
+    <div className="flex flex-col gap-4 p-4">
+      <h1 className="mb-8 text-3xl font-bold text-white">Top Artists Evolution Over Time</h1>
 
-        {/* Evolution Chart */}
-        <div>
-          <h2 className="mb-4 text-2xl font-bold text-white">Weekly Rankings Evolution</h2>
-          <EvolutionChart data={weeklyTopArtists} animationSpeed={1500} movingAverageWeeks={4} />
-        </div>
+      {/* Evolution Chart */}
+      <div>
+        <h2 className="mb-4 text-2xl font-bold text-white">Weekly Rankings Evolution</h2>
+        <EvolutionChart data={weeklyTopArtists} animationSpeed={1500} movingAverageWeeks={4} />
+      </div>
 
-        {/* Evolution Stats */}
-        <div className="mb-8">
-          <h2 className="mb-4 text-2xl font-bold text-white">Evolution Statistics</h2>
-          <EvolutionStats data={numberOneWeeksData} itemType="artists" />
-        </div>
+      {/* Evolution Stats */}
+      <div className="mb-8">
+        <h2 className="mb-4 text-2xl font-bold text-white">Evolution Statistics</h2>
+        <EvolutionStats data={numberOneWeeksData} itemType="artists" />
       </div>
     </div>
   );

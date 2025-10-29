@@ -265,7 +265,7 @@ function HeatmapGrid({
 
   return (
     <div className="mx-auto w-fit">
-      <div className="grid grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
             <Loading />

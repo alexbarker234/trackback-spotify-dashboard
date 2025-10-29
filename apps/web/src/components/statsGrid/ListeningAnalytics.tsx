@@ -18,7 +18,7 @@ export default function ListeningAnalytics({ stats }: { stats: ListeningAnalytic
     : `${stats.longestSession.trackCount} tracks`;
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6">
       <MetricCard
         title="Longest Listening Streak"
         mainText={`${stats.longestStreak.longestStreak} days`}
@@ -30,7 +30,7 @@ export default function ListeningAnalytics({ stats }: { stats: ListeningAnalytic
       />
 
       <MetricCard
-        title="Listening Session"
+        title="Longest Listening Session"
         mainText={formatDuration(stats.longestSession.longestSessionDuration)}
         secondaryText={sessionInfo}
         gradientFrom="from-indigo-500/10"
