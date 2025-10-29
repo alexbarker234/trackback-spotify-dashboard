@@ -1,6 +1,6 @@
 "use client";
 
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from "react";
@@ -13,7 +13,13 @@ interface ItemCarouselProps {
   viewMoreUrl?: string;
 }
 
-export default function ItemCarousel({ title, subtitle, children, className = "", viewMoreUrl }: ItemCarouselProps) {
+export default function ItemCarousel({
+  title,
+  subtitle,
+  children,
+  className = "",
+  viewMoreUrl
+}: ItemCarouselProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -28,23 +34,25 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
     const totalItems = React.Children.count(children);
     const maxIndex = Math.max(0, totalItems - visibleItems);
 
+    console.log(totalItems, visibleItems);
+
     setCanScrollLeft(currentIndex > 0);
     setCanScrollRight(currentIndex < maxIndex);
+    console.log(currentIndex, maxIndex);
   }, [children, visibleItems, currentIndex]);
 
   const getVisibleItemsCount = () => {
-    if (!containerRef.current) return 0;
+    if (!containerRef.current || !contentRef.current) return 0;
 
-    const container = containerRef.current;
-    const containerWidth = container.clientWidth;
-    const children = container.children;
+    const containerWidth = containerRef.current.clientWidth;
+    const children = contentRef.current.children;
 
     if (children.length === 0) return 0;
 
     // Get the actual width of the first item
     const firstItem = children[0] as HTMLElement;
     const itemWidth = firstItem.offsetWidth;
-    const gap = 12; // gap-3 = 12px
+    const gap = 12;
 
     return Math.round(containerWidth / (itemWidth + gap));
   };
@@ -52,8 +60,7 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
   useEffect(() => {
     if (!containerRef.current || !contentRef.current) return;
 
-    const container = containerRef.current;
-    const children = container.children;
+    const children = contentRef.current.children;
 
     if (children.length === 0) return;
 
@@ -105,7 +112,7 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
 
   return (
     <div className={`relative h-fit ${className}`}>
-      {/* Header with title and controls */}
+      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">{title}</h2>
@@ -115,40 +122,29 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
         {/* Navigation controls */}
         <div className="flex flex-shrink-0 items-center space-x-2">
           <div className="hidden items-center space-x-2 sm:flex">
-            <button
+            <RoundedIconButton
+              icon={faChevronLeft}
               onClick={scrollLeft}
               disabled={!canScrollLeft}
-              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-not-allowed ${
-                canScrollLeft
-                  ? "bg-white/10 text-white hover:bg-white/20"
-                  : "cursor-not-allowed bg-white/5 text-gray-500"
-              }`}
-            >
-              <FontAwesomeIcon icon={faChevronLeft} className="h-4 w-4" />
-            </button>
-            <button
+            />
+            <RoundedIconButton
+              icon={faChevronRight}
               onClick={scrollRight}
               disabled={!canScrollRight}
-              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-not-allowed ${
-                canScrollRight
-                  ? "bg-white/10 text-white hover:bg-white/20"
-                  : "cursor-not-allowed bg-white/5 text-gray-500"
-              }`}
-            >
-              <FontAwesomeIcon icon={faChevronRight} className="h-4 w-4" />
-            </button>
+            />
           </div>
           {viewMoreUrl && (
-            <Link href={viewMoreUrl} className="text-sm text-gray-400 transition-colors hover:text-white">
+            <Link
+              href={viewMoreUrl}
+              className="text-sm text-gray-400 transition-colors hover:text-white"
+            >
               View More
             </Link>
           )}
         </div>
       </div>
 
-      {/* Container with hidden overflow */}
       <div ref={containerRef} className="overflow-scroll sm:overflow-hidden">
-        {/* Content with transform */}
         <div
           ref={contentRef}
           className="flex gap-3"
@@ -161,5 +157,27 @@ export default function ItemCarousel({ title, subtitle, children, className = ""
         </div>
       </div>
     </div>
+  );
+}
+
+function RoundedIconButton({
+  icon,
+  onClick,
+  disabled
+}: {
+  icon: IconDefinition;
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all disabled:cursor-not-allowed ${
+        disabled ? "bg-white/5 text-gray-500" : "bg-white/10 text-white hover:bg-white/20"
+      }`}
+    >
+      <FontAwesomeIcon icon={icon} className="h-4 w-4" />
+    </button>
   );
 }
