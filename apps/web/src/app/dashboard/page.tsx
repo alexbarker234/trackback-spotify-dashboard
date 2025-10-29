@@ -1,3 +1,4 @@
+import LinkCard from "@/components/cards/LinkCard";
 import ListenCard from "@/components/cards/ListenCard";
 import MonthlyStreamChart from "@/components/charts/MonthlyStreamChart";
 import YearlyStreamChart from "@/components/charts/YearlyStreamChart";
@@ -8,8 +9,7 @@ import NowPlaying from "@/components/NowPlaying";
 import ListeningAnalytics from "@/components/statsGrid/ListeningAnalytics";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
-import { faCalendar, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCalendar } from "@fortawesome/free-solid-svg-icons";
 import { getTopAlbums } from "@workspace/core/queries/albums";
 import {
   getLongestListeningSession,
@@ -25,36 +25,7 @@ import {
 import { getTopTracks } from "@workspace/core/queries/tracks";
 import { headers } from "next/headers";
 import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
-
-function OnThisDaySection() {
-  return (
-    <Link
-      href="/dashboard/throwback"
-      className="group block rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 p-6 backdrop-blur-sm transition-all duration-300 hover:from-purple-900/30 hover:to-pink-900/30"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="rounded-full bg-gradient-to-br from-purple-500 to-pink-500 p-3 text-2xl transition-transform duration-300 group-hover:scale-110">
-            <FontAwesomeIcon icon={faCalendar} />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-zinc-100 transition-colors duration-300 group-hover:text-purple-300">
-              On This Day
-            </h3>
-            <p className="text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">
-              Discover what you were listening to on this date in previous years
-            </p>
-          </div>
-        </div>
-        <div className="text-2xl text-purple-400 transition-colors duration-300 group-hover:text-purple-300">
-          <FontAwesomeIcon icon={faChevronRight} />
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 async function MetricsSection() {
   const [listenStats, longestStreak, longestSession] = await Promise.all([
@@ -233,7 +204,12 @@ export default async function Home() {
         </Suspense>
 
         {/* On This Day Section */}
-        <OnThisDaySection />
+        <LinkCard
+          href="dashboard/throwback"
+          title="On This Day"
+          description="Discover what you were listening to on this date in previous years"
+          icon={faCalendar}
+        />
 
         {/* Top Tracks Section */}
         <Suspense fallback={<Loading />}>
