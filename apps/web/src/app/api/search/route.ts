@@ -4,8 +4,22 @@ import { getUserAccessToken } from "@workspace/core/queries/user";
 import { searchSpotify } from "@workspace/core/spotify/search";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-export async function GET(request: NextRequest): Promise<NextResponse<SearchResults | { error: string }>> {
+const searchQuerySchema = z.object({
+  q: z.string().min(1, "Query parameter 'q' is required").max(100, "Query too long"),
+  type: z.enum(["album", "track", "artist"]).default("artist"),
+  limit: z.coerce
+    .number()
+    .int("Limit must be an integer")
+    .min(1, "Limit must be at least 1")
+    .max(50, "Limit cannot exceed 50")
+    .default(50)
+});
+
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<SearchResults | { error: string }>> {
   try {
     const session = await auth.api.getSession({
       headers: await headers()
@@ -16,11 +30,22 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResu
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("q");
+    const rawQuery = {
+      q: searchParams.get("q"),
+      type: searchParams.get("type"),
+      limit: searchParams.get("limit")
+    };
 
-    if (!query) {
-      return NextResponse.json({ error: "Query parameter 'q' is required" }, { status: 400 });
+    const validationResult = searchQuerySchema.safeParse(rawQuery);
+
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.issues
+        .map((err) => `${err.path.join(".")}: ${err.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
+
+    const { q: query, type, limit } = validationResult.data;
 
     const accessToken = await getUserAccessToken(session.user.id);
 
@@ -28,7 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResu
       return NextResponse.json({ error: "No valid Spotify access token" }, { status: 401 });
     }
 
-    const searchResults = await searchSpotify(query, accessToken, ["album", "track", "artist"], 10);
+    const searchResults = await searchSpotify(query, accessToken, [type], limit);
 
     if (!searchResults) {
       return NextResponse.json({ error: "Search failed" }, { status: 500 });
