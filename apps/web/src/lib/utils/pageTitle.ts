@@ -27,6 +27,8 @@ export const getPageTitle = (path: string, searchParams: URLSearchParams) => {
       return "Heatmap";
     case "/dashboard/throwback":
       return "On This Day";
+    case "/dashboard/history":
+      return "Listening History";
     default:
       return "Trackback";
   }
