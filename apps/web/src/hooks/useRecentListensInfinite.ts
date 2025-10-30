@@ -20,14 +20,23 @@ type DayApiResponse = { days: DayGroup[]; nextCursor: string | null };
 
 async function fetchRecentListensByDays({
   cursor,
-  days = 7
+  days = 7,
+  artistId,
+  albumId,
+  trackIsrc
 }: {
   cursor?: string | null;
   days?: number;
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
 }) {
   const params = new URLSearchParams();
   params.set("days", String(days));
   params.set("tzOffsetMinutes", String(new Date().getTimezoneOffset() * -1));
+  if (artistId) params.set("artistId", artistId);
+  if (albumId) params.set("albumId", albumId);
+  if (trackIsrc) params.set("trackIsrc", trackIsrc);
   if (cursor) params.set("cursor", cursor);
   try {
     const res = await axios.get<DayApiResponse>(`/api/listens/recent?${params.toString()}`, {
@@ -39,11 +48,24 @@ async function fetchRecentListensByDays({
   }
 }
 
-export function useRecentListensInfinite(daysPerPage = 7) {
+export function useRecentListensInfinite(
+  daysPerPage = 7,
+  filters?: { artistId?: string; albumId?: string; trackIsrc?: string }
+) {
   return useInfiniteQuery<DayApiResponse, Error>({
-    queryKey: ["recent-listens-by-day", daysPerPage],
+    queryKey: [
+      "recent-listens-by-day",
+      daysPerPage,
+      filters?.artistId,
+      filters?.albumId,
+      filters?.trackIsrc
+    ],
     queryFn: ({ pageParam }) =>
-      fetchRecentListensByDays({ cursor: pageParam as string | undefined, days: daysPerPage }),
+      fetchRecentListensByDays({
+        cursor: pageParam as string | undefined,
+        days: daysPerPage,
+        ...filters
+      }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined
   });

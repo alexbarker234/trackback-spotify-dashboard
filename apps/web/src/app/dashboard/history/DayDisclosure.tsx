@@ -1,6 +1,7 @@
 "use client";
 
 import ListenCard from "@/components/cards/ListenCard";
+import { formatDuration } from "@/lib/utils/timeUtils";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Disclosure, DisclosureButton, DisclosurePanel, Transition } from "@headlessui/react";
@@ -25,12 +26,20 @@ export function DayDisclosure({ date, listens }: { date: Date; listens: Listen[]
     day: "numeric"
   }).format(date);
 
+  const listensCount = listens.length;
+  const timeListened = listens.reduce((acc, listen) => acc + listen.durationMS, 0);
+
   return (
     <Disclosure>
       {({ open }) => (
         <div className="rounded-2xl bg-white/5">
           <DisclosureButton className="flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-left text-zinc-100 transition hover:bg-white/10">
-            <span className="text-lg font-semibold">{formatted}</span>
+            <div className="flex flex-col gap-2">
+              <span className="text-lg font-semibold">{formatted}</span>
+              <span className="text-sm text-zinc-400">
+                {listensCount} listens • {formatDuration(timeListened)}
+              </span>
+            </div>
             <FontAwesomeIcon
               icon={faChevronDown}
               className={`h-5 w-5 transition-transform ${open ? "rotate-180" : "rotate-0"}`}

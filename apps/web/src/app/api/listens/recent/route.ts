@@ -8,9 +8,18 @@ export async function GET(request: Request) {
   const days = daysParam ? Math.min(Math.max(parseInt(daysParam, 10) || 0, 1), 31) : 7;
   const tzOffsetParam = searchParams.get("tzOffsetMinutes");
   const tzOffsetMinutes = tzOffsetParam ? Number(tzOffsetParam) : 0; // minutes to add to UTC to get local
+  const artistId = searchParams.get("artistId") || undefined;
+  const albumId = searchParams.get("albumId") || undefined;
+  const trackIsrc = searchParams.get("trackIsrc") || undefined;
 
   const batchLimit = 2000; // ensures we can cover up to 7 days (hope)
-  const { items } = await getPaginatedListens({ limit: batchLimit, cursor });
+  const { items } = await getPaginatedListens({
+    limit: batchLimit,
+    cursor,
+    artistId,
+    albumId,
+    trackIsrc
+  });
 
   // Group by LOCAL date string (YYYY-MM-DD) using tzOffsetMinutes
   const byDay = new Map<string, typeof items>();
