@@ -1,4 +1,4 @@
-import AlbumGrid from "@/components/cards/AlbumGrid";
+import AlbumCard from "@/components/cards/AlbumCard";
 import ListenCard from "@/components/cards/ListenCard";
 import TrackCard from "@/components/cards/TrackCard";
 import CumulativeStreamChart from "@/components/charts/CumulativeStreamChart";
@@ -6,6 +6,7 @@ import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
 import ListeningHeatmap from "@/components/charts/ListeningHeatmap";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
+import ExpandableList from "@/components/ExpandableList";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import Loading from "@/components/Loading";
@@ -22,6 +23,7 @@ import {
 } from "@workspace/core";
 import { getTopAlbums } from "@workspace/core/queries/albums";
 import { getArtistData } from "@workspace/core/queries/artists";
+import Link from "next/link";
 import { Suspense } from "react";
 
 async function ArtistHeader({
@@ -67,31 +69,58 @@ async function ChartsSection({ artistId, artistName }: { artistId: string; artis
 }
 
 async function TopTracksSection({ artistId }: { artistId: string }) {
-  const topTracks = await getTopTracksForArtist(artistId);
+  const topTracks = await getTopTracksForArtist(artistId, 100);
   if (topTracks.length === 0) return null;
   return (
     <div>
       <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks</h3>
-      <div className="space-y-2">
+      <ExpandableList containerClassName="space-y-2">
         {topTracks.map((track, index) => (
           <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
         ))}
-      </div>
+      </ExpandableList>
     </div>
   );
 }
 
 async function TopAlbumsSection({ artistId }: { artistId: string }) {
   const topAlbums = await getTopAlbums({ artistId });
-  return <AlbumGrid albums={topAlbums} />;
+  if (topAlbums.length === 0) return null;
+  return (
+    <div>
+      <h3 className="mb-4 text-lg font-semibold text-white">Top Albums</h3>
+      <ExpandableList containerClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {topAlbums.map((album, index) => (
+          <AlbumCard key={album.albumId} album={album} rank={index + 1} />
+        ))}
+      </ExpandableList>
+    </div>
+  );
 }
 
-async function RecentListensSection({ artistId }: { artistId: string }) {
+async function RecentListensSection({
+  artistId,
+  artistName
+}: {
+  artistId: string;
+  artistName: string;
+}) {
   const recentListens = await getRecentListens({ artistId });
   if (recentListens.length === 0) return null;
   return (
     <div>
-      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-zinc-100">Recent Listens</h3>
+        <Link
+          href={{
+            pathname: "/dashboard/history",
+            query: { type: "artist", id: artistId, name: artistName }
+          }}
+          className="text-sm text-zinc-400 transition-colors hover:text-zinc-300"
+        >
+          View more
+        </Link>
+      </div>
       <div className="space-y-2">
         {recentListens.map((listen) => (
           <ListenCard key={listen.id} listen={listen} />
@@ -135,7 +164,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
 
       {/* Recent Listens */}
       <Suspense fallback={<Loading />}>
-        <RecentListensSection artistId={artistId} />
+        <RecentListensSection artistId={artistId} artistName={artistData.artist.name} />
       </Suspense>
     </ItemPageSkeleton>
   );

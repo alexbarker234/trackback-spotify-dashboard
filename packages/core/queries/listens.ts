@@ -82,6 +82,80 @@ export async function getRecentListens(options: GetRecentListensOptions = {}) {
   }
 }
 
+type GetPaginatedListensOptions = {
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
+  limit?: number;
+  cursor?: string | null; // ISO date string for playedAt
+};
+
+export async function getPaginatedListens(options: GetPaginatedListensOptions = {}) {
+  const { artistId, albumId, trackIsrc, limit = 50, cursor } = options;
+
+  console.log(cursor);
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+
+    if (artistId) {
+      whereConditions.push(eq(trackArtist.artistId, artistId));
+    } else if (albumId) {
+      whereConditions.push(eq(albumTrack.albumId, albumId));
+    } else if (trackIsrc) {
+      whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
+    }
+
+    if (cursor) {
+      // Use playedAt strictly less than cursor for keyset pagination
+      const cursorDate = new Date(cursor);
+      whereConditions.push(sql`${listen.playedAt} < ${cursorDate}`);
+    }
+
+    const items = await db
+      .select({
+        id: listen.id,
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt,
+        trackName: track.name,
+        trackIsrc: track.isrc,
+        imageUrl: album.imageUrl,
+        trackDurationMS: track.durationMS,
+        artistNames: sql<
+          string[]
+        >`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
+        albumName: album.name
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
+      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
+      .where(and(...whereConditions))
+      .groupBy(
+        listen.id,
+        listen.durationMS,
+        listen.playedAt,
+        track.name,
+        track.isrc,
+        albumTrack.trackId,
+        album.name,
+        album.imageUrl
+      )
+      .orderBy(desc(listen.playedAt))
+      .limit(limit);
+
+    const nextCursor =
+      items.length === limit ? items[items.length - 1]!.playedAt.toISOString() : null;
+
+    return { items, nextCursor };
+  } catch (error) {
+    console.error("Error fetching paginated listens:", error);
+    return { items: [], nextCursor: null as string | null };
+  }
+}
+
 type GetDailyStreamDataOptions = {
   artistId?: string;
   albumId?: string;

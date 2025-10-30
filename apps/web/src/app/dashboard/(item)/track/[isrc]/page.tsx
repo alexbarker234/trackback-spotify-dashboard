@@ -22,6 +22,7 @@ import {
 import { getTopAlbums } from "@workspace/core/queries/albums";
 import { getTrackData } from "@workspace/core/queries/tracks";
 import { Suspense } from "react";
+import Link from "next/link";
 
 async function TrackHeader({ trackData }: { trackData: Awaited<ReturnType<typeof getTrackData>> }) {
   const { track, artists } = trackData;
@@ -67,12 +68,20 @@ async function AlbumsSection({ isrc }: { isrc: string }) {
   return <AlbumGrid albums={topAlbums} />;
 }
 
-async function RecentListensSection({ isrc }: { isrc: string }) {
+async function RecentListensSection({ isrc, trackName }: { isrc: string; trackName: string }) {
   const recentListens = await getRecentListens({ trackIsrc: isrc });
   if (recentListens.length === 0) return null;
   return (
     <div>
-      <h3 className="mb-4 text-lg font-semibold text-zinc-100">Recent Listens</h3>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-zinc-100">Recent Listens</h3>
+        <Link
+          href={{ pathname: "/dashboard/history", query: { type: "track", id: isrc, name: trackName } }}
+          className="text-sm text-zinc-400 transition-colors hover:text-zinc-300"
+        >
+          View more
+        </Link>
+      </div>
       <div className="space-y-2">
         {recentListens.map((listen) => (
           <ListenCard key={listen.id} listen={listen} />
@@ -111,7 +120,7 @@ export default async function TrackPage({ params }: { params: Promise<{ isrc: st
 
       {/* Recent Listens */}
       <Suspense fallback={<Loading />}>
-        <RecentListensSection isrc={isrc} />
+        <RecentListensSection isrc={isrc} trackName={trackData?.track.name || ""} />
       </Suspense>
     </ItemPageSkeleton>
   );

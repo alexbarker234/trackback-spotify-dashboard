@@ -25,6 +25,7 @@ import {
 import { getTopTracks } from "@workspace/core/queries/tracks";
 import { headers } from "next/headers";
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
 
 async function MetricsSection() {
@@ -149,8 +150,15 @@ async function RecentListensSection() {
 
   return (
     <div>
-      <h2 className="mb-6 text-3xl font-bold text-zinc-100">Recent Listens</h2>
-
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-3xl font-bold text-zinc-100">Recent Listens</h2>
+        <Link
+          href="dashboard/history"
+          className="text-sm text-zinc-400 transition-colors hover:text-zinc-300"
+        >
+          View more
+        </Link>
+      </div>
       {listens.length === 0 ? (
         <div className="py-8 text-center text-zinc-400">
           No listens found. Start listening to music to see your history here!
