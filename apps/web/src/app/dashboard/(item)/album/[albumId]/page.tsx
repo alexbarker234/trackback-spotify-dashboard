@@ -6,6 +6,7 @@ import DailyStreamChart from "@/components/charts/DailyStreamChart";
 import HourlyListensRadialChart from "@/components/charts/HourlyListensRadialChart";
 import ListeningHeatmap from "@/components/charts/ListeningHeatmap";
 import YearlyPercentageChart from "@/components/charts/YearlyPercentageChart";
+import ExpandableList from "@/components/ExpandableList";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import Loading from "@/components/Loading";
@@ -65,16 +66,16 @@ async function ChartsSection({ albumId, albumName }: { albumId: string; albumNam
 }
 
 async function TopTracksSection({ albumId }: { albumId: string }) {
-  const topTracks = await getTopTracksForAlbum(albumId);
+  const topTracks = await getTopTracksForAlbum(albumId, 100);
   if (topTracks.length === 0) return null;
   return (
     <div>
       <h3 className="mb-4 text-lg font-semibold text-zinc-100">Top Tracks on this album</h3>
-      <div className="space-y-2">
+      <ExpandableList containerClassName="space-y-2">
         {topTracks.map((track, index) => (
           <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
         ))}
-      </div>
+      </ExpandableList>
     </div>
   );
 }
