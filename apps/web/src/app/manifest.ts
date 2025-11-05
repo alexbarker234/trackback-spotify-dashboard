@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "A personal spotify listening dashboard",
     start_url: "/",
     display: "standalone",
-    background_color: "##121327",
-    theme_color: "##121327",
+    background_color: "#121327",
+    theme_color: "#121327",
     icons: [
       {
         src: "/icon-192x192.png",
