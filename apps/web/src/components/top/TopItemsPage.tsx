@@ -7,6 +7,7 @@ import { formatDuration } from "@/lib/utils/timeUtils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useCallback, useEffect, useState } from "react";
 import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
 import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
@@ -16,6 +17,7 @@ import DateRangeSelector from "../DateRangeSelector";
 import StreamItemCard from "../itemCards/StreamItemCard";
 import ItemTypeSelector, { ItemType, itemTypeOptions } from "../ItemTypeSelector";
 import Loading from "../Loading";
+import CustomDateRangeModal from "../modals/CustomDateRangeModal";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
 
 export type TopItem = {
@@ -64,6 +66,23 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
     handlePreviousPeriod,
     handleNextPeriod
   } = useDateRange();
+
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+
+  const handleCloseModal = useCallback(() => {
+    setIsCustomModalOpen(false);
+    // If no custom dates are set, switch back to a default range
+    if (dateRange === "custom" && !startDate && !endDate) {
+      handleDateRangeChange("4weeks");
+    }
+  }, [dateRange, startDate, endDate, handleDateRangeChange]);
+
+  // Open modal when custom is selected
+  useEffect(() => {
+    if (dateRange === "custom") {
+      setIsCustomModalOpen(true);
+    }
+  }, [dateRange]);
 
   const [viewType, setViewType] = useQueryState<ViewType>(
     "viewType",
@@ -124,12 +143,14 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
           </div>
 
           {/* Navigation Controls */}
-          <DateNavigationControls
-            dateRange={dateRange}
-            currentPeriod={currentPeriod}
-            onPreviousPeriod={handlePreviousPeriod}
-            onNextPeriod={handleNextPeriod}
-          />
+          {dateRange !== "custom" && (
+            <DateNavigationControls
+              dateRange={dateRange}
+              currentPeriod={currentPeriod}
+              onPreviousPeriod={handlePreviousPeriod}
+              onNextPeriod={handleNextPeriod}
+            />
+          )}
         </div>
         {/* Content */}
         {isLoading ? (
@@ -155,6 +176,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
             <div className="text-gray-400">No data available for this period</div>
           </div>
         )}
+
+        {/* Custom Date Range Modal */}
+        <CustomDateRangeModal isOpen={isCustomModalOpen} onClose={handleCloseModal} />
       </div>
     </div>
   );

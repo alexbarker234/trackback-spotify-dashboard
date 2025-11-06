@@ -1,16 +1,24 @@
 "use client";
 
 import { formatDate } from "@/lib/utils/timeUtils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import styles from "./calendar.module.css";
 
 type CalendarRangeSelectorProps = {
   onChange?: (value: [Date, Date]) => void;
+  initialValue?: [Date, Date] | null;
 };
 
-export default function CalendarRangeSelector({ onChange }: CalendarRangeSelectorProps) {
-  const [value, setValue] = useState<[Date, Date] | null>(null);
+export default function CalendarRangeSelector({
+  onChange,
+  initialValue = null
+}: CalendarRangeSelectorProps) {
+  const [value, setValue] = useState<[Date, Date] | null>(initialValue);
+
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
 
   const onInternalChange = (value: Date | Date[]) => {
     if (Array.isArray(value)) {
@@ -22,7 +30,7 @@ export default function CalendarRangeSelector({ onChange }: CalendarRangeSelecto
 
   return (
     <div className={styles.calendarContainer}>
-      <Calendar selectRange={true} onChange={onInternalChange} />
+      <Calendar selectRange={true} onChange={onInternalChange} value={value || undefined} />
       {/* Display the selected range */}
       <div className="mt-4 rounded-lg bg-white/5 p-4 backdrop-blur-sm">
         {value ? (

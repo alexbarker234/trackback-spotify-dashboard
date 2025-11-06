@@ -3,7 +3,7 @@
 import { parseAsInteger, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useMemo } from "react";
 
-const dateRangeOptions = ["4weeks", "6months", "year", "lifetime"] as const;
+const dateRangeOptions = ["4weeks", "6months", "year", "lifetime", "custom"] as const;
 export type DateRange = (typeof dateRangeOptions)[number];
 
 export type UseDateRangeOptions = {
@@ -18,7 +18,18 @@ export function useDateRange(options: UseDateRangeOptions = {}) {
     "dateRange",
     parseAsStringLiteral(dateRangeOptions).withDefault(initialDateRange)
   );
-  const [currentPeriod, setCurrentPeriod] = useQueryState("currentPeriod", parseAsInteger.withDefault(initialPeriod));
+  const [currentPeriod, setCurrentPeriod] = useQueryState(
+    "currentPeriod",
+    parseAsInteger.withDefault(initialPeriod)
+  );
+  const [customStartDate, setCustomStartDate] = useQueryState(
+    "customStartDate",
+    parseAsInteger.withOptions({ history: "push" })
+  );
+  const [customEndDate, setCustomEndDate] = useQueryState(
+    "customEndDate",
+    parseAsInteger.withOptions({ history: "push" })
+  );
 
   // Calculate start and end dates based on dateRange and currentPeriod
   const { startDate, endDate } = useMemo(() => {
@@ -40,10 +51,19 @@ export function useDateRange(options: UseDateRangeOptions = {}) {
     } else if (dateRange === "lifetime") {
       start = undefined;
       end = undefined;
+    } else if (dateRange === "custom") {
+      if (customStartDate && customEndDate) {
+        start = new Date(customStartDate);
+        end = new Date(customEndDate);
+      } else {
+        // Default to last 4 weeks if custom dates not set
+        start = new Date();
+        start.setDate(start.getDate() - 28);
+      }
     }
 
     return { startDate: start, endDate: end };
-  }, [dateRange, currentPeriod]);
+  }, [dateRange, currentPeriod, customStartDate, customEndDate]);
 
   const handleDateRangeChange = (newRange: DateRange) => {
     setDateRange(newRange);
@@ -58,6 +78,11 @@ export function useDateRange(options: UseDateRangeOptions = {}) {
     setCurrentPeriod((prev) => Math.max(0, prev - 1));
   };
 
+  const handleCustomDateRange = (start: Date, end: Date) => {
+    setCustomStartDate(start.getTime());
+    setCustomEndDate(end.getTime());
+  };
+
   return {
     dateRange,
     currentPeriod,
@@ -65,6 +90,7 @@ export function useDateRange(options: UseDateRangeOptions = {}) {
     endDate,
     handleDateRangeChange,
     handlePreviousPeriod,
-    handleNextPeriod
+    handleNextPeriod,
+    handleCustomDateRange
   };
 }
