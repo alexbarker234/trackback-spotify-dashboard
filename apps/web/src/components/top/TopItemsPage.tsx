@@ -1,13 +1,13 @@
 "use client";
 
-import { useDateRange } from "@/hooks/useDateRange";
+import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
 import { cn } from "@/lib/utils/cn";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
 import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
@@ -77,13 +77,6 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
     }
   }, [dateRange, startDate, endDate, handleDateRangeChange]);
 
-  // Open modal when custom is selected
-  useEffect(() => {
-    if (dateRange === "custom") {
-      setIsCustomModalOpen(true);
-    }
-  }, [dateRange]);
-
   const [viewType, setViewType] = useQueryState<ViewType>(
     "viewType",
     parseAsStringLiteral(viewTypeOptions).withDefault("grid")
@@ -108,6 +101,12 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const onItemTypeChange = (newItemType: ItemType) => {
     setItemType(newItemType);
+  };
+
+  const handleDateRangeOptionClick = (dateRange: DateRange) => {
+    if (dateRange === "custom") {
+      setIsCustomModalOpen(true);
+    }
   };
 
   return (
@@ -136,7 +135,11 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
               <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />
             )}
             {/* Date Range Selector */}
-            <DateRangeSelector dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
+            <DateRangeSelector
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
+              onOptionClick={handleDateRangeOptionClick}
+            />
 
             {/* View Selector */}
             <ViewSelector viewType={viewType} onViewTypeChange={setViewType} />
