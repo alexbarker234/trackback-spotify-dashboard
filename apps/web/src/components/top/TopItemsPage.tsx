@@ -2,9 +2,10 @@
 
 import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
+import { usePageTitle } from "@/lib/contexts/PageTitleContext";
 import { formatDate, formatDuration } from "@/lib/utils/timeUtils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
 import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
@@ -44,6 +45,8 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
 
+  const { setTitle, setSubheader } = usePageTitle();
+
   const handleCloseModal = useCallback(() => {
     setIsCustomModalOpen(false);
     // If no custom dates are set, switch back to a default range
@@ -74,15 +77,25 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const title = `Top ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
 
-  const periodDisplay = useMemo(() => {
-    if (dateRange === "lifetime") {
-      return "";
-    }
-    if (startDate && endDate) {
-      return `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`;
-    }
-    return title;
-  }, [title, dateRange, startDate, endDate]);
+  // Update period & PWA header
+  const updatePeriod = useCallback(() => {
+    const period =
+      dateRange === "lifetime"
+        ? ""
+        : startDate && endDate
+          ? `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`
+          : "";
+    setTitle(title);
+    setSubheader(period);
+    return period;
+  }, [dateRange, startDate, endDate, title, setSubheader, setTitle]);
+
+  useEffect(() => {
+    updatePeriod();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const periodDisplay = useMemo(() => updatePeriod(), [updatePeriod]);
 
   const onItemTypeChange = (newItemType: ItemType) => {
     setItemType(newItemType);
