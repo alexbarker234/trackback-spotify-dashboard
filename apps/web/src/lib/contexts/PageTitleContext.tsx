@@ -2,7 +2,16 @@
 
 import { getPageTitle } from "@/lib/utils/pageTitle";
 import { usePathname, useSearchParams } from "next/navigation";
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  Suspense,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 
 type PageTitleContextType = {
   title: string | null;
@@ -13,10 +22,13 @@ type PageTitleContextType = {
 
 const PageTitleContext = createContext<PageTitleContextType | undefined>(undefined);
 
-export function PageTitleProvider({ children }: { children: ReactNode }) {
+function PageTitleProviderInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const defaultTitle = getPageTitle(pathname, searchParams);
+  const defaultTitle = useMemo(
+    () => getPageTitle(pathname, searchParams),
+    [pathname, searchParams]
+  );
   const [title, setTitle] = useState<string>(defaultTitle);
   const [subheader, setSubheader] = useState<string | null>(null);
 
@@ -35,6 +47,34 @@ export function PageTitleProvider({ children }: { children: ReactNode }) {
     <PageTitleContext.Provider value={{ title, subheader, setTitle, setSubheader }}>
       {children}
     </PageTitleContext.Provider>
+  );
+}
+
+function PageTitleProviderFallback({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const defaultTitle = useMemo(() => getPageTitle(pathname, new URLSearchParams()), [pathname]);
+  const [title] = useState<string>(defaultTitle);
+  const [subheader] = useState<string | null>(null);
+
+  return (
+    <PageTitleContext.Provider
+      value={{
+        title,
+        subheader,
+        setTitle: () => {},
+        setSubheader: () => {}
+      }}
+    >
+      {children}
+    </PageTitleContext.Provider>
+  );
+}
+
+export function PageTitleProvider({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<PageTitleProviderFallback>{children}</PageTitleProviderFallback>}>
+      <PageTitleProviderInner>{children}</PageTitleProviderInner>
+    </Suspense>
   );
 }
 

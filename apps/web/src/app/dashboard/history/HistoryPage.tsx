@@ -5,7 +5,7 @@ import { useRecentListensInfinite } from "@/hooks/useRecentListensInfinite";
 import { useSearchParams } from "next/navigation";
 import { HistoryList } from "./HistoryList";
 
-export default function HistoryPage({ isStandalone }: { isStandalone: boolean }) {
+export default function HistoryPage() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type");
   const id = searchParams.get("id");
