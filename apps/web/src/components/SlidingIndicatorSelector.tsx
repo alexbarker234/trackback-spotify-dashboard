@@ -9,14 +9,16 @@ type SlidingIndicatorSelectorProps<T> = {
   options: Option<T>[];
   value: T;
   onChange: (value: T) => void;
+  onOptionClick?: (value: T) => void;
 };
 
 export default function SlidingIndicatorSelector<T extends string>({
   options,
   value,
-  onChange
+  onChange,
+  onOptionClick
 }: SlidingIndicatorSelectorProps<T>) {
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, top: 0, height: 0 });
   const [isInitialised, setIsInitialised] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -32,7 +34,9 @@ export default function SlidingIndicatorSelector<T extends string>({
 
         setIndicatorStyle({
           left: buttonRect.left - containerRect.left,
-          width: buttonRect.width
+          width: buttonRect.width,
+          top: buttonRect.top - containerRect.top,
+          height: buttonRect.height
         });
 
         if (!isInitialised) {
@@ -46,19 +50,29 @@ export default function SlidingIndicatorSelector<T extends string>({
     return () => window.removeEventListener("resize", updateIndicator);
   }, [value, isInitialised]);
 
+  const handleOptionClick = (optionValue: T) => {
+    onOptionClick?.(optionValue);
+    // Only call onChange if the value actually changed
+    if (optionValue !== value) {
+      onChange(optionValue);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
-      className="relative flex gap-1 rounded-xl bg-white/5 p-1 backdrop-blur-sm"
+      className="relative flex flex-wrap gap-1 rounded-xl bg-white/5 p-1 backdrop-blur-sm"
     >
       {/* Sliding indicator */}
       <div
-        className={`absolute top-1 h-[calc(100%-8px)] rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 ${
+        className={`absolute rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 ${
           isInitialised ? "transition-all duration-300 ease-out" : ""
         }`}
         style={{
           left: `${indicatorStyle.left}px`,
-          width: `${indicatorStyle.width}px`
+          width: `${indicatorStyle.width}px`,
+          top: `${indicatorStyle.top}px`,
+          height: `${indicatorStyle.height}px`
         }}
       />
 
@@ -69,8 +83,8 @@ export default function SlidingIndicatorSelector<T extends string>({
           ref={(el) => {
             buttonsRef.current[option.value] = el;
           }}
-          onClick={() => onChange(option.value)}
-          className={`relative z-10 flex-grow cursor-pointer rounded-lg px-4 py-1 text-sm font-medium transition-colors sm:py-2 ${
+          onClick={() => handleOptionClick(option.value)}
+          className={`relative z-10 flex-grow cursor-pointer rounded-lg px-4 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed sm:py-2 ${
             value === option.value ? "text-white" : "text-gray-400 hover:text-white"
           }`}
         >

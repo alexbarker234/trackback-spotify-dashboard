@@ -1,6 +1,7 @@
 "use client";
 
 import { useStandalone } from "@/hooks/useStandalone";
+import { PageTitleProvider } from "@/lib/contexts/PageTitleContext";
 import { setStandaloneCookie } from "@/lib/utils/cookies";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -24,7 +25,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <NuqsAdapter>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <PageTitleProvider>{children}</PageTitleProvider>
+      </QueryClientProvider>
     </NuqsAdapter>
   );
 }

@@ -1,12 +1,11 @@
 "use client";
 
-import { useDateRange } from "@/hooks/useDateRange";
+import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
-import { cn } from "@/lib/utils/cn";
-import { formatDuration } from "@/lib/utils/timeUtils";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePageTitle } from "@/lib/contexts/PageTitleContext";
+import { formatDate, formatDuration } from "@/lib/utils/timeUtils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
 import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
@@ -16,6 +15,7 @@ import DateRangeSelector from "../DateRangeSelector";
 import StreamItemCard from "../itemCards/StreamItemCard";
 import ItemTypeSelector, { ItemType, itemTypeOptions } from "../ItemTypeSelector";
 import Loading from "../Loading";
+import CustomDateRangeModal from "../modals/CustomDateRangeModal";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
 
 export type TopItem = {
@@ -32,28 +32,6 @@ export type TopItemsPageProps = {
   isStandalone?: boolean;
 };
 
-const TopItemLink = ({ itemType, text }: { itemType: ItemType; text: string }) => {
-  const [currentItemType] = useQueryState<ItemType>(
-    "type",
-    parseAsStringLiteral(itemTypeOptions).withDefault("artists")
-  );
-  const searchParams = useSearchParams();
-  const newSearchParams = new URLSearchParams(searchParams);
-  newSearchParams.set("type", itemType);
-
-  return (
-    <Link
-      href={`/dashboard/top?${newSearchParams.toString()}`}
-      className={cn(
-        "cursor-pointer text-sm text-gray-400 transition-colors hover:text-white",
-        currentItemType === itemType ? "cursor-default text-white" : ""
-      )}
-    >
-      {text}
-    </Link>
-  );
-};
-
 export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps) {
   const {
     dateRange,
@@ -64,6 +42,18 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
     handlePreviousPeriod,
     handleNextPeriod
   } = useDateRange();
+
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+
+  const { setTitle, setSubheader } = usePageTitle();
+
+  const handleCloseModal = useCallback(() => {
+    setIsCustomModalOpen(false);
+    // If no custom dates are set, switch back to a default range
+    if (dateRange === "custom" && !startDate && !endDate) {
+      handleDateRangeChange("4weeks");
+    }
+  }, [dateRange, startDate, endDate, handleDateRangeChange]);
 
   const [viewType, setViewType] = useQueryState<ViewType>(
     "viewType",
@@ -87,8 +77,34 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const title = `Top ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
 
+  // Update period & PWA header
+  const updatePeriod = useCallback(() => {
+    const period =
+      dateRange === "lifetime"
+        ? ""
+        : startDate && endDate
+          ? `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`
+          : "";
+    setTitle(title);
+    setSubheader(period);
+    return period;
+  }, [dateRange, startDate, endDate, title, setSubheader, setTitle]);
+
+  useEffect(() => {
+    updatePeriod();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const periodDisplay = useMemo(() => updatePeriod(), [updatePeriod]);
+
   const onItemTypeChange = (newItemType: ItemType) => {
     setItemType(newItemType);
+  };
+
+  const handleDateRangeOptionClick = (dateRange: DateRange) => {
+    if (dateRange === "custom") {
+      setIsCustomModalOpen(true);
+    }
   };
 
   return (
@@ -98,12 +114,12 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
         {!isStandalone && (
           <>
             <BackNav />
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold text-white">{title}</h1>
-              <div className="mt-4 flex gap-4">
-                <TopItemLink itemType="artists" text="Artists" />
-                <TopItemLink itemType="tracks" text="Tracks" />
-                <TopItemLink itemType="albums" text="Albums" />
+            <div className="mb-2">
+              <h1 className="text-4xl font-bold text-white">
+                {title} <span className="text-2xl text-gray-400">{periodDisplay}</span>
+              </h1>
+              <div className="mt-2 max-w-md">
+                <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />
               </div>
             </div>
           </>
@@ -117,19 +133,25 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
               <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />
             )}
             {/* Date Range Selector */}
-            <DateRangeSelector dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
+            <DateRangeSelector
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
+              onOptionClick={handleDateRangeOptionClick}
+            />
 
             {/* View Selector */}
             <ViewSelector viewType={viewType} onViewTypeChange={setViewType} />
           </div>
 
           {/* Navigation Controls */}
-          <DateNavigationControls
-            dateRange={dateRange}
-            currentPeriod={currentPeriod}
-            onPreviousPeriod={handlePreviousPeriod}
-            onNextPeriod={handleNextPeriod}
-          />
+          {dateRange !== "custom" && (
+            <DateNavigationControls
+              dateRange={dateRange}
+              currentPeriod={currentPeriod}
+              onPreviousPeriod={handlePreviousPeriod}
+              onNextPeriod={handleNextPeriod}
+            />
+          )}
         </div>
         {/* Content */}
         {isLoading ? (
@@ -155,6 +177,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
             <div className="text-gray-400">No data available for this period</div>
           </div>
         )}
+
+        {/* Custom Date Range Modal */}
+        <CustomDateRangeModal isOpen={isCustomModalOpen} onClose={handleCloseModal} />
       </div>
     </div>
   );
