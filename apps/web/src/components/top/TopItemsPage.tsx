@@ -2,9 +2,9 @@
 
 import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
-import { formatDuration } from "@/lib/utils/timeUtils";
+import { formatDate, formatDuration } from "@/lib/utils/timeUtils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import BackNav from "../BackNav";
 import CompactRankListCard from "../cards/CompactRankListCard";
 import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
@@ -74,6 +74,16 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const title = `Top ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
 
+  const periodDisplay = useMemo(() => {
+    if (dateRange === "lifetime") {
+      return "";
+    }
+    if (startDate && endDate) {
+      return `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`;
+    }
+    return title;
+  }, [title, dateRange, startDate, endDate]);
+
   const onItemTypeChange = (newItemType: ItemType) => {
     setItemType(newItemType);
   };
@@ -92,7 +102,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
           <>
             <BackNav />
             <div className="mb-2">
-              <h1 className="text-4xl font-bold text-white">{title}</h1>
+              <h1 className="text-4xl font-bold text-white">
+                {title} <span className="text-2xl text-gray-400">{periodDisplay}</span>
+              </h1>
               <div className="mt-2 max-w-md">
                 <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />
               </div>
