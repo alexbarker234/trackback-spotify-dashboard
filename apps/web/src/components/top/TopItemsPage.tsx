@@ -77,21 +77,17 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const title = `Top ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
 
-  // Update period & PWA header
   const updatePeriod = useCallback(() => {
+    const isLifetime = dateRange === "lifetime";
+    const hasDates = startDate && endDate;
     const period =
-      dateRange === "lifetime"
-        ? ""
-        : startDate && endDate
-          ? `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`
-          : "";
-
+      !isLifetime && hasDates
+        ? `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`
+        : "";
     const shortPeriod =
-      dateRange === "lifetime"
-        ? ""
-        : startDate && endDate
-          ? `${formatDateShort(startDate.getTime())} - ${formatDateShort(endDate.getTime())}`
-          : "";
+      !isLifetime && hasDates
+        ? `${formatDateShort(startDate.getTime())} - ${formatDateShort(endDate.getTime())}`
+        : "";
 
     setTitle(title);
     setSubheader(shortPeriod);

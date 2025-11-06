@@ -34,11 +34,8 @@ export default function ItemCarousel({
     const totalItems = React.Children.count(children);
     const maxIndex = Math.max(0, totalItems - visibleItems);
 
-    console.log(totalItems, visibleItems);
-
     setCanScrollLeft(currentIndex > 0);
     setCanScrollRight(currentIndex < maxIndex);
-    console.log(currentIndex, maxIndex);
   }, [children, visibleItems, currentIndex]);
 
   const getVisibleItemsCount = () => {

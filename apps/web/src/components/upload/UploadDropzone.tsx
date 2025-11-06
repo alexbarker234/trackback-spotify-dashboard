@@ -13,7 +13,6 @@ interface UploadDropzoneProps {
 export default function UploadDropzone({ onDrop, isUploading }: UploadDropzoneProps) {
   const onDropCallback = useCallback(
     (acceptedFiles: File[]) => {
-      console.log("acceptedFiles", acceptedFiles);
       onDrop(acceptedFiles);
     },
     [onDrop]

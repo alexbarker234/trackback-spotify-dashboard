@@ -52,7 +52,10 @@ interface FileToUpload {
   blobUrl?: string;
 }
 
-const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) => void): Promise<UploadResponse> => {
+const uploadFiles = async (
+  files: File[],
+  onProgress?: (update: ProgressUpdate) => void
+): Promise<UploadResponse> => {
   const blobUrls: string[] = [];
 
   // Step 1: Upload files to Vercel Blob
@@ -69,7 +72,11 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
     onProgress?.({
       type: "progress",
       message: `Uploading ${file.name}...`,
-      progress: { current: i, total: files.length, percentage: Math.round((i / files.length) * 50) },
+      progress: {
+        current: i,
+        total: files.length,
+        percentage: Math.round((i / files.length) * 50)
+      },
       fileProgress: {
         fileIndex: i,
         fileName: file.name,
@@ -92,7 +99,11 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
       onProgress?.({
         type: "progress",
         message: `Uploaded ${file.name} successfully`,
-        progress: { current: i + 1, total: files.length, percentage: Math.round(((i + 1) / files.length) * 50) },
+        progress: {
+          current: i + 1,
+          total: files.length,
+          percentage: Math.round(((i + 1) / files.length) * 50)
+        },
         fileProgress: {
           fileIndex: i,
           fileName: file.name,
@@ -107,7 +118,11 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
       onProgress?.({
         type: "progress",
         message: `Failed to upload ${file.name}`,
-        progress: { current: i, total: files.length, percentage: Math.round((i / files.length) * 50) },
+        progress: {
+          current: i,
+          total: files.length,
+          percentage: Math.round((i / files.length) * 50)
+        },
         fileProgress: {
           fileIndex: i,
           fileName: file.name,
@@ -116,7 +131,9 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
         }
       });
 
-      throw new Error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`);
+      throw new Error(
+        `Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -214,8 +231,13 @@ const uploadFiles = async (files: File[], onProgress?: (update: ProgressUpdate) 
 
 export function useUploadFiles() {
   return useMutation({
-    mutationFn: ({ files, onProgress }: { files: File[]; onProgress?: (update: ProgressUpdate) => void }) =>
-      uploadFiles(files, onProgress),
+    mutationFn: ({
+      files,
+      onProgress
+    }: {
+      files: File[];
+      onProgress?: (update: ProgressUpdate) => void;
+    }) => uploadFiles(files, onProgress),
     onError: (error) => {
       console.error("Upload failed:", error);
     },

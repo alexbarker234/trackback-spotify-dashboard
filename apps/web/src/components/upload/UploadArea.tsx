@@ -35,7 +35,6 @@ export default function UploadArea() {
   } | null>(null);
 
   const uploadMutation = useUploadFiles();
-  console.log(files);
   // Handle successful upload
   const handleUploadSuccess = (data: UploadResponse) => {
     // Clear global progress
@@ -105,7 +104,6 @@ export default function UploadArea() {
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    console.log("acceptedFiles", acceptedFiles);
     const newFiles: FileToUpload[] = acceptedFiles.map((file) => ({
       file,
       id: Math.random().toString(36).substr(2, 9),
@@ -151,7 +149,9 @@ export default function UploadArea() {
 
             // Log progress messages for debugging
             if (update.message) {
-              console.log(`Upload progress: ${update.message} (${update.progress?.percentage || 0}%)`);
+              console.log(
+                `Upload progress: ${update.message} (${update.progress?.percentage || 0}%)`
+              );
             }
           }
         },
@@ -269,7 +269,12 @@ export default function UploadArea() {
 
             <div className="space-y-3">
               {files.map((file) => (
-                <UploadFile key={file.id} file={file} isUploading={isUploading} onRemove={handleRemoveFile} />
+                <UploadFile
+                  key={file.id}
+                  file={file}
+                  isUploading={isUploading}
+                  onRemove={handleRemoveFile}
+                />
               ))}
             </div>
           </div>

@@ -1,7 +1,15 @@
 "use client";
 
 import { formatDuration } from "@/lib/utils/timeUtils";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts";
 import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
 
@@ -18,6 +26,38 @@ interface CumulativeStreamChartProps {
 }
 
 export default function CumulativeStreamChart({ data }: CumulativeStreamChartProps) {
+  // Fill missing days with zero values
+  const filledData = (() => {
+    if (!data.length) return [];
+    const dataMap = new Map(data.map((d) => [d.date, d]));
+    const [first, last] = [new Date(data[0]!.date), new Date(data[data.length - 1]!.date)];
+    const result: CumulativeStreamData[] = [];
+    let lastCumulative = { streams: 0, duration: 0 };
+    const d = new Date(first);
+
+    while (d <= last) {
+      const dateStr = d.toISOString().split("T")[0]!;
+      const existing = dataMap.get(dateStr);
+      if (existing) {
+        lastCumulative = {
+          streams: existing.cumulativeStreams,
+          duration: existing.cumulativeDuration
+        };
+        result.push(existing);
+      } else {
+        result.push({
+          date: dateStr,
+          streamCount: 0,
+          totalDuration: 0,
+          cumulativeStreams: lastCumulative.streams,
+          cumulativeDuration: lastCumulative.duration
+        });
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    return result;
+  })();
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -67,7 +107,7 @@ export default function CumulativeStreamChart({ data }: CumulativeStreamChartPro
     <ExpandableChartContainer title="Cumulative Streams">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          data={data}
+          data={filledData}
           margin={{
             top: 10,
             right: 10,

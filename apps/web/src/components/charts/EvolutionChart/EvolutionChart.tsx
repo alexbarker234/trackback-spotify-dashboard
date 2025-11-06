@@ -130,7 +130,6 @@ function EvolutionChartContent({
       const calculatedHeight = Math.max(minItemHeight, containerHeight / maxItems);
       const newHeight = Math.min(calculatedHeight, maxItemHeight);
       const finalHeight = newHeight - itemMargin * 2;
-      console.log(finalHeight);
       setItemHeight(finalHeight);
     };
 
