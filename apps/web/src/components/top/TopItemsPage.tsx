@@ -2,10 +2,7 @@
 
 import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
-import { cn } from "@/lib/utils/cn";
 import { formatDuration } from "@/lib/utils/timeUtils";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useState } from "react";
 import BackNav from "../BackNav";
@@ -32,28 +29,6 @@ export type TopItem = {
 
 export type TopItemsPageProps = {
   isStandalone?: boolean;
-};
-
-const TopItemLink = ({ itemType, text }: { itemType: ItemType; text: string }) => {
-  const [currentItemType] = useQueryState<ItemType>(
-    "type",
-    parseAsStringLiteral(itemTypeOptions).withDefault("artists")
-  );
-  const searchParams = useSearchParams();
-  const newSearchParams = new URLSearchParams(searchParams);
-  newSearchParams.set("type", itemType);
-
-  return (
-    <Link
-      href={`/dashboard/top?${newSearchParams.toString()}`}
-      className={cn(
-        "cursor-pointer text-sm text-gray-400 transition-colors hover:text-white",
-        currentItemType === itemType ? "cursor-default text-white" : ""
-      )}
-    >
-      {text}
-    </Link>
-  );
 };
 
 export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps) {
@@ -116,12 +91,10 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
         {!isStandalone && (
           <>
             <BackNav />
-            <div className="mb-8">
+            <div className="mb-2">
               <h1 className="text-4xl font-bold text-white">{title}</h1>
-              <div className="mt-4 flex gap-4">
-                <TopItemLink itemType="artists" text="Artists" />
-                <TopItemLink itemType="tracks" text="Tracks" />
-                <TopItemLink itemType="albums" text="Albums" />
+              <div className="mt-2 max-w-md">
+                <ItemTypeSelector itemType={itemType} onItemTypeChange={onItemTypeChange} />
               </div>
             </div>
           </>
