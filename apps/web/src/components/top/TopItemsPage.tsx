@@ -3,7 +3,7 @@
 import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
 import { usePageTitle } from "@/lib/contexts/PageTitleContext";
-import { formatDate, formatDuration } from "@/lib/utils/timeUtils";
+import { formatDate, formatDateShort, formatDuration } from "@/lib/utils/timeUtils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BackNav from "../BackNav";
@@ -85,8 +85,16 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
         : startDate && endDate
           ? `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`
           : "";
+
+    const shortPeriod =
+      dateRange === "lifetime"
+        ? ""
+        : startDate && endDate
+          ? `${formatDateShort(startDate.getTime())} - ${formatDateShort(endDate.getTime())}`
+          : "";
+
     setTitle(title);
-    setSubheader(period);
+    setSubheader(shortPeriod);
     return period;
   }, [dateRange, startDate, endDate, title, setSubheader, setTitle]);
 

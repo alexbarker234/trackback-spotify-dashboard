@@ -1,4 +1,4 @@
-import { MONTH_NAMES_LONG } from "../constants";
+import { MONTH_NAMES_LONG, MONTH_NAMES_SHORT } from "../constants";
 
 export function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -20,6 +20,14 @@ export function formatDuration(ms: number): string {
 export function formatDate(ms: number): string {
   const date = new Date(ms);
   const month = MONTH_NAMES_LONG[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${month} ${day} ${year}`;
+}
+
+export function formatDateShort(ms: number): string {
+  const date = new Date(ms);
+  const month = MONTH_NAMES_SHORT[date.getMonth()];
   const day = date.getDate();
   const year = date.getFullYear();
   return `${month} ${day} ${year}`;
