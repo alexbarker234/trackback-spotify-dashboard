@@ -1,5 +1,7 @@
 import {
   album,
+  albumArtist,
+  AlbumArtistInsert,
   AlbumInsert,
   albumTrack,
   AlbumTrackInsert,
@@ -35,6 +37,7 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
     const trackArtistsToInsert: Array<TrackArtistInsert> = [];
     const albumsToInsert: Array<AlbumInsert> = [];
     const albumTracksToInsert: Array<AlbumTrackInsert> = [];
+    const albumArtistsToInsert: Array<AlbumArtistInsert> = [];
     const listensToInsert: Array<ListenInsert> = [];
 
     // Collect all unique tracks, artists, albums, and listens
@@ -43,6 +46,7 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
     const uniqueAlbums = new Map<string, AlbumInsert>();
     const uniqueTrackArtists = new Set<string>();
     const uniqueAlbumTracks = new Set<string>();
+    const uniqueAlbumArtists = new Set<string>();
     const playedAtTimestamps = new Set<string>();
 
     for (const { trackData, playedAt } of tracksData) {
@@ -73,6 +77,9 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
           imageUrl: trackData.album.images[0]?.url || null
         });
         uniqueAlbumTracks.add(`${trackData.album.id}-${trackData.id}`);
+        for (const artistData of trackData.artists) {
+          uniqueAlbumArtists.add(`${trackData.album.id}-${artistData.id}`);
+        }
       }
 
       // Collect unique playedAt timestamps for duplicate checking
@@ -103,9 +110,16 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
       const [albumId, trackId] = key.split("-");
       const trackData = tracksData.find((t) => t.trackData.id === trackId);
       if (trackData) {
-        const trackIsrc = trackData.trackData.external_ids?.isrc || `spotify_${trackData.trackData.id}`;
+        const trackIsrc =
+          trackData.trackData.external_ids?.isrc || `spotify_${trackData.trackData.id}`;
         albumTracksToInsert.push({ albumId, trackId, trackIsrc });
       }
+    }
+
+    // Prepare album-artist relationships
+    for (const key of uniqueAlbumArtists) {
+      const [albumId, artistId] = key.split("-");
+      albumArtistsToInsert.push({ albumId, artistId });
     }
 
     // Prepare listen records (only for non-duplicate playedAt timestamps)
@@ -142,19 +156,29 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
       await db.insert(albumTrack).values(albumTracksToInsert).onConflictDoNothing();
     }
 
+    if (albumArtistsToInsert.length > 0) {
+      await db.insert(albumArtist).values(albumArtistsToInsert).onConflictDoNothing();
+    }
+
     if (listensToInsert.length > 0) {
       await db.insert(listen).values(listensToInsert);
     }
 
     // Calculate duration statistics
-    const totalOriginalDuration = tracksData.reduce((sum, track) => sum + track.trackData.duration_ms, 0);
-    const totalActualDuration = tracksData.reduce((sum, track) => sum + track.trackData.duration_ms, 0);
+    const totalOriginalDuration = tracksData.reduce(
+      (sum, track) => sum + track.trackData.duration_ms,
+      0
+    );
+    const totalActualDuration = tracksData.reduce(
+      (sum, track) => sum + track.trackData.duration_ms,
+      0
+    );
     const skippedDuration = totalOriginalDuration - totalActualDuration;
     const skippedPercentage =
       totalOriginalDuration > 0 ? ((skippedDuration / totalOriginalDuration) * 100).toFixed(1) : 0;
 
     console.log(
-      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${listensToInsert.length} listens`
+      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${albumArtistsToInsert.length} album artists, ${listensToInsert.length} listens`
     );
     console.log(
       `Duration: ${(totalActualDuration / 1000 / 60).toFixed(1)}min actual vs ${(totalOriginalDuration / 1000 / 60).toFixed(1)}min original (${skippedPercentage}% skipped)`
@@ -265,12 +289,14 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
     const trackArtistsToInsert: Array<TrackArtistInsert> = [];
     const albumsToInsert: Array<AlbumInsert> = [];
     const albumTracksToInsert: Array<AlbumTrackInsert> = [];
+    const albumArtistsToInsert: Array<AlbumArtistInsert> = [];
 
     // Use Sets to track unique entries
     const uniqueArtists = new Set<string>();
     const uniqueAlbums = new Set<string>();
     const uniqueTrackArtists = new Set<string>();
     const uniqueAlbumTracks = new Set<string>();
+    const uniqueAlbumArtists = new Set<string>();
 
     // Process each track in the batch
     for (const spotifyTrack of spotifyTracks) {
@@ -324,6 +350,17 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
           });
           uniqueAlbumTracks.add(albumTrackKey);
         }
+
+        for (const artistData of spotifyTrack.artists) {
+          const albumArtistKey = `${spotifyTrack.album.id}-${artistData.id}`;
+          if (!uniqueAlbumArtists.has(albumArtistKey)) {
+            albumArtistsToInsert.push({
+              albumId: spotifyTrack.album.id,
+              artistId: artistData.id
+            });
+            uniqueAlbumArtists.add(albumArtistKey);
+          }
+        }
       }
     }
 
@@ -348,8 +385,12 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
       await db.insert(albumTrack).values(albumTracksToInsert).onConflictDoNothing();
     }
 
+    if (albumArtistsToInsert.length > 0) {
+      await db.insert(albumArtist).values(albumArtistsToInsert).onConflictDoNothing();
+    }
+
     console.log(
-      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${trackArtistsToInsert.length} track-artist relationships, ${albumTracksToInsert.length} album-track relationships`
+      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${trackArtistsToInsert.length} track-artist relationships, ${albumTracksToInsert.length} album-track relationships, ${albumArtistsToInsert.length} album-artist relationships`
     );
   } catch (error) {
     console.error(`Error saving batch track data:`, error);
