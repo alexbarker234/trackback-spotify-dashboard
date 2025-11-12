@@ -78,6 +78,12 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
         });
         uniqueAlbumTracks.add(`${trackData.album.id}-${trackData.id}`);
         for (const artistData of trackData.artists) {
+          if (!uniqueArtists.has(artistData.id)) {
+            uniqueArtists.set(artistData.id, {
+              id: artistData.id,
+              name: artistData.name
+            });
+          }
           uniqueAlbumArtists.add(`${trackData.album.id}-${artistData.id}`);
         }
       }
@@ -354,6 +360,14 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
         for (const artistData of spotifyTrack.artists) {
           const albumArtistKey = `${spotifyTrack.album.id}-${artistData.id}`;
           if (!uniqueAlbumArtists.has(albumArtistKey)) {
+            if (!uniqueArtists.has(artistData.id)) {
+              artistsToInsert.push({
+                id: artistData.id,
+                name: artistData.name,
+                imageUrl: null
+              });
+              uniqueArtists.add(artistData.id);
+            }
             albumArtistsToInsert.push({
               albumId: spotifyTrack.album.id,
               artistId: artistData.id
