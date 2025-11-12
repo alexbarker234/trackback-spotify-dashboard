@@ -1,10 +1,28 @@
 import { SPOTIFY_CONFIG } from "@/config";
 import {
+  SpotifyAlbumsResponse,
   SpotifyArtistResponse,
   SpotifyRecentlyPlayedResponse,
   SpotifyTokenResponse,
   SpotifyTrack
 } from "@/types/spotify";
+
+export async function getServerAccessToken(): Promise<string | null> {
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${SPOTIFY_CONFIG.BASIC}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      grant_type: "client_credentials"
+    })
+  });
+
+  const data = await response.json();
+
+  return data.access_token;
+}
 
 /**
  * Refreshes an access token using a refresh token
@@ -18,7 +36,7 @@ export async function refreshAccessToken(
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${SPOTIFY_CONFIG.TOKEN}`
+        Authorization: `Basic ${SPOTIFY_CONFIG.BASIC}`
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
@@ -83,13 +101,19 @@ export async function fetchRecentlyPlayedTracks(
   accessToken: string,
   limit: number = 50
 ): Promise<SpotifyRecentlyPlayedResponse> {
-  return spotifyApiRequest<SpotifyRecentlyPlayedResponse>(`/me/player/recently-played?limit=${limit}`, accessToken);
+  return spotifyApiRequest<SpotifyRecentlyPlayedResponse>(
+    `/me/player/recently-played?limit=${limit}`,
+    accessToken
+  );
 }
 
 /**
  * Fetches artist data including images
  */
-export async function fetchArtistData(artistId: string, accessToken: string): Promise<SpotifyArtistResponse> {
+export async function fetchArtistData(
+  artistId: string,
+  accessToken: string
+): Promise<SpotifyArtistResponse> {
   return spotifyApiRequest<SpotifyArtistResponse>(`/artists/${artistId}`, accessToken);
 }
 
@@ -119,5 +143,19 @@ export async function fetchMultipleArtists(
   accessToken: string
 ): Promise<{ artists: SpotifyArtistResponse[] }> {
   const ids = artistIds.join(",");
-  return spotifyApiRequest<{ artists: SpotifyArtistResponse[] }>(`/artists?ids=${ids}`, accessToken);
+  return spotifyApiRequest<{ artists: SpotifyArtistResponse[] }>(
+    `/artists?ids=${ids}`,
+    accessToken
+  );
+}
+
+/**
+ * Fetches multiple albums in a single request (up to 20 albums)
+ */
+export async function fetchMultipleAlbums(
+  albumIds: string[],
+  accessToken: string
+): Promise<SpotifyAlbumsResponse> {
+  const ids = albumIds.join(",");
+  return spotifyApiRequest<SpotifyAlbumsResponse>(`/albums?ids=${ids}`, accessToken);
 }

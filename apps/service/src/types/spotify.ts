@@ -18,6 +18,18 @@ export interface SpotifyTrack {
   };
 }
 
+export interface SpotifyAlbum {
+  id: string;
+  name: string;
+  images: Array<{
+    url: string;
+  }>;
+  artists: Array<{
+    id: string;
+    name: string;
+  }>;
+}
+
 export interface SpotifyRecentlyPlayedItem {
   track: SpotifyTrack;
   played_at: string;
@@ -33,6 +45,10 @@ export interface SpotifyArtistResponse {
   images: Array<{
     url: string;
   }>;
+}
+
+export interface SpotifyAlbumsResponse {
+  albums: Array<SpotifyAlbum | null>;
 }
 
 export interface SpotifyTokenResponse {

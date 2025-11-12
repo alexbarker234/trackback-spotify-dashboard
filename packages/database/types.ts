@@ -1,5 +1,13 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { album, albumTrack, artist, listen, track, trackArtist } from "./schema/spotifySchema";
+import {
+  album,
+  albumArtist,
+  albumTrack,
+  artist,
+  listen,
+  track,
+  trackArtist
+} from "./schema/spotifySchema";
 
 export type Listen = InferSelectModel<typeof listen>;
 export type Track = InferSelectModel<typeof track>;
@@ -14,3 +22,4 @@ export type ArtistInsert = InferInsertModel<typeof artist>;
 export type AlbumInsert = InferInsertModel<typeof album>;
 export type TrackArtistInsert = InferInsertModel<typeof trackArtist>;
 export type AlbumTrackInsert = InferInsertModel<typeof albumTrack>;
+export type AlbumArtistInsert = InferInsertModel<typeof albumArtist>;

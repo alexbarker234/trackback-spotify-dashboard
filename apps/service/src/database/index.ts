@@ -1,5 +1,7 @@
 import {
   album,
+  albumArtist,
+  AlbumArtistInsert,
   AlbumInsert,
   albumTrack,
   AlbumTrackInsert,
@@ -18,7 +20,7 @@ import {
   TrackArtistInsert,
   TrackInsert
 } from "@workspace/database";
-import { SpotifyTrack } from "../types/spotify";
+import { SpotifyAlbum, SpotifyTrack } from "../types/spotify";
 
 interface TrackListenData {
   trackData: SpotifyTrack;
@@ -35,6 +37,7 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
     const trackArtistsToInsert: Array<TrackArtistInsert> = [];
     const albumsToInsert: Array<AlbumInsert> = [];
     const albumTracksToInsert: Array<AlbumTrackInsert> = [];
+    const albumArtistsToInsert: Array<AlbumArtistInsert> = [];
     const listensToInsert: Array<ListenInsert> = [];
 
     // Collect all unique tracks, artists, albums, and listens
@@ -43,6 +46,7 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
     const uniqueAlbums = new Map<string, AlbumInsert>();
     const uniqueTrackArtists = new Set<string>();
     const uniqueAlbumTracks = new Set<string>();
+    const uniqueAlbumArtists = new Set<string>();
     const playedAtTimestamps = new Set<string>();
 
     for (const { trackData, playedAt } of tracksData) {
@@ -73,6 +77,15 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
           imageUrl: trackData.album.images[0]?.url || null
         });
         uniqueAlbumTracks.add(`${trackData.album.id}-${trackData.id}`);
+        for (const artistData of trackData.artists) {
+          if (!uniqueArtists.has(artistData.id)) {
+            uniqueArtists.set(artistData.id, {
+              id: artistData.id,
+              name: artistData.name
+            });
+          }
+          uniqueAlbumArtists.add(`${trackData.album.id}-${artistData.id}`);
+        }
       }
 
       // Collect unique playedAt timestamps for duplicate checking
@@ -103,9 +116,16 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
       const [albumId, trackId] = key.split("-");
       const trackData = tracksData.find((t) => t.trackData.id === trackId);
       if (trackData) {
-        const trackIsrc = trackData.trackData.external_ids?.isrc || `spotify_${trackData.trackData.id}`;
+        const trackIsrc =
+          trackData.trackData.external_ids?.isrc || `spotify_${trackData.trackData.id}`;
         albumTracksToInsert.push({ albumId, trackId, trackIsrc });
       }
+    }
+
+    // Prepare album-artist relationships
+    for (const key of uniqueAlbumArtists) {
+      const [albumId, artistId] = key.split("-");
+      albumArtistsToInsert.push({ albumId, artistId });
     }
 
     // Prepare listen records (only for non-duplicate playedAt timestamps)
@@ -142,19 +162,29 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
       await db.insert(albumTrack).values(albumTracksToInsert).onConflictDoNothing();
     }
 
+    if (albumArtistsToInsert.length > 0) {
+      await db.insert(albumArtist).values(albumArtistsToInsert).onConflictDoNothing();
+    }
+
     if (listensToInsert.length > 0) {
       await db.insert(listen).values(listensToInsert);
     }
 
     // Calculate duration statistics
-    const totalOriginalDuration = tracksData.reduce((sum, track) => sum + track.trackData.duration_ms, 0);
-    const totalActualDuration = tracksData.reduce((sum, track) => sum + track.trackData.duration_ms, 0);
+    const totalOriginalDuration = tracksData.reduce(
+      (sum, track) => sum + track.trackData.duration_ms,
+      0
+    );
+    const totalActualDuration = tracksData.reduce(
+      (sum, track) => sum + track.trackData.duration_ms,
+      0
+    );
     const skippedDuration = totalOriginalDuration - totalActualDuration;
     const skippedPercentage =
       totalOriginalDuration > 0 ? ((skippedDuration / totalOriginalDuration) * 100).toFixed(1) : 0;
 
     console.log(
-      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${listensToInsert.length} listens`
+      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${albumArtistsToInsert.length} album artists, ${listensToInsert.length} listens`
     );
     console.log(
       `Duration: ${(totalActualDuration / 1000 / 60).toFixed(1)}min actual vs ${(totalOriginalDuration / 1000 / 60).toFixed(1)}min original (${skippedPercentage}% skipped)`
@@ -242,6 +272,16 @@ export async function getListensWithoutAlbumTrack(): Promise<Listen[]> {
 }
 
 /**
+ * Gets albums that don't have corresponding albumArtist entries
+ */
+export async function getAlbumsWithoutAlbumArtist() {
+  return db.query.album.findMany({
+    where: (album, { notExists }) =>
+      notExists(db.select().from(albumArtist).where(eq(albumArtist.albumId, album.id)))
+  });
+}
+
+/**
  * Checks for existing listens by playedAt timestamps
  */
 export async function getExistingListensByPlayedAt(playedAtDates: Date[]): Promise<Set<string>> {
@@ -255,6 +295,70 @@ export async function getExistingListensByPlayedAt(playedAtDates: Date[]): Promi
 }
 
 /**
+ * Saves album and artist relationships based on Spotify album data
+ */
+export async function saveAlbumsWithArtistsToDatabase(
+  spotifyAlbums: SpotifyAlbum[]
+): Promise<void> {
+  if (spotifyAlbums.length === 0) return;
+
+  try {
+    const albumsToInsert: Array<AlbumInsert> = [];
+    const artistsToInsert: Array<ArtistInsert> = [];
+    const albumArtistsToInsert: Array<AlbumArtistInsert> = [];
+
+    const uniqueAlbums = new Set<string>();
+    const uniqueArtists = new Set<string>();
+    const uniqueAlbumArtists = new Set<string>();
+
+    for (const spotifyAlbum of spotifyAlbums) {
+      if (!uniqueAlbums.has(spotifyAlbum.id)) {
+        albumsToInsert.push({
+          id: spotifyAlbum.id,
+          name: spotifyAlbum.name,
+          imageUrl: spotifyAlbum.images[0]?.url || null
+        });
+        uniqueAlbums.add(spotifyAlbum.id);
+      }
+
+      for (const artistData of spotifyAlbum.artists) {
+        if (!uniqueArtists.has(artistData.id)) {
+          artistsToInsert.push({
+            id: artistData.id,
+            name: artistData.name,
+            imageUrl: null
+          });
+          uniqueArtists.add(artistData.id);
+        }
+
+        const albumArtistKey = `${spotifyAlbum.id}-${artistData.id}`;
+        if (!uniqueAlbumArtists.has(albumArtistKey)) {
+          albumArtistsToInsert.push({
+            albumId: spotifyAlbum.id,
+            artistId: artistData.id
+          });
+          uniqueAlbumArtists.add(albumArtistKey);
+        }
+      }
+    }
+
+    if (albumsToInsert.length > 0) {
+      await db.insert(album).values(albumsToInsert).onConflictDoNothing();
+    }
+
+    if (artistsToInsert.length > 0) {
+      await db.insert(artist).values(artistsToInsert).onConflictDoNothing();
+    }
+
+    if (albumArtistsToInsert.length > 0) {
+      await db.insert(albumArtist).values(albumArtistsToInsert).onConflictDoNothing();
+    }
+  } catch (error) {
+    console.error("Error saving album artist relationships:", error);
+  }
+}
+
+/**
  * Saves track, artist, and album data to the database in bulk
  */
 export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]): Promise<void> {
@@ -265,12 +369,14 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
     const trackArtistsToInsert: Array<TrackArtistInsert> = [];
     const albumsToInsert: Array<AlbumInsert> = [];
     const albumTracksToInsert: Array<AlbumTrackInsert> = [];
+    const albumArtistsToInsert: Array<AlbumArtistInsert> = [];
 
     // Use Sets to track unique entries
     const uniqueArtists = new Set<string>();
     const uniqueAlbums = new Set<string>();
     const uniqueTrackArtists = new Set<string>();
     const uniqueAlbumTracks = new Set<string>();
+    const uniqueAlbumArtists = new Set<string>();
 
     // Process each track in the batch
     for (const spotifyTrack of spotifyTracks) {
@@ -324,6 +430,25 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
           });
           uniqueAlbumTracks.add(albumTrackKey);
         }
+
+        for (const artistData of spotifyTrack.artists) {
+          const albumArtistKey = `${spotifyTrack.album.id}-${artistData.id}`;
+          if (!uniqueAlbumArtists.has(albumArtistKey)) {
+            if (!uniqueArtists.has(artistData.id)) {
+              artistsToInsert.push({
+                id: artistData.id,
+                name: artistData.name,
+                imageUrl: null
+              });
+              uniqueArtists.add(artistData.id);
+            }
+            albumArtistsToInsert.push({
+              albumId: spotifyTrack.album.id,
+              artistId: artistData.id
+            });
+            uniqueAlbumArtists.add(albumArtistKey);
+          }
+        }
       }
     }
 
@@ -348,8 +473,12 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
       await db.insert(albumTrack).values(albumTracksToInsert).onConflictDoNothing();
     }
 
+    if (albumArtistsToInsert.length > 0) {
+      await db.insert(albumArtist).values(albumArtistsToInsert).onConflictDoNothing();
+    }
+
     console.log(
-      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${trackArtistsToInsert.length} track-artist relationships, ${albumTracksToInsert.length} album-track relationships`
+      `Bulk saved: ${tracksToInsert.length} tracks, ${artistsToInsert.length} artists, ${albumsToInsert.length} albums, ${trackArtistsToInsert.length} track-artist relationships, ${albumTracksToInsert.length} album-track relationships, ${albumArtistsToInsert.length} album-artist relationships`
     );
   } catch (error) {
     console.error(`Error saving batch track data:`, error);
