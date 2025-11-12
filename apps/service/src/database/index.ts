@@ -20,7 +20,7 @@ import {
   TrackArtistInsert,
   TrackInsert
 } from "@workspace/database";
-import { SpotifyTrack } from "../types/spotify";
+import { SpotifyAlbum, SpotifyTrack } from "../types/spotify";
 
 interface TrackListenData {
   trackData: SpotifyTrack;
@@ -272,6 +272,16 @@ export async function getListensWithoutAlbumTrack(): Promise<Listen[]> {
 }
 
 /**
+ * Gets albums that don't have corresponding albumArtist entries
+ */
+export async function getAlbumsWithoutAlbumArtist() {
+  return db.query.album.findMany({
+    where: (album, { notExists }) =>
+      notExists(db.select().from(albumArtist).where(eq(albumArtist.albumId, album.id)))
+  });
+}
+
+/**
  * Checks for existing listens by playedAt timestamps
  */
 export async function getExistingListensByPlayedAt(playedAtDates: Date[]): Promise<Set<string>> {
@@ -282,6 +292,70 @@ export async function getExistingListensByPlayedAt(playedAtDates: Date[]): Promi
   });
 
   return new Set(existingListens.map((l) => l.playedAt.toISOString()));
+}
+
+/**
+ * Saves album and artist relationships based on Spotify album data
+ */
+export async function saveAlbumsWithArtistsToDatabase(
+  spotifyAlbums: SpotifyAlbum[]
+): Promise<void> {
+  if (spotifyAlbums.length === 0) return;
+
+  try {
+    const albumsToInsert: Array<AlbumInsert> = [];
+    const artistsToInsert: Array<ArtistInsert> = [];
+    const albumArtistsToInsert: Array<AlbumArtistInsert> = [];
+
+    const uniqueAlbums = new Set<string>();
+    const uniqueArtists = new Set<string>();
+    const uniqueAlbumArtists = new Set<string>();
+
+    for (const spotifyAlbum of spotifyAlbums) {
+      if (!uniqueAlbums.has(spotifyAlbum.id)) {
+        albumsToInsert.push({
+          id: spotifyAlbum.id,
+          name: spotifyAlbum.name,
+          imageUrl: spotifyAlbum.images[0]?.url || null
+        });
+        uniqueAlbums.add(spotifyAlbum.id);
+      }
+
+      for (const artistData of spotifyAlbum.artists) {
+        if (!uniqueArtists.has(artistData.id)) {
+          artistsToInsert.push({
+            id: artistData.id,
+            name: artistData.name,
+            imageUrl: null
+          });
+          uniqueArtists.add(artistData.id);
+        }
+
+        const albumArtistKey = `${spotifyAlbum.id}-${artistData.id}`;
+        if (!uniqueAlbumArtists.has(albumArtistKey)) {
+          albumArtistsToInsert.push({
+            albumId: spotifyAlbum.id,
+            artistId: artistData.id
+          });
+          uniqueAlbumArtists.add(albumArtistKey);
+        }
+      }
+    }
+
+    if (albumsToInsert.length > 0) {
+      await db.insert(album).values(albumsToInsert).onConflictDoNothing();
+    }
+
+    if (artistsToInsert.length > 0) {
+      await db.insert(artist).values(artistsToInsert).onConflictDoNothing();
+    }
+
+    if (albumArtistsToInsert.length > 0) {
+      await db.insert(albumArtist).values(albumArtistsToInsert).onConflictDoNothing();
+    }
+  } catch (error) {
+    console.error("Error saving album artist relationships:", error);
+  }
 }
 
 /**
