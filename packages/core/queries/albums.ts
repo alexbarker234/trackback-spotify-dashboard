@@ -45,8 +45,10 @@ export async function getTopAlbums(options: TopAlbumsOptions = {}): Promise<TopA
         albumName: album.name,
         albumId: album.id,
         albumImageUrl: album.imageUrl,
-        artistNames: sql<string[]>`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
-        listenCount: sql<number>`count(*)`.as("listenCount"),
+        artistNames: sql<
+          string[]
+        >`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
+        listenCount: sql<number>`count(distinct ${listen.id})`.as("listenCount"),
         totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
       })
       .from(listen)
@@ -58,7 +60,7 @@ export async function getTopAlbums(options: TopAlbumsOptions = {}): Promise<TopA
       .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
       .where(and(...whereConditions))
       .groupBy(album.name, album.id, album.imageUrl)
-      .orderBy(desc(sql<number>`count(*)`))
+      .orderBy(desc(sql<number>`count(distinct ${listen.id})`))
       .limit(limit);
 
     // Filter out null values and convert to TopAlbum format
