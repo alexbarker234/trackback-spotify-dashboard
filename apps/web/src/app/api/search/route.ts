@@ -13,8 +13,8 @@ const searchQuerySchema = z.object({
     .number()
     .int("Limit must be an integer")
     .min(1, "Limit must be at least 1")
-    .max(50, "Limit cannot exceed 50")
-    .default(50)
+    .max(10, "Limit cannot exceed 10")
+    .default(10)
 });
 
 export async function GET(
@@ -81,8 +81,7 @@ export async function GET(
       searchResults.artists?.items.map((artist) => ({
         id: artist.id,
         name: artist.name,
-        imageUrl: artist.images[0]?.url || null,
-        followers: artist.followers.total
+        imageUrl: artist.images[0]?.url || null
       })) || [];
 
     return NextResponse.json({

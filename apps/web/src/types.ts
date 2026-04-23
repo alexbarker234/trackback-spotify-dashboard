@@ -56,7 +56,6 @@ export interface SearchArtist {
   id: string;
   name: string;
   imageUrl: string | null;
-  followers: number;
 }
 
 export interface SearchResults {

@@ -24,7 +24,7 @@ export default function SearchPage() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  const { data: results, isLoading, error } = useSearch(debouncedQuery, selectedItemType, 50);
+  const { data: results, isLoading, error } = useSearch(debouncedQuery, selectedItemType, 10);
 
   const mapResultsToSearchItems = (searchResults: SearchResults) => {
     switch (selectedItemType) {
@@ -33,7 +33,7 @@ export default function SearchPage() {
           id: artist.id,
           name: artist.name,
           imageUrl: artist.imageUrl,
-          subtitle: `${artist.followers.toLocaleString()} followers`,
+          subtitle: "Artist",
           href: `/dashboard/artist/${artist.id}`
         }));
       case "albums":
