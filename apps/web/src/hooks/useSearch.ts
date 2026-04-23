@@ -6,7 +6,7 @@ type ItemType = "artists" | "tracks" | "albums";
 const fetchSearch = async (
   query: string,
   type: ItemType,
-  limit: number = 50
+  limit: number = 10
 ): Promise<SearchResults> => {
   if (!query || query.trim() === "") {
     return { albums: [], tracks: [], artists: [] };
@@ -25,7 +25,7 @@ const fetchSearch = async (
   return response.json();
 };
 
-export const useSearch = (query: string, type: ItemType = "artists", limit: number = 50) => {
+export const useSearch = (query: string, type: ItemType = "artists", limit: number = 10) => {
   return useQuery({
     queryKey: ["search", query, type, limit],
     queryFn: () => fetchSearch(query, type, limit),

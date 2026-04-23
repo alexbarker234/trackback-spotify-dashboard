@@ -8,7 +8,7 @@ export async function searchSpotify(
   query: string,
   accessToken: string,
   types: Array<"album" | "track" | "artist"> = ["album", "track", "artist"],
-  limit = 20
+  limit = 10
 ): Promise<SpotifySearchResponse | null> {
   if (!query || query.trim() === "") {
     return { albums: { items: [] }, tracks: { items: [] }, artists: { items: [] } };
@@ -16,7 +16,8 @@ export async function searchSpotify(
 
   const typeString = types.join(",");
   const encodedQuery = encodeURIComponent(query);
-  const endpoint = `/search?q=${encodedQuery}&type=${typeString}&limit=${limit}`;
+  const safeLimit = Math.min(Math.max(limit, 1), 10);
+  const endpoint = `/search?q=${encodedQuery}&type=${typeString}&limit=${safeLimit}`;
 
   return spotifyApiRequest<SpotifySearchResponse>(endpoint, accessToken);
 }

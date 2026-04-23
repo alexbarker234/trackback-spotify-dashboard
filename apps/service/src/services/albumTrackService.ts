@@ -53,11 +53,6 @@ export async function populateAlbumTrackService(): Promise<void> {
 
         // Save all track, artist, and album data to database in bulk
         await saveBatchTrackDataToDatabase(spotifyTracks);
-
-        // Add a small delay to respect rate limits
-        if (i + batchSize < trackIds.length) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
       } catch (error) {
         console.error(`Error processing batch starting at index ${i}:`, error);
         // Continue with next batch

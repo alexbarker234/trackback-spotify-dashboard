@@ -194,7 +194,7 @@ export async function getDailyStreamData(options: GetDailyStreamDataOptions = {}
     const dailyStreams = await db
       .select({
         date: sql<string>`date(${listen.playedAt})`.as("date"),
-        streamCount: sql<number>`count(*)`.as("streamCount"),
+        streamCount: sql<number>`count(distinct ${listen.id})`.as("streamCount"),
         totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
       })
       .from(listen)
@@ -274,7 +274,7 @@ export async function getCumulativeStreamData(options: GetDailyStreamDataOptions
     const dailyStreams = await db
       .select({
         date: sql<string>`date(${listen.playedAt})`.as("date"),
-        streamCount: sql<number>`count(*)`.as("streamCount"),
+        streamCount: sql<number>`count(distinct ${listen.id})`.as("streamCount"),
         totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
       })
       .from(listen)
@@ -336,7 +336,7 @@ export async function getMonthlyStreamData(options: GetDailyStreamDataOptions = 
       .select({
         month: sql<string>`to_char(${listen.playedAt}, 'Month')`.as("month"),
         monthNumber: sql<number>`extract(month from ${listen.playedAt})`.as("monthNumber"),
-        streamCount: sql<number>`count(*)`.as("streamCount"),
+        streamCount: sql<number>`count(distinct ${listen.id})`.as("streamCount"),
         totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
       })
       .from(listen)
@@ -386,7 +386,7 @@ export async function getYearlyStreamData(options: GetDailyStreamDataOptions = {
     const yearlyStreams = await db
       .select({
         year: sql<string>`to_char(${listen.playedAt}, 'YYYY')`.as("year"),
-        streamCount: sql<number>`count(*)`.as("streamCount"),
+        streamCount: sql<number>`count(distinct ${listen.id})`.as("streamCount"),
         totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
       })
       .from(listen)
@@ -444,7 +444,7 @@ export async function getYearlyPercentageData(options: GetYearlyPercentageDataOp
     const itemListensPerYear = await db
       .select({
         year: sql<string>`to_char(${listen.playedAt}, 'YYYY')`.as("year"),
-        itemListens: sql<number>`count(*)`.as("itemListens")
+        itemListens: sql<number>`count(distinct ${listen.id})`.as("itemListens")
       })
       .from(listen)
       .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
@@ -568,7 +568,7 @@ export async function getDailyUniqueStreamData(options: GetDailyUniqueStreamData
     const uniqueStreams = await db
       .select({
         date: sql<string>`${dateGroupBy}`.as("date"),
-        streamCount: sql<number>`count(*)`.as("streamCount"),
+        streamCount: sql<number>`count(distinct ${listen.id})`.as("streamCount"),
         uniqueTracks: sql<number>`count(distinct ${track.isrc})`.as("uniqueTracks"),
         uniqueArtists: sql<number>`count(distinct ${trackArtist.artistId})`.as("uniqueArtists")
       })
@@ -911,7 +911,7 @@ export async function getHourlyListenData(options: GetHourlyListenDataOptions = 
     const hourlyListens = await db
       .select({
         hour: sql<number>`extract(hour from ${listen.playedAt})`.as("hour"),
-        listenCount: sql<number>`count(*)`.as("listenCount"),
+        listenCount: sql<number>`count(distinct ${listen.id})`.as("listenCount"),
         totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
       })
       .from(listen)

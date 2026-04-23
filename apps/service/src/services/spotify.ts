@@ -1,5 +1,6 @@
 import { SPOTIFY_CONFIG } from "@/config";
 import {
+  SpotifyAlbum,
   SpotifyAlbumsResponse,
   SpotifyArtistResponse,
   SpotifyRecentlyPlayedResponse,
@@ -7,8 +8,71 @@ import {
   SpotifyTrack
 } from "@/types/spotify";
 
+const DEFAULT_SPOTIFY_RETRY_DELAY_MS = 30_000;
+const SPOTIFY_MIN_REQUEST_GAP_MS = 250;
+const SPOTIFY_MAX_RETRIES = 5;
+
+let lastSpotifyRequestAt = 0;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseRetryAfterMs(headerValue: string | null): number {
+  if (!headerValue) {
+    return DEFAULT_SPOTIFY_RETRY_DELAY_MS;
+  }
+
+  const seconds = Number(headerValue);
+  if (!Number.isNaN(seconds) && seconds > 0) {
+    return Math.ceil(seconds * 1000);
+  }
+
+  const dateMs = Date.parse(headerValue);
+  if (!Number.isNaN(dateMs)) {
+    return Math.max(dateMs - Date.now(), 0);
+  }
+
+  return DEFAULT_SPOTIFY_RETRY_DELAY_MS;
+}
+
+/**
+ * Performs a Spotify API fetch while respecting minimum spacing
+ * and backing off on 429 responses before retrying.
+ */
+async function rateLimitFetch(
+  input: string,
+  init?: Parameters<typeof fetch>[1]
+): Promise<Response> {
+  let attempts = 0;
+
+  while (attempts <= SPOTIFY_MAX_RETRIES) {
+    const now = Date.now();
+    const waitMs = Math.max(lastSpotifyRequestAt + SPOTIFY_MIN_REQUEST_GAP_MS - now, 0);
+    if (waitMs > 0) {
+      await sleep(waitMs);
+    }
+
+    const response = await fetch(input, init);
+    lastSpotifyRequestAt = Date.now();
+
+    if (response.status !== 429) {
+      return response;
+    }
+
+    const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+    attempts += 1;
+    console.log(
+      `Rate limited by Spotify API. Waiting ${retryAfterMs}ms before retry ${attempts}/${SPOTIFY_MAX_RETRIES}...`
+    );
+    await sleep(retryAfterMs);
+  }
+
+  throw new Error("Spotify API rate limit retries exceeded");
+}
+
 export async function getServerAccessToken(): Promise<string | null> {
-  const response = await fetch("https://accounts.spotify.com/api/token", {
+  const response = await rateLimitFetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       Authorization: `Basic ${SPOTIFY_CONFIG.BASIC}`,
@@ -32,7 +96,7 @@ export async function refreshAccessToken(
 ): Promise<{ accessToken: string; expiresIn: number; refreshToken?: string } | null> {
   try {
     console.log("Refreshing access token...");
-    const response = await fetch(SPOTIFY_CONFIG.TOKEN_URL, {
+    const response = await rateLimitFetch(SPOTIFY_CONFIG.TOKEN_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -68,7 +132,7 @@ export async function refreshAccessToken(
  */
 export async function spotifyApiRequest<T>(endpoint: string, accessToken: string): Promise<T> {
   try {
-    const response = await fetch(`${SPOTIFY_CONFIG.API_BASE}${endpoint}`, {
+    const response = await rateLimitFetch(`${SPOTIFY_CONFIG.API_BASE}${endpoint}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json"
@@ -78,11 +142,6 @@ export async function spotifyApiRequest<T>(endpoint: string, accessToken: string
     if (!response.ok) {
       if (response.status === 401) {
         throw new Error("Unauthorized - token may be expired");
-      }
-      if (response.status === 429) {
-        console.log("Rate limited by Spotify API. Waiting 30 seconds before retry...");
-        await new Promise((resolve) => setTimeout(resolve, 30000));
-        return spotifyApiRequest<T>(endpoint, accessToken);
       }
       throw new Error(`Spotify API error: ${response.status} ${response.statusText}`);
     }
@@ -124,38 +183,65 @@ export async function fetchTrackData(trackId: string, accessToken: string): Prom
   return spotifyApiRequest<SpotifyTrack>(`/tracks/${trackId}`, accessToken);
 }
 
+async function fetchInParallelBatches<T>(
+  ids: string[],
+  batchSize: number,
+  fetcher: (id: string) => Promise<T>
+): Promise<T[]> {
+  const results: T[] = [];
+
+  for (let i = 0; i < ids.length; i += batchSize) {
+    const batch = ids.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(batch.map((id) => fetcher(id)));
+
+    for (const result of batchResults) {
+      if (result.status === "fulfilled") {
+        results.push(result.value);
+      }
+    }
+  }
+
+  return results;
+}
+
 /**
- * Fetches multiple tracks in a single request (up to 50 tracks)
+ * Fetches multiple tracks using per-track requests in small batches
  */
 export async function fetchMultipleTracks(
   trackIds: string[],
   accessToken: string
 ): Promise<{ tracks: SpotifyTrack[] }> {
-  const ids = trackIds.join(",");
-  return spotifyApiRequest<{ tracks: SpotifyTrack[] }>(`/tracks?ids=${ids}`, accessToken);
+  const tracks = await fetchInParallelBatches(trackIds, 5, (trackId) =>
+    fetchTrackData(trackId, accessToken)
+  );
+
+  return { tracks };
 }
 
 /**
- * Fetches multiple artists in a single request (up to 50 artists)
+ * Fetches multiple artists using per-artist requests in small batches
  */
 export async function fetchMultipleArtists(
   artistIds: string[],
   accessToken: string
 ): Promise<{ artists: SpotifyArtistResponse[] }> {
-  const ids = artistIds.join(",");
-  return spotifyApiRequest<{ artists: SpotifyArtistResponse[] }>(
-    `/artists?ids=${ids}`,
-    accessToken
+  const artists = await fetchInParallelBatches(artistIds, 5, (artistId) =>
+    fetchArtistData(artistId, accessToken)
   );
+
+  return { artists };
 }
 
 /**
- * Fetches multiple albums in a single request (up to 20 albums)
+ * Fetches multiple albums using per-album requests in small batches
  */
 export async function fetchMultipleAlbums(
   albumIds: string[],
   accessToken: string
 ): Promise<SpotifyAlbumsResponse> {
-  const ids = albumIds.join(",");
-  return spotifyApiRequest<SpotifyAlbumsResponse>(`/albums?ids=${ids}`, accessToken);
+  const albums = await fetchInParallelBatches(albumIds, 5, (albumId) =>
+    spotifyApiRequest<SpotifyAlbum>(`/albums/${albumId}`, accessToken)
+  );
+
+  return { albums };
 }
