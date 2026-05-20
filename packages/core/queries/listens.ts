@@ -2,12 +2,14 @@ import {
   album,
   albumTrack,
   and,
+  asc,
   artist,
   db,
   desc,
   eq,
   gte,
   listen,
+  lt,
   sql,
   track,
   trackArtist
@@ -941,6 +943,82 @@ export async function getHourlyListenData(options: GetHourlyListenDataOptions = 
     return completeHourlyData;
   } catch (error) {
     console.error("Error fetching hourly listen data:", error);
+    return [];
+  }
+}
+
+type GetListensForCalendarDayOptions = {
+  /** Local calendar date as `YYYY-MM-DD` (same interpretation as `/api/listens/recent`). */
+  date: string;
+  /** Minutes added to UTC to get local civil time; typically `-new Date().getTimezoneOffset()`. */
+  tzOffsetMinutes: number;
+};
+
+/** Listens whose local calendar day matches `date`, ordered chronologically. */
+export async function getListensForCalendarDay(options: GetListensForCalendarDayOptions) {
+  const { date, tzOffsetMinutes } = options;
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.trim());
+  if (!match) {
+    return [];
+  }
+
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  if (!y || m < 1 || m > 12 || d < 1 || d > 31) {
+    return [];
+  }
+
+  const dayStartUtcMs = Date.UTC(y, m - 1, d, 0, 0, 0, 0);
+  const dayEndUtcMs = Date.UTC(y, m - 1, d + 1, 0, 0, 0, 0);
+  const offsetMs = tzOffsetMinutes * 60_000;
+  const rangeStart = new Date(dayStartUtcMs - offsetMs);
+  const rangeEnd = new Date(dayEndUtcMs - offsetMs);
+
+  try {
+    const whereConditions = [
+      gte(listen.durationMS, 30000),
+      gte(listen.playedAt, rangeStart),
+      lt(listen.playedAt, rangeEnd)
+    ];
+
+    const rows = await db
+      .select({
+        id: listen.id,
+        durationMS: listen.durationMS,
+        playedAt: listen.playedAt,
+        trackName: track.name,
+        trackIsrc: track.isrc,
+        imageUrl: album.imageUrl,
+        trackDurationMS: track.durationMS,
+        artistNames: sql<
+          string[]
+        >`array_agg(distinct ${artist.name}) filter (where ${artist.name} is not null)`,
+        albumName: album.name
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .leftJoin(album, eq(albumTrack.albumId, album.id))
+      .leftJoin(artist, eq(trackArtist.artistId, artist.id))
+      .where(and(...whereConditions))
+      .groupBy(
+        listen.id,
+        listen.durationMS,
+        listen.playedAt,
+        track.name,
+        track.isrc,
+        albumTrack.trackId,
+        album.name,
+        album.imageUrl
+      )
+      .orderBy(asc(listen.playedAt));
+
+    return rows;
+  } catch (error) {
+    console.error("Error fetching listens for calendar day:", error);
     return [];
   }
 }
