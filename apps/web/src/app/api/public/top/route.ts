@@ -1,6 +1,12 @@
 import { getTopArtists } from "@workspace/core/queries/artists";
 import { NextRequest, NextResponse } from "next/server";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+
 const VALID_PERIODS = ["4weeks", "6months", "year", "lifetime"] as const;
 type Period = (typeof VALID_PERIODS)[number];
 
@@ -39,20 +45,26 @@ export async function GET(request: NextRequest) {
     if (!VALID_PERIODS.includes(periodParam as Period)) {
       return NextResponse.json(
         { error: `Invalid period. Must be one of: ${VALID_PERIODS.join(", ")}` },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     const { startDate, endDate } = periodToDateRange(periodParam as Period);
     const artists = await getTopArtists({ startDate, endDate, limit });
 
-    return NextResponse.json({
-      period: periodParam,
-      limit,
-      artists
-    });
+    return NextResponse.json(
+      { period: periodParam, limit, artists },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error("Error fetching public top artists:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500, headers: corsHeaders }
+    );
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
 }
