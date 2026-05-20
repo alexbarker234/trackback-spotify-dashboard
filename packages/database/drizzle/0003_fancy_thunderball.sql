@@ -1,0 +1,1 @@
+ALTER TABLE "artist" ADD COLUMN "last_fetched_from_spotify_at" timestamp;

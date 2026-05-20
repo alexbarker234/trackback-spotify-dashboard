@@ -2,7 +2,8 @@ import cron from "node-cron";
 import {
   fetchRecentlyPlayedTracksService,
   populateAlbumArtistData,
-  populateAlbumTrackService
+  populateAlbumTrackService,
+  refetchArtistData
 } from "./services";
 
 console.log("🚀 Starting Trackback service...");
@@ -13,7 +14,11 @@ if (useInternalCron) {
   console.log("🕑 Starting Trackback cron service...");
   cron.schedule("*/2 * * * *", fetchRecentlyPlayedTracksService);
   cron.schedule("*/30 * * * *", () => {
-    Promise.all([populateAlbumTrackService(), populateAlbumArtistData()]);
+    Promise.all([
+      populateAlbumTrackService(),
+      populateAlbumArtistData(),
+      refetchArtistData()
+    ]);
   });
 } else {
   console.log("🕑 Using external cron service...");
@@ -22,7 +27,8 @@ if (useInternalCron) {
 Promise.all([
   fetchRecentlyPlayedTracksService(),
   populateAlbumTrackService(),
-  populateAlbumArtistData()
+  populateAlbumArtistData(),
+  refetchArtistData()
 ]).then(() => {
   if (!useInternalCron) {
     console.log("✅ Fetching complete. Exiting.");

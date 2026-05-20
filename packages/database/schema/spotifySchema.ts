@@ -34,7 +34,8 @@ export const albumArtist = pgTable(
 export const artist = pgTable("artist", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  imageUrl: text("image_url")
+  imageUrl: text("image_url"),
+  lastFetchedFromSpotifyAt: timestamp("last_fetched_from_spotify_at")
 });
 
 export const albumTrack = pgTable(

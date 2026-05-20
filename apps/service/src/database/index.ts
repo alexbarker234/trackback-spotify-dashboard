@@ -7,9 +7,13 @@ import {
   AlbumTrackInsert,
   artist,
   ArtistInsert,
+  asc,
   db,
   eq,
   inArray,
+  isNull,
+  lt,
+  or,
   Listen,
   listen,
   ListenInsert,
@@ -194,12 +198,27 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
   }
 }
 
+const ARTIST_REFETCH_STALE_MS = 14 * 24 * 60 * 60 * 1000;
+
 /**
  * Gets artists that need image updates
  */
 export async function getArtistsNeedingImages() {
   return db.query.artist.findMany({
     where: (artist, { isNull }) => isNull(artist.imageUrl)
+  });
+}
+
+/**
+ * Gets artists whose Spotify data has never been fetched or is older than 2 weeks
+ */
+export async function getArtistsNeedingRefetch(limit: number) {
+  const staleBefore = new Date(Date.now() - ARTIST_REFETCH_STALE_MS);
+
+  return db.query.artist.findMany({
+    where: or(isNull(artist.lastFetchedFromSpotifyAt), lt(artist.lastFetchedFromSpotifyAt, staleBefore)),
+    orderBy: [asc(artist.lastFetchedFromSpotifyAt)],
+    limit
   });
 }
 
@@ -230,7 +249,10 @@ export async function updateArtistImagesBulk(
 
   const finalSql = sql.join(sqlChunks, sql.raw(" "));
 
-  await db.update(artist).set({ imageUrl: finalSql }).where(inArray(artist.id, artistIds));
+  await db
+    .update(artist)
+    .set({ imageUrl: finalSql, lastFetchedFromSpotifyAt: new Date() })
+    .where(inArray(artist.id, artistIds));
 }
 
 /**
