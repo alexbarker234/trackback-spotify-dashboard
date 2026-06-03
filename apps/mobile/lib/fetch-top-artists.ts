@@ -12,6 +12,10 @@ export async function fetchTopArtists(limit = 5): Promise<TopArtist[]> {
 
   const response = await fetch(`${API_URL}/api/top-artists?limit=${limit}`, { headers });
 
+  if (response.status === 401 || response.status === 403) {
+    throw new Error("Sign in required");
+  }
+
   if (!response.ok) {
     throw new Error(`Failed to fetch top artists (${response.status})`);
   }
