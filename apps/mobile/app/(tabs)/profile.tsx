@@ -1,12 +1,14 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
+import { refreshTopArtistsWidget } from "@/lib/refresh-widget";
 
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
   const [loading, setLoading] = useState(false);
+  const [refreshingWidget, setRefreshingWidget] = useState(false);
 
   const handleSignOut = async () => {
     setLoading(true);
@@ -18,10 +20,33 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleRefreshWidget = async () => {
+    setRefreshingWidget(true);
+    try {
+      await refreshTopArtistsWidget();
+    } finally {
+      setRefreshingWidget(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Signed in as</Text>
       <Text style={styles.name}>{session?.user.name ?? session?.user.email ?? "User"}</Text>
+
+      {Platform.OS === "android" ? (
+        <Pressable
+          style={[styles.button, styles.widgetButton, refreshingWidget && styles.buttonDisabled]}
+          onPress={handleRefreshWidget}
+          disabled={refreshingWidget}
+        >
+          {refreshingWidget ? (
+            <ActivityIndicator color="#fafafa" />
+          ) : (
+            <Text style={styles.buttonText}>Refresh home screen widget</Text>
+          )}
+        </Pressable>
+      ) : null}
 
       <Pressable
         style={[styles.button, loading && styles.buttonDisabled]}
@@ -62,6 +87,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     cursor: "pointer",
+  },
+  widgetButton: {
+    marginBottom: 16,
+    backgroundColor: "#1db954",
   },
   buttonDisabled: {
     opacity: 0.6,
