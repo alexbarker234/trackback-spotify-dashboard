@@ -1,8 +1,18 @@
 import { account, count, db, session, user, verification } from "@workspace/database";
+import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { createAuthMiddleware, customSession } from "better-auth/plugins";
+import { createAuthMiddleware } from "better-auth/api";
+import { customSession } from "better-auth/plugins";
+
+const trustedOrigins = [
+  ...(process.env.TRUSTED_ORIGINS?.split(",") || []),
+  "trackback://",
+  ...(process.env.NODE_ENV === "development"
+    ? ["exp://", "exp://**", "exp://192.168.*.*:*/**"]
+    : [])
+];
 
 const scopes = [
   "user-read-recently-played",
@@ -71,8 +81,9 @@ export const auth = betterAuth({
         session
       };
     }),
-    nextCookies()
+    nextCookies(),
+    expo()
   ],
   baseURL: process.env.BASE_URL,
-  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(",") || []
+  trustedOrigins
 });

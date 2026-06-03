@@ -3,7 +3,7 @@ name: spotify-dashboard
 services:
   db:
     container_name: spotify-dashboard-database
-    image: postgres
+    image: postgres:17
     environment:
       # comes from the .env file
       - POSTGRES_DB
