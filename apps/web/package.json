@@ -47,8 +47,8 @@
     "@tailwindcss/postcss": "^4",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "~19.2.2",
+    "@types/react-dom": "~19.2.2",
     "@workspace/eslint-config": "workspace:*",
     "tailwindcss": "^4",
     "typescript": "^5"
