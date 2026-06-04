@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Trackback",
+    "slug": "trackback",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "trackback",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.alexbarker234.trackback"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#121327",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.alexbarker234.trackback"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#121327"
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": ["./assets/fonts/fa-solid-900.ttf"],
+          "widgets": [
+            {
+              "name": "Stat",
+              "label": "Stat widget",
+              "minWidth": "110dp",
+              "minHeight": "180dp",
+              "maxResizeWidth": "600dp",
+              "maxResizeHeight": "400dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 3,
+              "resizeMode": "horizontal|vertical",
+              "description": "Last 4 weeks: top artist, top track, streams, and minutes",
+              "previewImage": "./assets/images/icon.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
