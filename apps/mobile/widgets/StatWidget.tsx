@@ -10,7 +10,232 @@ const REFRESH_ACTION = "REFRESH";
 const STAT_BOX_BG = "#262626";
 const GRID_GAP = 8;
 const LABEL_FONT_SIZE = 13;
-const VALUE_FONT_SIZE = 16;
+const IMAGE_CORNER_RADIUS = 8;
+const STAT_BOX_PADDING = 20;
+
+type WidgetSizing = {
+  valueFontSize: number;
+  valueMaxLines: number;
+  imageSize: number;
+  imageCornerRadius: number;
+  imageBannerWidth: number;
+  imageBannerHeight: number;
+  stackedImage: boolean;
+  gridGap: number;
+  cardPadding: number;
+  cardInnerGap: number;
+  titleFontSize: number;
+  showSpacer: boolean;
+};
+
+const SHELL_OVERHEAD = 50;
+const TITLE_LINE_HEIGHT = 20;
+const HEIGHT_BUFFER = 20;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function imageCardHeight(
+  imageSize: number,
+  valueFontSize: number,
+  cardPadding: number,
+  cardInnerGap: number,
+  valueMaxLines: number,
+): number {
+  const valueHeight = valueFontSize * (valueMaxLines > 1 ? 2.15 : 1.15);
+  const bodyHeight = LABEL_FONT_SIZE + cardInnerGap + Math.max(imageSize, valueHeight);
+  return cardPadding * 2 + bodyHeight;
+}
+
+function textCardHeight(
+  valueFontSize: number,
+  cardPadding: number,
+  cardInnerGap: number,
+  valueMaxLines: number,
+): number {
+  const valueHeight = valueFontSize * (valueMaxLines > 1 ? 2.15 : 1.15);
+  return cardPadding * 2 + LABEL_FONT_SIZE + cardInnerGap + valueHeight;
+}
+
+function stackedImageCardHeight(
+  bannerHeight: number,
+  valueFontSize: number,
+  cardPadding: number,
+  cardInnerGap: number,
+  valueMaxLines: number,
+): number {
+  const valueHeight = valueFontSize * (valueMaxLines > 1 ? 2.15 : 1.15);
+  return cardPadding * 2 + LABEL_FONT_SIZE + cardInnerGap + bannerHeight + cardInnerGap + valueHeight;
+}
+
+function measureLayoutHeight(
+  layout: LayoutMode,
+  sizing: Pick<
+    WidgetSizing,
+    | "stackedImage"
+    | "imageSize"
+    | "imageBannerHeight"
+    | "valueFontSize"
+    | "gridGap"
+    | "cardPadding"
+    | "cardInnerGap"
+    | "valueMaxLines"
+  >,
+): number {
+  const imageRow = sizing.stackedImage
+    ? stackedImageCardHeight(
+        sizing.imageBannerHeight,
+        sizing.valueFontSize,
+        sizing.cardPadding,
+        sizing.cardInnerGap,
+        sizing.valueMaxLines,
+      )
+    : imageCardHeight(
+        sizing.imageSize,
+        sizing.valueFontSize,
+        sizing.cardPadding,
+        sizing.cardInnerGap,
+        sizing.valueMaxLines,
+      );
+  const textRow = textCardHeight(
+    sizing.valueFontSize,
+    sizing.cardPadding,
+    sizing.cardInnerGap,
+    sizing.valueMaxLines,
+  );
+
+  if (layout === "column") {
+    return (
+      TITLE_LINE_HEIGHT +
+      sizing.gridGap +
+      imageRow +
+      sizing.gridGap +
+      imageRow +
+      sizing.gridGap +
+      textRow +
+      sizing.gridGap +
+      textRow +
+      HEIGHT_BUFFER
+    );
+  }
+
+  return (
+    TITLE_LINE_HEIGHT +
+    sizing.gridGap +
+    imageRow +
+    sizing.gridGap +
+    textRow +
+    HEIGHT_BUFFER
+  );
+}
+
+function getWidgetSizing(
+  width: number | undefined,
+  height: number | undefined,
+  layout: LayoutMode,
+): WidgetSizing {
+  const widgetWidth = width ?? 320;
+  const widgetHeight = height ?? 260;
+  const statsHeight = widgetHeight - SHELL_OVERHEAD;
+  const contentWidth = widgetWidth - 24;
+
+  const imageCellWidth =
+    layout === "column" ? contentWidth : (contentWidth - GRID_GAP) / 2;
+  const scale = clamp(imageCellWidth / 140, 0.9, 1.85);
+
+  let sizing: WidgetSizing = {
+    valueFontSize: clamp(Math.round(15 * scale), 13, 26),
+    valueMaxLines: 2,
+    imageSize: clamp(Math.round(34 * scale), 30, 72),
+    imageCornerRadius: clamp(Math.round(IMAGE_CORNER_RADIUS * scale), 6, 12),
+    imageBannerWidth: Math.max(Math.round(imageCellWidth - STAT_BOX_PADDING), 48),
+    imageBannerHeight: 0,
+    stackedImage: false,
+    gridGap: GRID_GAP,
+    cardPadding: 10,
+    cardInnerGap: 6,
+    titleFontSize: 16,
+    showSpacer: true,
+  };
+
+  sizing.imageBannerHeight = sizing.imageBannerWidth;
+
+  const stackedFits =
+    measureLayoutHeight(layout, { ...sizing, stackedImage: true }) <= statsHeight;
+  sizing.stackedImage = stackedFits;
+
+  while (measureLayoutHeight(layout, sizing) > statsHeight) {
+    if (sizing.valueFontSize > 12) {
+      sizing.valueFontSize -= 1;
+      continue;
+    }
+    if (sizing.imageSize > 22) {
+      sizing.imageSize -= 2;
+      continue;
+    }
+    if (sizing.gridGap > 4) {
+      sizing.gridGap -= 2;
+      continue;
+    }
+    if (sizing.cardPadding > 6) {
+      sizing.cardPadding -= 2;
+      continue;
+    }
+    if (sizing.cardInnerGap > 4) {
+      sizing.cardInnerGap -= 1;
+      continue;
+    }
+    if (sizing.valueMaxLines > 1) {
+      sizing.valueMaxLines = 1;
+      continue;
+    }
+    if (sizing.titleFontSize > 14) {
+      sizing.titleFontSize = 14;
+      continue;
+    }
+    break;
+  }
+
+  if (sizing.stackedImage) {
+    const textRow = textCardHeight(
+      sizing.valueFontSize,
+      sizing.cardPadding,
+      sizing.cardInnerGap,
+      sizing.valueMaxLines,
+    );
+    const overhead =
+      layout === "column"
+        ? TITLE_LINE_HEIGHT +
+          sizing.gridGap * 4 +
+          textRow * 2 +
+          sizing.cardPadding * 4 +
+          HEIGHT_BUFFER
+        : TITLE_LINE_HEIGHT + sizing.gridGap + textRow + HEIGHT_BUFFER;
+    const bannerBudget = statsHeight - overhead - LABEL_FONT_SIZE - sizing.valueFontSize - sizing.cardInnerGap * 2 - sizing.cardPadding * 2;
+    sizing.imageBannerHeight = clamp(
+      Math.min(sizing.imageBannerWidth, Math.round(bannerBudget)),
+      32,
+      sizing.imageBannerWidth,
+    );
+  }
+
+  while (measureLayoutHeight(layout, sizing) > statsHeight) {
+    if (sizing.stackedImage && sizing.imageBannerHeight > 28) {
+      sizing.imageBannerHeight -= 4;
+      continue;
+    }
+    if (!sizing.stackedImage && sizing.imageSize > 20) {
+      sizing.imageSize -= 2;
+      continue;
+    }
+    break;
+  }
+
+  sizing.showSpacer = statsHeight - measureLayoutHeight(layout, sizing) > 24;
+
+  return sizing;
+}
 
 type StatWidgetProps = {
   stats?: WidgetFourWeekStats;
@@ -27,7 +252,9 @@ const shellStyle: FlexWidgetStyle = {
   height: "match_parent" as const,
   width: "match_parent" as const,
   backgroundColor: "#0a0a0a" as const,
-  padding: 12,
+  paddingHorizontal: 12,
+  paddingTop: 12,
+  paddingBottom: 6,
   flexDirection: "column" as const,
 };
 
@@ -70,9 +297,9 @@ function WidgetFrame({ children }: { children: ReactNode }) {
         <FlexWidget
           clickAction={REFRESH_ACTION}
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: 16,
+            width: 20,
+            height: 20,
+            borderRadius: 10,
             backgroundColor: STAT_BOX_BG,
             justifyContent: "center",
             alignItems: "center",
@@ -85,14 +312,13 @@ function WidgetFrame({ children }: { children: ReactNode }) {
   );
 }
 
-/** Equal-width / equal-height slot for each stat card */
+/** Equal width; height follows card content */
 function StatCell({ children }: { children: ReactNode }) {
   return (
     <FlexWidget
       style={{
         flex: 1,
         width: "match_parent",
-        height: "match_parent",
       }}
     >
       {children}
@@ -100,38 +326,41 @@ function StatCell({ children }: { children: ReactNode }) {
   );
 }
 
-function StatRow({ children }: { children: ReactNode }) {
+function StatRow({ children, gap }: { children: ReactNode; gap: number }) {
   return (
     <FlexWidget
       style={{
-        flex: 1,
         width: "match_parent",
         flexDirection: "row",
-        flexGap: GRID_GAP,
+        flexGap: gap,
       }}
     >
       {children}
     </FlexWidget>
   );
+}
+
+function GridSpacer() {
+  return <FlexWidget style={{ flex: 1, width: "match_parent" }} />;
 }
 
 function StatImage({
   imageUrl,
+  width,
+  height,
   radius,
-  compact,
 }: {
   imageUrl: string | null | undefined;
+  width: number;
+  height: number;
   radius: number;
-  compact: boolean;
 }) {
-  const size = compact ? 28 : 32;
-
   if (imageUrl?.startsWith("https:")) {
     return (
       <ImageWidget
         image={imageUrl as `https:${string}`}
-        imageWidth={size}
-        imageHeight={size}
+        imageWidth={width}
+        imageHeight={height}
         radius={radius}
       />
     );
@@ -140,8 +369,8 @@ function StatImage({
   return (
     <FlexWidget
       style={{
-        width: size,
-        height: size,
+        width,
+        height,
         borderRadius: radius,
         backgroundColor: "#404040",
       }}
@@ -152,31 +381,63 @@ function StatImage({
 function StatBox({
   label,
   value,
+  sizing,
   imageUrl,
-  imageRadius = 6,
-  compact = false,
 }: {
   label: string;
   value: string;
+  sizing: WidgetSizing;
   imageUrl?: string | null;
-  imageRadius?: number;
-  compact?: boolean;
 }) {
   const hasImage = imageUrl !== undefined;
+  const radius = sizing.imageCornerRadius;
+
+  const boxStyle: FlexWidgetStyle = {
+    width: "match_parent",
+    backgroundColor: "#262626",
+    borderRadius: 10,
+    padding: sizing.cardPadding,
+    flexDirection: "column",
+    flexGap: sizing.cardInnerGap,
+  };
 
   if (hasImage) {
+    if (sizing.stackedImage) {
+      return (
+        <FlexWidget style={boxStyle}>
+          <TextWidget
+            text={label}
+            style={{
+              fontSize: LABEL_FONT_SIZE,
+              fontWeight: "600",
+              color: "#a3a3a3",
+              width: "match_parent",
+            }}
+          />
+          <FlexWidget style={{ width: "match_parent" }}>
+            <StatImage
+              imageUrl={imageUrl}
+              width={sizing.imageBannerWidth}
+              height={sizing.imageBannerHeight}
+              radius={radius}
+            />
+          </FlexWidget>
+          <TextWidget
+            text={value}
+            maxLines={sizing.valueMaxLines}
+            style={{
+              fontSize: sizing.valueFontSize,
+              fontWeight: "600",
+              color: "#fafafa",
+              width: "match_parent",
+            }}
+          />
+        </FlexWidget>
+      );
+    }
+
     return (
-      <FlexWidget
-        style={{
-          width: "match_parent",
-          height: "match_parent",
-          backgroundColor: STAT_BOX_BG,
-          borderRadius: 10,
-          padding: 10,
-          flexDirection: "column",
-          flexGap: 6,
-        }}
-      >
+      <FlexWidget style={boxStyle}>
         <TextWidget
           text={label}
           style={{
@@ -188,20 +449,24 @@ function StatBox({
         />
         <FlexWidget
           style={{
-            flex: 1,
             width: "match_parent",
             flexDirection: "row",
             alignItems: "center",
-            flexGap: 8,
+            flexGap: sizing.cardInnerGap + 2,
           }}
         >
-          <StatImage imageUrl={imageUrl} radius={imageRadius} compact={compact} />
+          <StatImage
+            imageUrl={imageUrl}
+            width={sizing.imageSize}
+            height={sizing.imageSize}
+            radius={radius}
+          />
           <FlexWidget style={{ flex: 1, flexDirection: "column", justifyContent: "center" }}>
             <TextWidget
               text={value}
-              maxLines={2}
+              maxLines={sizing.valueMaxLines}
               style={{
-                fontSize: VALUE_FONT_SIZE,
+                fontSize: sizing.valueFontSize,
                 fontWeight: "600",
                 color: "#fafafa",
                 width: "match_parent",
@@ -214,18 +479,7 @@ function StatBox({
   }
 
   return (
-    <FlexWidget
-      style={{
-        width: "match_parent",
-        height: "match_parent",
-        backgroundColor: STAT_BOX_BG,
-        borderRadius: 10,
-        padding: 10,
-        flexDirection: "column",
-        justifyContent: "center",
-        flexGap: 6,
-      }}
-    >
+    <FlexWidget style={boxStyle}>
       <TextWidget
         text={label}
         style={{
@@ -237,9 +491,9 @@ function StatBox({
       />
       <TextWidget
         text={value}
-        maxLines={2}
+        maxLines={sizing.valueMaxLines}
         style={{
-          fontSize: VALUE_FONT_SIZE,
+          fontSize: sizing.valueFontSize,
           fontWeight: "600",
           color: "#fafafa",
           width: "match_parent",
@@ -289,11 +543,11 @@ function LoginContent() {
 function StatsContent({
   stats,
   layout,
-  compact,
+  sizing,
 }: {
   stats: WidgetFourWeekStats;
   layout: LayoutMode;
-  compact: boolean;
+  sizing: WidgetSizing;
 }) {
   const topArtistName = stats.topArtist?.artistName ?? "—";
   const topTrackName = stats.topTrack?.trackName ?? "—";
@@ -303,25 +557,33 @@ function StatsContent({
       key="artist"
       label="Top artist"
       value={topArtistName}
+      sizing={sizing}
       imageUrl={stats.topArtist?.artistImageUrl}
-      imageRadius={16}
-      compact={compact}
     />,
     <StatBox
       key="track"
       label="Top track"
       value={topTrackName}
+      sizing={sizing}
       imageUrl={stats.topTrack?.imageUrl}
-      imageRadius={6}
-      compact={compact}
     />,
-    <StatBox key="streams" label="Streams" value={formatStreams(stats.totalStreams)} />,
+    <StatBox
+      key="streams"
+      label="Streams"
+      value={formatStreams(stats.totalStreams)}
+      sizing={sizing}
+    />,
     <StatBox
       key="minutes"
       label="Minutes listened"
       value={formatMinutes(stats.minutesListened)}
+      sizing={sizing}
     />,
   ];
+
+  const gap = sizing.gridGap;
+  const spacer = sizing.showSpacer ? <GridSpacer /> : null;
+  const grow = sizing.showSpacer ? 1 : undefined;
 
   return (
     <FlexWidget
@@ -330,45 +592,57 @@ function StatsContent({
         flex: 1,
         width: "match_parent",
         flexDirection: "column",
-        flexGap: GRID_GAP,
+        flexGap: gap,
       }}
     >
       <TextWidget
         text="Last 4 weeks"
-        style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa" }}
+        style={{ fontSize: sizing.titleFontSize, fontWeight: "bold", color: "#fafafa" }}
       />
-      {layout === "column" ? (
-        <FlexWidget
-          style={{
-            flex: 1,
-            width: "match_parent",
-            flexDirection: "column",
-            flexGap: GRID_GAP,
-          }}
-        >
-          {cards.map((card) => (
-            <StatCell key={card.key}>{card}</StatCell>
-          ))}
-        </FlexWidget>
-      ) : (
-        <FlexWidget
-          style={{
-            flex: 1,
-            width: "match_parent",
-            flexDirection: "column",
-            flexGap: GRID_GAP,
-          }}
-        >
-          <StatRow>
+      <FlexWidget
+        style={{
+          flex: grow,
+          width: "match_parent",
+          flexDirection: "column",
+          flexGap: gap,
+        }}
+      >
+        {layout === "column" ? (
+          <FlexWidget
+            style={{
+              flex: grow,
+              width: "match_parent",
+              flexDirection: "column",
+              flexGap: gap,
+            }}
+          >
             <StatCell>{cards[0]}</StatCell>
             <StatCell>{cards[1]}</StatCell>
-          </StatRow>
-          <StatRow>
+            {spacer}
             <StatCell>{cards[2]}</StatCell>
             <StatCell>{cards[3]}</StatCell>
-          </StatRow>
-        </FlexWidget>
-      )}
+          </FlexWidget>
+        ) : (
+          <FlexWidget
+            style={{
+              flex: grow,
+              width: "match_parent",
+              flexDirection: "column",
+              flexGap: gap,
+            }}
+          >
+            <StatRow gap={gap}>
+              <StatCell>{cards[0]}</StatCell>
+              <StatCell>{cards[1]}</StatCell>
+            </StatRow>
+            {spacer}
+            <StatRow gap={gap}>
+              <StatCell>{cards[2]}</StatCell>
+              <StatCell>{cards[3]}</StatCell>
+            </StatRow>
+          </FlexWidget>
+        )}
+      </FlexWidget>
     </FlexWidget>
   );
 }
@@ -382,7 +656,7 @@ export function StatWidget({
   height,
 }: StatWidgetProps) {
   const layout = getLayoutMode(width, height);
-  const compact = layout === "column" || (width !== undefined && width < 340);
+  const sizing = getWidgetSizing(width, height, layout);
 
   if (loading) {
     return (
@@ -450,7 +724,7 @@ export function StatWidget({
 
   return (
     <WidgetFrame>
-      <StatsContent stats={stats} layout={layout} compact={compact} />
+      <StatsContent stats={stats} layout={layout} sizing={sizing} />
     </WidgetFrame>
   );
 }
