@@ -8,13 +8,20 @@ import type { WidgetFourWeekStats } from "@/lib/types";
 const REFRESH_ACTION = "REFRESH";
 
 const STAT_BOX_BG = "#262626";
+const GRID_GAP = 8;
+const LABEL_FONT_SIZE = 13;
+const VALUE_FONT_SIZE = 16;
 
 type StatWidgetProps = {
   stats?: WidgetFourWeekStats;
   error?: string;
   loading?: boolean;
   needsLogin?: boolean;
+  width?: number;
+  height?: number;
 };
+
+type LayoutMode = "grid" | "column";
 
 const shellStyle: FlexWidgetStyle = {
   height: "match_parent" as const,
@@ -23,6 +30,22 @@ const shellStyle: FlexWidgetStyle = {
   padding: 12,
   flexDirection: "column" as const,
 };
+
+function getLayoutMode(width?: number, height?: number): LayoutMode {
+  if (!width) {
+    return "grid";
+  }
+
+  if (width < 300) {
+    return "column";
+  }
+
+  if (height && height > width && width < 360) {
+    return "column";
+  }
+
+  return "grid";
+}
 
 function WidgetFrame({ children }: { children: ReactNode }) {
   return (
@@ -62,19 +85,53 @@ function WidgetFrame({ children }: { children: ReactNode }) {
   );
 }
 
+/** Equal-width / equal-height slot for each stat card */
+function StatCell({ children }: { children: ReactNode }) {
+  return (
+    <FlexWidget
+      style={{
+        flex: 1,
+        width: "match_parent",
+        height: "match_parent",
+      }}
+    >
+      {children}
+    </FlexWidget>
+  );
+}
+
+function StatRow({ children }: { children: ReactNode }) {
+  return (
+    <FlexWidget
+      style={{
+        flex: 1,
+        width: "match_parent",
+        flexDirection: "row",
+        flexGap: GRID_GAP,
+      }}
+    >
+      {children}
+    </FlexWidget>
+  );
+}
+
 function StatImage({
   imageUrl,
   radius,
+  compact,
 }: {
   imageUrl: string | null | undefined;
   radius: number;
+  compact: boolean;
 }) {
+  const size = compact ? 28 : 32;
+
   if (imageUrl?.startsWith("https:")) {
     return (
       <ImageWidget
         image={imageUrl as `https:${string}`}
-        imageWidth={32}
-        imageHeight={32}
+        imageWidth={size}
+        imageHeight={size}
         radius={radius}
       />
     );
@@ -83,8 +140,8 @@ function StatImage({
   return (
     <FlexWidget
       style={{
-        width: 32,
-        height: 32,
+        width: size,
+        height: size,
         borderRadius: radius,
         backgroundColor: "#404040",
       }}
@@ -97,54 +154,97 @@ function StatBox({
   value,
   imageUrl,
   imageRadius = 6,
+  compact = false,
 }: {
   label: string;
   value: string;
   imageUrl?: string | null;
   imageRadius?: number;
+  compact?: boolean;
 }) {
   const hasImage = imageUrl !== undefined;
 
-  return (
-    <FlexWidget
-      style={{
-        flex: 1,
-        backgroundColor: STAT_BOX_BG,
-        borderRadius: 10,
-        padding: 10,
-        flexDirection: hasImage ? "row" : "column",
-        alignItems: hasImage ? "center" : "flex-start",
-        flexGap: hasImage ? 8 : 4,
-      }}
-    >
-      {hasImage ? <StatImage imageUrl={imageUrl} radius={imageRadius} /> : null}
-      <FlexWidget style={{ flex: 1, flexDirection: "column", flexGap: 4 }}>
-        <TextWidget text={label} style={{ fontSize: 10, color: "#737373" }} />
+  if (hasImage) {
+    return (
+      <FlexWidget
+        style={{
+          width: "match_parent",
+          height: "match_parent",
+          backgroundColor: STAT_BOX_BG,
+          borderRadius: 10,
+          padding: 10,
+          flexDirection: "column",
+          flexGap: 6,
+        }}
+      >
         <TextWidget
-          text={value}
-          maxLines={2}
+          text={label}
           style={{
-            fontSize: 13,
+            fontSize: LABEL_FONT_SIZE,
             fontWeight: "600",
-            color: "#fafafa",
+            color: "#a3a3a3",
             width: "match_parent",
           }}
         />
+        <FlexWidget
+          style={{
+            flex: 1,
+            width: "match_parent",
+            flexDirection: "row",
+            alignItems: "center",
+            flexGap: 8,
+          }}
+        >
+          <StatImage imageUrl={imageUrl} radius={imageRadius} compact={compact} />
+          <FlexWidget style={{ flex: 1, flexDirection: "column", justifyContent: "center" }}>
+            <TextWidget
+              text={value}
+              maxLines={2}
+              style={{
+                fontSize: VALUE_FONT_SIZE,
+                fontWeight: "600",
+                color: "#fafafa",
+                width: "match_parent",
+              }}
+            />
+          </FlexWidget>
+        </FlexWidget>
       </FlexWidget>
-    </FlexWidget>
-  );
-}
+    );
+  }
 
-function StatRow({ children }: { children: ReactNode }) {
   return (
     <FlexWidget
       style={{
         width: "match_parent",
-        flexDirection: "row",
-        flexGap: 8,
+        height: "match_parent",
+        backgroundColor: STAT_BOX_BG,
+        borderRadius: 10,
+        padding: 10,
+        flexDirection: "column",
+        justifyContent: "center",
+        flexGap: 6,
       }}
     >
-      {children}
+      <TextWidget
+        text={label}
+        style={{
+          fontSize: LABEL_FONT_SIZE,
+          fontWeight: "600",
+          color: "#a3a3a3",
+          width: "match_parent",
+        }}
+      />
+      <TextWidget
+        text={value}
+        maxLines={2}
+        style={{
+          fontSize: VALUE_FONT_SIZE,
+          fontWeight: "600",
+          color: "#fafafa",
+          width: "match_parent",
+        }}
+      />
     </FlexWidget>
   );
 }
@@ -163,6 +263,7 @@ function LoginContent() {
       clickAction="OPEN_APP"
       style={{
         flex: 1,
+        width: "match_parent",
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "column",
@@ -185,9 +286,42 @@ function LoginContent() {
   );
 }
 
-function StatsContent({ stats }: { stats: WidgetFourWeekStats }) {
+function StatsContent({
+  stats,
+  layout,
+  compact,
+}: {
+  stats: WidgetFourWeekStats;
+  layout: LayoutMode;
+  compact: boolean;
+}) {
   const topArtistName = stats.topArtist?.artistName ?? "—";
   const topTrackName = stats.topTrack?.trackName ?? "—";
+
+  const cards = [
+    <StatBox
+      key="artist"
+      label="Top artist"
+      value={topArtistName}
+      imageUrl={stats.topArtist?.artistImageUrl}
+      imageRadius={16}
+      compact={compact}
+    />,
+    <StatBox
+      key="track"
+      label="Top track"
+      value={topTrackName}
+      imageUrl={stats.topTrack?.imageUrl}
+      imageRadius={6}
+      compact={compact}
+    />,
+    <StatBox key="streams" label="Streams" value={formatStreams(stats.totalStreams)} />,
+    <StatBox
+      key="minutes"
+      label="Minutes listened"
+      value={formatMinutes(stats.minutesListened)}
+    />,
+  ];
 
   return (
     <FlexWidget
@@ -196,42 +330,67 @@ function StatsContent({ stats }: { stats: WidgetFourWeekStats }) {
         flex: 1,
         width: "match_parent",
         flexDirection: "column",
-        flexGap: 8,
+        flexGap: GRID_GAP,
       }}
     >
       <TextWidget
         text="Last 4 weeks"
-        style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa", marginBottom: 2 }}
+        style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa" }}
       />
-      <StatRow>
-        <StatBox
-          label="Top artist"
-          value={topArtistName}
-          imageUrl={stats.topArtist?.artistImageUrl}
-          imageRadius={16}
-        />
-        <StatBox
-          label="Top track"
-          value={topTrackName}
-          imageUrl={stats.topTrack?.imageUrl}
-          imageRadius={6}
-        />
-      </StatRow>
-      <StatRow>
-        <StatBox label="Streams" value={formatStreams(stats.totalStreams)} />
-        <StatBox label="Minutes listened" value={formatMinutes(stats.minutesListened)} />
-      </StatRow>
+      {layout === "column" ? (
+        <FlexWidget
+          style={{
+            flex: 1,
+            width: "match_parent",
+            flexDirection: "column",
+            flexGap: GRID_GAP,
+          }}
+        >
+          {cards.map((card) => (
+            <StatCell key={card.key}>{card}</StatCell>
+          ))}
+        </FlexWidget>
+      ) : (
+        <FlexWidget
+          style={{
+            flex: 1,
+            width: "match_parent",
+            flexDirection: "column",
+            flexGap: GRID_GAP,
+          }}
+        >
+          <StatRow>
+            <StatCell>{cards[0]}</StatCell>
+            <StatCell>{cards[1]}</StatCell>
+          </StatRow>
+          <StatRow>
+            <StatCell>{cards[2]}</StatCell>
+            <StatCell>{cards[3]}</StatCell>
+          </StatRow>
+        </FlexWidget>
+      )}
     </FlexWidget>
   );
 }
 
-export function StatWidget({ stats, error, loading, needsLogin }: StatWidgetProps) {
+export function StatWidget({
+  stats,
+  error,
+  loading,
+  needsLogin,
+  width,
+  height,
+}: StatWidgetProps) {
+  const layout = getLayoutMode(width, height);
+  const compact = layout === "column" || (width !== undefined && width < 340);
+
   if (loading) {
     return (
       <WidgetFrame>
         <FlexWidget
           style={{
             flex: 1,
+            width: "match_parent",
             justifyContent: "center",
             alignItems: "center",
           }}
@@ -257,6 +416,7 @@ export function StatWidget({ stats, error, loading, needsLogin }: StatWidgetProp
           clickAction="OPEN_APP"
           style={{
             flex: 1,
+            width: "match_parent",
             flexDirection: "column",
             justifyContent: "center",
           }}
@@ -277,6 +437,7 @@ export function StatWidget({ stats, error, loading, needsLogin }: StatWidgetProp
         <FlexWidget
           style={{
             flex: 1,
+            width: "match_parent",
             justifyContent: "center",
             alignItems: "center",
           }}
@@ -289,7 +450,7 @@ export function StatWidget({ stats, error, loading, needsLogin }: StatWidgetProp
 
   return (
     <WidgetFrame>
-      <StatsContent stats={stats} />
+      <StatsContent stats={stats} layout={layout} compact={compact} />
     </WidgetFrame>
   );
 }

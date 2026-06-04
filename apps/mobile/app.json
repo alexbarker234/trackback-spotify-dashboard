@@ -44,9 +44,12 @@
               "name": "Stat",
               "label": "Stat widget",
               "minWidth": "250dp",
-              "minHeight": "200dp",
+              "minHeight": "180dp",
+              "maxResizeWidth": "600dp",
+              "maxResizeHeight": "400dp",
               "targetCellWidth": 4,
               "targetCellHeight": 3,
+              "resizeMode": "horizontal|vertical",
               "description": "Last 4 weeks: top artist, top track, streams, and minutes",
               "previewImage": "./assets/images/icon.png",
               "updatePeriodMillis": 1800000
