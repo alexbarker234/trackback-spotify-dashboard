@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
-import { refreshTopArtistsWidget } from "@/lib/refresh-widget";
+import { refreshStatWidget } from "@/lib/refresh-stat-widget";
 
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
@@ -23,7 +23,7 @@ export default function ProfileScreen() {
   const handleRefreshWidget = async () => {
     setRefreshingWidget(true);
     try {
-      await refreshTopArtistsWidget();
+      await refreshStatWidget();
     } finally {
       setRefreshingWidget(false);
     }

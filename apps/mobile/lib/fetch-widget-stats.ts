@@ -1,8 +1,8 @@
 import { authClient } from "./auth-client";
 import { API_URL } from "./config";
-import type { TopArtist } from "./types";
+import type { WidgetFourWeekStats } from "./types";
 
-export async function fetchTopArtists(limit = 5): Promise<TopArtist[]> {
+export async function fetchWidgetFourWeekStats(): Promise<WidgetFourWeekStats> {
   const cookies = authClient.getCookie();
   const headers: Record<string, string> = {};
 
@@ -10,14 +10,14 @@ export async function fetchTopArtists(limit = 5): Promise<TopArtist[]> {
     headers.Cookie = cookies;
   }
 
-  const response = await fetch(`${API_URL}/api/top-artists?limit=${limit}`, { headers });
+  const response = await fetch(`${API_URL}/api/widget/four-week-stats`, { headers });
 
   if (response.status === 401 || response.status === 403) {
     throw new Error("Sign in required");
   }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch top artists (${response.status})`);
+    throw new Error(`Failed to fetch widget stats (${response.status})`);
   }
 
   return response.json();

@@ -41,13 +41,13 @@
         {
           "widgets": [
             {
-              "name": "TopArtists",
-              "label": "Top Artists",
+              "name": "Stat",
+              "label": "Stat widget",
               "minWidth": "250dp",
-              "minHeight": "180dp",
+              "minHeight": "200dp",
               "targetCellWidth": 4,
               "targetCellHeight": 3,
-              "description": "Your most listened artists",
+              "description": "Last 4 weeks: top artist, top track, streams, and minutes",
               "previewImage": "./assets/images/icon.png",
               "updatePeriodMillis": 1800000
             }

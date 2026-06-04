@@ -3,3 +3,4 @@ export * from "./queries/analytics";
 export * from "./queries/artists";
 export * from "./queries/listens";
 export * from "./queries/tracks";
+export * from "./queries/widget-stats";

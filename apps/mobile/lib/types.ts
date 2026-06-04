@@ -17,3 +17,20 @@ export type TopTrack = {
     artistId: string;
   }[];
 };
+
+export type WidgetFourWeekStats = {
+  period: "4weeks";
+  topArtist: {
+    artistName: string;
+    artistId: string;
+    artistImageUrl: string | null;
+  } | null;
+  topTrack: {
+    trackName: string;
+    trackIsrc: string;
+    imageUrl: string | null;
+    artistName: string | null;
+  } | null;
+  totalStreams: number;
+  minutesListened: number;
+};
