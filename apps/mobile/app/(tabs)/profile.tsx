@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { AppIcon } from "@/components/AppIcon";
 import { authClient } from "@/lib/auth-client";
 import { refreshStatWidget } from "@/lib/refresh-stat-widget";
 
@@ -31,6 +32,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <AppIcon size={72} style={styles.logo} />
       <Text style={styles.label}>Signed in as</Text>
       <Text style={styles.name}>{session?.user.name ?? session?.user.email ?? "User"}</Text>
 
@@ -68,6 +70,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     backgroundColor: "#0a0a0a",
+  },
+  logo: {
+    marginBottom: 24,
   },
   label: {
     fontSize: 14,

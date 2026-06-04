@@ -2,6 +2,7 @@ import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { AppIcon } from "@/components/AppIcon";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginScreen() {
@@ -47,6 +48,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <AppIcon size={96} style={styles.logo} />
       <Text style={styles.title}>Trackback</Text>
       <Text style={styles.subtitle}>Your Spotify listening dashboard</Text>
 
@@ -79,6 +81,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
     backgroundColor: "#0a0a0a",
+  },
+  logo: {
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
