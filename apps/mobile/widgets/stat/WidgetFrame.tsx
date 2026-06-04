@@ -1,7 +1,12 @@
 import { type ReactNode } from "react";
-import { FlexWidget, FlexWidgetStyle, TextWidget } from "react-native-android-widget";
+import { FlexWidget, FlexWidgetStyle, IconWidget } from "react-native-android-widget";
 
-import { REFRESH_ACTION, STAT_BOX_BG } from "./constants";
+import {
+  FA_ICON_ARROWS_ROTATE,
+  FA_SOLID_FONT,
+  REFRESH_ACTION,
+  STAT_BOX_BG,
+} from "./constants";
 
 const shellStyle: FlexWidgetStyle = {
   height: "match_parent",
@@ -44,7 +49,12 @@ export function WidgetFrame({ children }: { children: ReactNode }) {
             alignItems: "center",
           }}
         >
-          <TextWidget text="↻" style={{ fontSize: 18, color: "#a3a3a3" }} />
+          <IconWidget
+            icon={FA_ICON_ARROWS_ROTATE}
+            font={FA_SOLID_FONT}
+            size={14}
+            style={{ color: "#a3a3a3" }}
+          />
         </FlexWidget>
       </FlexWidget>
     </FlexWidget>
