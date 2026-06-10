@@ -1,7 +1,9 @@
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
+import { formatRefreshedAt } from "@/lib/format-refreshed-at";
 import type { WidgetFourWeekStats } from "@/lib/types";
 
+import { REFRESHED_AT_FONT_SIZE } from "./constants";
 import { StatBox } from "./StatBox";
 import { GridSpacer, StatCell, StatRow } from "./grid";
 import type { LayoutMode, WidgetSizing } from "./types";
@@ -26,9 +28,10 @@ type StatsContentProps = {
   stats: WidgetFourWeekStats;
   layout: LayoutMode;
   sizing: WidgetSizing;
+  refreshedAt?: string;
 };
 
-export function StatsContent({ stats, layout, sizing }: StatsContentProps) {
+export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsContentProps) {
   const topArtistName = stats.topArtist?.artistName ?? "—";
   const topTrackName = stats.topTrack?.trackName ?? "—";
 
@@ -112,10 +115,26 @@ export function StatsContent({ stats, layout, sizing }: StatsContentProps) {
         flexGap: gap,
       }}
     >
-      <TextWidget
-        text="Last 4 weeks"
-        style={{ fontSize: sizing.titleFontSize, fontWeight: "bold", color: "#fafafa" }}
-      />
+      <FlexWidget
+        style={{
+          width: "match_parent",
+          flexDirection: sizing.stackedHeader ? "column" : "row",
+          justifyContent: sizing.stackedHeader ? "flex-start" : "space-between",
+          alignItems: sizing.stackedHeader ? "flex-start" : "center",
+          flexGap: sizing.stackedHeader ? 4 : undefined,
+        }}
+      >
+        <TextWidget
+          text="Last 4 weeks"
+          style={{ fontSize: sizing.titleFontSize, fontWeight: "bold", color: "#fafafa" }}
+        />
+        {refreshedAt ? (
+          <TextWidget
+            text={formatRefreshedAt(refreshedAt)}
+            style={{ fontSize: REFRESHED_AT_FONT_SIZE, color: "#737373" }}
+          />
+        ) : null}
+      </FlexWidget>
       <FlexWidget
         style={{
           flex: grow,

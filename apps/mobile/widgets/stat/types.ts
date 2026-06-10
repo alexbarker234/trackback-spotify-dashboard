@@ -14,6 +14,8 @@ export type WidgetSizing = {
   cardPadding: number;
   cardInnerGap: number;
   titleFontSize: number;
+  stackedHeader: boolean;
+  headerHeight: number;
   showSpacer: boolean;
 };
 

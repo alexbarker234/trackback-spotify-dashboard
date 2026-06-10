@@ -1,12 +1,26 @@
 import {
   HEIGHT_BUFFER,
   LABEL_FONT_SIZE,
+  REFRESHED_AT_FONT_SIZE,
+  STACKED_HEADER_GAP,
   TITLE_LINE_HEIGHT,
 } from "./constants";
 import type { LayoutMode, WidgetSizing } from "./types";
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+export function getHeaderHeight(stackedHeader: boolean, titleFontSize: number): number {
+  if (stackedHeader) {
+    return (
+      Math.ceil(titleFontSize * 1.15) +
+      STACKED_HEADER_GAP +
+      Math.ceil(REFRESHED_AT_FONT_SIZE * 1.15)
+    );
+  }
+
+  return TITLE_LINE_HEIGHT;
 }
 
 function valueBlockHeight(valueFontSize: number, valueMaxLines: number) {
@@ -58,6 +72,7 @@ export function measureLayoutHeight(
     | "cardPadding"
     | "cardInnerGap"
     | "valueMaxLines"
+    | "headerHeight"
   >,
 ): number {
   const imageRow = sizing.stackedImage
@@ -84,7 +99,7 @@ export function measureLayoutHeight(
 
   if (layout === "column") {
     return (
-      TITLE_LINE_HEIGHT +
+      sizing.headerHeight +
       sizing.gridGap +
       imageRow +
       sizing.gridGap +
@@ -98,7 +113,7 @@ export function measureLayoutHeight(
   }
 
   return (
-    TITLE_LINE_HEIGHT +
+    sizing.headerHeight +
     sizing.gridGap +
     imageRow +
     sizing.gridGap +
@@ -107,12 +122,17 @@ export function measureLayoutHeight(
   );
 }
 
-export function getCellHeight(statsHeight: number, layout: LayoutMode, gridGap: number): number {
+export function getCellHeight(
+  statsHeight: number,
+  layout: LayoutMode,
+  gridGap: number,
+  headerHeight: number,
+): number {
   if (layout === "column") {
-    return (statsHeight - TITLE_LINE_HEIGHT - gridGap * 3) / 4;
+    return (statsHeight - headerHeight - gridGap * 3) / 4;
   }
 
-  return (statsHeight - TITLE_LINE_HEIGHT - gridGap) / 2;
+  return (statsHeight - headerHeight - gridGap) / 2;
 }
 
 export function getStackedImageRowHeight(
@@ -120,7 +140,12 @@ export function getStackedImageRowHeight(
   layout: LayoutMode,
   sizing: Pick<
     WidgetSizing,
-    "valueFontSize" | "cardPadding" | "cardInnerGap" | "valueMaxLines" | "gridGap"
+    | "valueFontSize"
+    | "cardPadding"
+    | "cardInnerGap"
+    | "valueMaxLines"
+    | "gridGap"
+    | "headerHeight"
   >,
 ): number {
   const textRow = textCardHeight(
@@ -131,8 +156,8 @@ export function getStackedImageRowHeight(
   );
 
   if (layout === "column") {
-    return (statsHeight - TITLE_LINE_HEIGHT - sizing.gridGap * 3 - textRow * 2) / 2;
+    return (statsHeight - sizing.headerHeight - sizing.gridGap * 3 - textRow * 2) / 2;
   }
 
-  return statsHeight - TITLE_LINE_HEIGHT - sizing.gridGap * 2 - textRow;
+  return statsHeight - sizing.headerHeight - sizing.gridGap * 2 - textRow;
 }

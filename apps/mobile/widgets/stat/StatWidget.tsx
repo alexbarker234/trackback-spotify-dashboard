@@ -21,9 +21,11 @@ export function StatWidget({
   const layout = getLayoutMode(width, height);
   const sizing = getWidgetSizing(width, height, layout);
 
+  const frameProps = { width, height };
+
   if (loading) {
     return (
-      <WidgetFrame>
+      <WidgetFrame {...frameProps}>
         <FlexWidget
           style={{
             flex: 1,
@@ -40,7 +42,7 @@ export function StatWidget({
 
   if (needsLogin) {
     return (
-      <WidgetFrame>
+      <WidgetFrame {...frameProps}>
         <LoginContent />
       </WidgetFrame>
     );
@@ -48,7 +50,7 @@ export function StatWidget({
 
   if (error) {
     return (
-      <WidgetFrame>
+      <WidgetFrame {...frameProps}>
         <FlexWidget
           clickAction="OPEN_APP"
           style={{
@@ -70,7 +72,7 @@ export function StatWidget({
 
   if (!stats) {
     return (
-      <WidgetFrame>
+      <WidgetFrame {...frameProps}>
         <FlexWidget
           style={{
             flex: 1,
@@ -86,8 +88,8 @@ export function StatWidget({
   }
 
   return (
-    <WidgetFrame refreshedAt={refreshedAt}>
-      <StatsContent stats={stats} layout={layout} sizing={sizing} />
+    <WidgetFrame {...frameProps}>
+      <StatsContent stats={stats} layout={layout} sizing={sizing} refreshedAt={refreshedAt} />
     </WidgetFrame>
   );
 }

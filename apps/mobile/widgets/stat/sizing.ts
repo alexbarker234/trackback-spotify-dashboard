@@ -7,6 +7,8 @@ import {
   IMAGE_CORNER_RADIUS,
   LABEL_FONT_SIZE,
   MIN_STACKED_BANNER_HEIGHT,
+  NARROW_TITLE_FONT_SIZE,
+  NARROW_WIDGET_MAX_WIDTH,
   SHELL_OVERHEAD,
   VALUE_FONT_MAX,
   VALUE_FONT_MIN,
@@ -14,6 +16,7 @@ import {
 import {
   clamp,
   getCellHeight,
+  getHeaderHeight,
   getStackedImageRowHeight,
   measureLayoutHeight,
   stackedImageCardHeight,
@@ -159,7 +162,10 @@ export function getWidgetSizing(
   const imageCellWidth =
     layout === "column" ? contentWidth : (contentWidth - GRID_GAP) / 2;
   const scale = clamp(imageCellWidth / 140, 0.9, 1.85);
-  const cellHeight = getCellHeight(statsHeight, layout, GRID_GAP);
+  const stackedHeader = widgetWidth <= NARROW_WIDGET_MAX_WIDTH;
+  const titleFontSize = stackedHeader ? NARROW_TITLE_FONT_SIZE : 16;
+  const headerHeight = getHeaderHeight(stackedHeader, titleFontSize);
+  const cellHeight = getCellHeight(statsHeight, layout, GRID_GAP, headerHeight);
   const cardPadding = 10;
   const maxStackedBannerWidth = Math.max(
     Math.round(imageCellWidth - cardPadding * 2),
@@ -177,7 +183,9 @@ export function getWidgetSizing(
     gridGap: GRID_GAP,
     cardPadding,
     cardInnerGap: 6,
-    titleFontSize: 16,
+    titleFontSize,
+    stackedHeader,
+    headerHeight,
     showSpacer: true,
   };
 
