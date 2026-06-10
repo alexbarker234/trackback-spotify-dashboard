@@ -3,6 +3,8 @@ import CookieManager from "@preeternal/react-native-cookie-manager";
 import { authClient } from "./auth-client";
 import { API_URL } from "./config";
 
+const STANDALONE_COOKIE_NAME = "trackback-standalone";
+
 function parseCookieHeader(cookieHeader: string): { name: string; value: string }[] {
   return cookieHeader
     .split(";")
@@ -30,8 +32,8 @@ export async function syncAuthCookiesToWebView(): Promise<boolean> {
   const base = new URL(API_URL);
   const cookies = parseCookieHeader(cookieHeader);
 
-  await Promise.all(
-    cookies.map((cookie) =>
+  await Promise.all([
+    ...cookies.map((cookie) =>
       CookieManager.set(
         base.origin,
         {
@@ -45,7 +47,18 @@ export async function syncAuthCookiesToWebView(): Promise<boolean> {
         true,
       ),
     ),
-  );
+    CookieManager.set(
+      base.origin,
+      {
+        name: STANDALONE_COOKIE_NAME,
+        value: "true",
+        domain: base.hostname,
+        path: "/",
+        secure: base.protocol === "https:",
+      },
+      true,
+    ),
+  ]);
 
   await CookieManager.flush();
 

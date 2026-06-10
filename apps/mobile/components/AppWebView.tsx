@@ -107,6 +107,7 @@ export function AppWebView() {
         ref={webViewRef}
         source={{ uri: DASHBOARD_URL }}
         style={styles.webview}
+        applicationNameForUserAgent="TrackbackApp"
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
         allowsBackForwardNavigationGestures
