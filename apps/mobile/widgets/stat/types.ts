@@ -19,6 +19,7 @@ export type WidgetSizing = {
 
 export type StatWidgetProps = {
   stats?: WidgetFourWeekStats;
+  refreshedAt?: string;
   error?: string;
   loading?: boolean;
   needsLogin?: boolean;
