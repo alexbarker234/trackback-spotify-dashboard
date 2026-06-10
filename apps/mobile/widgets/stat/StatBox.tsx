@@ -18,15 +18,57 @@ const valueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
   width: "match_parent" as const,
 });
 
+const secondaryValueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
+  fontSize: sizing.valueFontSize - 2,
+  fontWeight: "500" as const,
+  color: "#a3a3a3",
+  width: "match_parent" as const,
+});
+
+type ValueBlockProps = {
+  value: string;
+  secondaryValue?: string;
+  sizing: WidgetSizing;
+};
+
+function ValueBlock({ value, secondaryValue, sizing }: ValueBlockProps) {
+  return (
+    <FlexWidget
+      style={{
+        width: "match_parent",
+        flexDirection: "column",
+        flexGap: secondaryValue ? 2 : undefined,
+      }}
+    >
+      <TextWidget
+        text={value}
+        maxLines={secondaryValue ? 1 : sizing.valueMaxLines}
+        style={valueStyle(sizing)}
+      />
+      {secondaryValue ? (
+        <TextWidget text={secondaryValue} style={secondaryValueStyle(sizing)} />
+      ) : null}
+    </FlexWidget>
+  );
+}
+
 type StatBoxProps = {
   label: string;
   value: string;
+  secondaryValue?: string;
   sizing: WidgetSizing;
   imageUrl?: string | null;
   fillCell?: boolean;
 };
 
-export function StatBox({ label, value, sizing, imageUrl, fillCell = false }: StatBoxProps) {
+export function StatBox({
+  label,
+  value,
+  secondaryValue,
+  sizing,
+  imageUrl,
+  fillCell = false,
+}: StatBoxProps) {
   const hasImage = imageUrl !== undefined;
   const radius = sizing.imageCornerRadius;
 
@@ -42,9 +84,12 @@ export function StatBox({ label, value, sizing, imageUrl, fillCell = false }: St
   };
 
   if (hasImage && fillCell) {
+    const imageSize = sizing.fillImageSize;
+
     return (
       <FlexWidget style={boxStyle}>
         <TextWidget text={label} style={labelStyle} />
+        <ValueBlock value={value} secondaryValue={secondaryValue} sizing={sizing} />
         <FlexWidget
           style={{
             flex: 1,
@@ -55,12 +100,11 @@ export function StatBox({ label, value, sizing, imageUrl, fillCell = false }: St
         >
           <StatImage
             imageUrl={imageUrl}
-            width={sizing.imageSize}
-            height={sizing.imageSize}
+            width={200}
+            height={200}
             radius={radius}
           />
         </FlexWidget>
-        <TextWidget text={value} maxLines={sizing.valueMaxLines} style={valueStyle(sizing)} />
       </FlexWidget>
     );
   }
@@ -77,14 +121,22 @@ export function StatBox({ label, value, sizing, imageUrl, fillCell = false }: St
             flexGap: sizing.cardInnerGap + 2,
           }}
         >
-          <StatImage
-            imageUrl={imageUrl}
-            width={sizing.imageSize}
-            height={sizing.imageSize}
-            radius={radius}
-          />
+          <FlexWidget
+            style={{
+              flex: 0,
+              width: "match_parent",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <StatImage
+              imageUrl={imageUrl}
+              width={200}
+              height={200}
+              radius={radius}
+            /></FlexWidget>
           <FlexWidget style={{ flex: 1, flexDirection: "column", justifyContent: "center" }}>
-            <TextWidget text={value} maxLines={sizing.valueMaxLines} style={valueStyle(sizing)} />
+            <ValueBlock value={value} secondaryValue={secondaryValue} sizing={sizing} />
           </FlexWidget>
         </FlexWidget>
       </FlexWidget>
@@ -94,7 +146,7 @@ export function StatBox({ label, value, sizing, imageUrl, fillCell = false }: St
   return (
     <FlexWidget style={boxStyle}>
       <TextWidget text={label} style={labelStyle} />
-      <TextWidget text={value} maxLines={sizing.valueMaxLines} style={valueStyle(sizing)} />
+      <ValueBlock value={value} secondaryValue={secondaryValue} sizing={sizing} />
     </FlexWidget>
   );
 }

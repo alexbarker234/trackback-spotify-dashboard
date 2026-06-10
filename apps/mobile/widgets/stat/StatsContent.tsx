@@ -3,9 +3,9 @@ import { FlexWidget, TextWidget } from "react-native-android-widget";
 import { formatRefreshedAt } from "@/lib/format-refreshed-at";
 import type { WidgetFourWeekStats } from "@/lib/types";
 
-import { REFRESHED_AT_FONT_SIZE } from "./constants";
-import { StatBox } from "./StatBox";
+import { GRID_MIN_HEIGHT, REFRESHED_AT_FONT_SIZE } from "./constants";
 import { StatCell, StatRow } from "./grid";
+import { StatBox } from "./StatBox";
 import type { LayoutMode, WidgetSizing } from "./types";
 
 function formatStreams(count: number): string {
@@ -16,12 +16,12 @@ function formatMinutes(minutes: number): string {
   return minutes.toLocaleString();
 }
 
-function formatTopItemValue(name: string, listenCount: number | undefined): string {
-  if (name === "—" || listenCount === undefined) {
-    return name;
+function formatStreamCount(listenCount: number | undefined): string | undefined {
+  if (listenCount === undefined) {
+    return undefined;
   }
 
-  return `${name}\n${formatStreams(listenCount)} streams`;
+  return `${formatStreams(listenCount)} streams`;
 }
 
 type StatsContentProps = {
@@ -29,20 +29,23 @@ type StatsContentProps = {
   layout: LayoutMode;
   sizing: WidgetSizing;
   refreshedAt?: string;
+  height?: number;
 };
 
-export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsContentProps) {
+export function StatsContent({ stats, layout, sizing, refreshedAt, height }: StatsContentProps) {
   const topArtistName = stats.topArtist?.artistName ?? "—";
   const topTrackName = stats.topTrack?.trackName ?? "—";
   const gap = sizing.gridGap;
 
-  const imageFillCell = layout === "grid";
+  const imageFillCell =
+    layout === "grid" && (height === undefined || height >= GRID_MIN_HEIGHT);
 
   const cards = [
     <StatBox
       key="artist"
       label="Top artist"
-      value={formatTopItemValue(topArtistName, stats.topArtist?.listenCount)}
+      value={topArtistName}
+      secondaryValue={formatStreamCount(stats.topArtist?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topArtist?.artistImageUrl}
       fillCell={imageFillCell}
@@ -50,7 +53,8 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
     <StatBox
       key="track"
       label="Top track"
-      value={formatTopItemValue(topTrackName, stats.topTrack?.listenCount)}
+      value={topTrackName}
+      secondaryValue={formatStreamCount(stats.topTrack?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topTrack?.imageUrl}
       fillCell={imageFillCell}
@@ -63,7 +67,7 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
     />,
     <StatBox
       key="minutes"
-      label="Total minutes listened"
+      label="Total minutes"
       value={formatMinutes(stats.minutesListened)}
       sizing={sizing}
     />,
@@ -93,7 +97,7 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
           flexGap: gap,
         }}
       >
-        <StatRow gap={gap} flex={1} fillHeight>
+        <StatRow gap={gap} flex={imageFillCell ? 1 : undefined} fillHeight={imageFillCell}>
           {cards[0]}
           {cards[1]}
         </StatRow>

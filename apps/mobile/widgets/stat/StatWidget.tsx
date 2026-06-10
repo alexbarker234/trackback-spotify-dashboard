@@ -19,7 +19,7 @@ export function StatWidget({
   height,
 }: StatWidgetProps) {
   const layout = getLayoutMode(width);
-  const sizing = getWidgetSizing(width);
+  const sizing = getWidgetSizing(width, height, layout);
 
   const frameProps = { width, height };
 
@@ -89,7 +89,13 @@ export function StatWidget({
 
   return (
     <WidgetFrame {...frameProps}>
-      <StatsContent stats={stats} layout={layout} sizing={sizing} refreshedAt={refreshedAt} />
+      <StatsContent
+        stats={stats}
+        layout={layout}
+        sizing={sizing}
+        refreshedAt={refreshedAt}
+        height={height}
+      />
     </WidgetFrame>
   );
 }
