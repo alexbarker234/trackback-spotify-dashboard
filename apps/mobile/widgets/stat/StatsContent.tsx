@@ -14,6 +14,14 @@ function formatMinutes(minutes: number): string {
   return minutes.toLocaleString();
 }
 
+function formatTopItemValue(name: string, listenCount: number | undefined): string {
+  if (name === "—" || listenCount === undefined) {
+    return name;
+  }
+
+  return `${name}\n${formatStreams(listenCount)} streams`;
+}
+
 type StatsContentProps = {
   stats: WidgetFourWeekStats;
   layout: LayoutMode;
@@ -28,26 +36,26 @@ export function StatsContent({ stats, layout, sizing }: StatsContentProps) {
     <StatBox
       key="artist"
       label="Top artist"
-      value={topArtistName}
+      value={formatTopItemValue(topArtistName, stats.topArtist?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topArtist?.artistImageUrl}
     />,
     <StatBox
       key="track"
       label="Top track"
-      value={topTrackName}
+      value={formatTopItemValue(topTrackName, stats.topTrack?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topTrack?.imageUrl}
     />,
     <StatBox
       key="streams"
-      label="Streams"
+      label="Total streams"
       value={formatStreams(stats.totalStreams)}
       sizing={sizing}
     />,
     <StatBox
       key="minutes"
-      label="Minutes listened"
+      label="Total minutes listened"
       value={formatMinutes(stats.minutesListened)}
       sizing={sizing}
     />,

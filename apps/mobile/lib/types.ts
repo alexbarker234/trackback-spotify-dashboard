@@ -24,12 +24,14 @@ export type WidgetFourWeekStats = {
     artistName: string;
     artistId: string;
     artistImageUrl: string | null;
+    listenCount: number;
   } | null;
   topTrack: {
     trackName: string;
     trackIsrc: string;
     imageUrl: string | null;
     artistName: string | null;
+    listenCount: number;
   } | null;
   totalStreams: number;
   minutesListened: number;

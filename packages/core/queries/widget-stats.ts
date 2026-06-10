@@ -9,12 +9,14 @@ export type WidgetFourWeekStats = {
     artistName: string;
     artistId: string;
     artistImageUrl: string | null;
+    listenCount: number;
   } | null;
   topTrack: {
     trackName: string;
     trackIsrc: string;
     imageUrl: string | null;
     artistName: string | null;
+    listenCount: number;
   } | null;
   totalStreams: number;
   minutesListened: number;
@@ -61,7 +63,8 @@ export async function getWidgetFourWeekStats(): Promise<WidgetFourWeekStats> {
     ? {
         artistName: artists[0].artistName,
         artistId: artists[0].artistId,
-        artistImageUrl: artists[0].artistImageUrl
+        artistImageUrl: artists[0].artistImageUrl,
+        listenCount: artists[0].listenCount
       }
     : null;
 
@@ -71,7 +74,8 @@ export async function getWidgetFourWeekStats(): Promise<WidgetFourWeekStats> {
         trackName: topTrackRow.trackName,
         trackIsrc: topTrackRow.trackIsrc,
         imageUrl: topTrackRow.imageUrl,
-        artistName: topTrackRow.artists[0]?.artistName ?? null
+        artistName: topTrackRow.artists[0]?.artistName ?? null,
+        listenCount: topTrackRow.listenCount
       }
     : null;
 

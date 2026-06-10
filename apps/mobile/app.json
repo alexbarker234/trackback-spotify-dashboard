@@ -42,8 +42,8 @@
             {
               "name": "Stat",
               "label": "Stat widget",
-              "minWidth": "110dp",
-              "minHeight": "180dp",
+              "minWidth": "109dp",
+              "minHeight": "115dp",
               "maxResizeWidth": "600dp",
               "maxResizeHeight": "400dp",
               "targetCellWidth": 2,
