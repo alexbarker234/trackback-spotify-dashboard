@@ -1,7 +1,7 @@
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
 
 import { renderStatWidget } from "@/lib/render-stat-widget";
-import { REFRESH_ACTION, StatWidget } from "@/widgets/StatWidget";
+import { StatWidget } from "@/widgets/StatWidget";
 
 function widgetSize(props: WidgetTaskHandlerProps) {
   return { width: props.widgetInfo.width, height: props.widgetInfo.height };
@@ -23,11 +23,6 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case "WIDGET_UPDATE":
     case "WIDGET_RESIZED":
       await renderStat(props);
-      break;
-    case "WIDGET_CLICK":
-      if (props.clickAction === REFRESH_ACTION) {
-        await renderStat(props);
-      }
       break;
     default:
       break;

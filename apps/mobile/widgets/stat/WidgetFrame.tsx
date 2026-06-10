@@ -1,12 +1,7 @@
 import { type ReactNode } from "react";
-import { FlexWidget, FlexWidgetStyle, IconWidget } from "react-native-android-widget";
+import { FlexWidget, FlexWidgetStyle, TextWidget } from "react-native-android-widget";
 
-import {
-  FA_ICON_ARROWS_ROTATE,
-  FA_SOLID_FONT,
-  REFRESH_ACTION,
-  STAT_BOX_BG,
-} from "./constants";
+import { formatRefreshedAt } from "@/lib/format-refreshed-at";
 
 const shellStyle: FlexWidgetStyle = {
   height: "match_parent",
@@ -18,7 +13,12 @@ const shellStyle: FlexWidgetStyle = {
   flexDirection: "column",
 };
 
-export function WidgetFrame({ children }: { children: ReactNode }) {
+type WidgetFrameProps = {
+  children: ReactNode;
+  refreshedAt?: string;
+};
+
+export function WidgetFrame({ children, refreshedAt }: WidgetFrameProps) {
   return (
     <FlexWidget style={shellStyle}>
       <FlexWidget
@@ -30,33 +30,19 @@ export function WidgetFrame({ children }: { children: ReactNode }) {
       >
         {children}
       </FlexWidget>
-      <FlexWidget
-        style={{
-          width: "match_parent",
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          marginTop: 4,
-        }}
-      >
+      {refreshedAt ? (
         <FlexWidget
-          clickAction={REFRESH_ACTION}
           style={{
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            backgroundColor: STAT_BOX_BG,
-            justifyContent: "center",
-            alignItems: "center",
+            width: "match_parent",
+            marginTop: 4,
           }}
         >
-          <IconWidget
-            icon={FA_ICON_ARROWS_ROTATE}
-            font={FA_SOLID_FONT}
-            size={14}
-            style={{ color: "#a3a3a3" }}
+          <TextWidget
+            text={formatRefreshedAt(refreshedAt)}
+            style={{ fontSize: 10, color: "#737373" }}
           />
         </FlexWidget>
-      </FlexWidget>
+      ) : null}
     </FlexWidget>
   );
 }

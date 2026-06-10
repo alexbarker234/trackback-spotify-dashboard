@@ -2,7 +2,6 @@
 
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
-import { REFRESH_ACTION } from "./constants";
 import { getLayoutMode } from "./layout-mode";
 import { LoginContent } from "./LoginContent";
 import { getWidgetSizing } from "./sizing";
@@ -10,10 +9,9 @@ import { StatsContent } from "./StatsContent";
 import type { StatWidgetProps } from "./types";
 import { WidgetFrame } from "./WidgetFrame";
 
-export { REFRESH_ACTION };
-
 export function StatWidget({
   stats,
+  refreshedAt,
   error,
   loading,
   needsLogin,
@@ -88,7 +86,7 @@ export function StatWidget({
   }
 
   return (
-    <WidgetFrame>
+    <WidgetFrame refreshedAt={refreshedAt}>
       <StatsContent stats={stats} layout={layout} sizing={sizing} />
     </WidgetFrame>
   );

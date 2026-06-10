@@ -38,7 +38,6 @@
       [
         "react-native-android-widget",
         {
-          "fonts": ["./assets/fonts/fa-solid-900.ttf"],
           "widgets": [
             {
               "name": "Stat",
