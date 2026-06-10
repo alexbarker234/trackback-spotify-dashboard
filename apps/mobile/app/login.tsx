@@ -1,14 +1,19 @@
 import { Redirect, router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { AppIcon } from "@/components/AppIcon";
 import { authClient } from "@/lib/auth-client";
+import { clearWebViewAuthCookies } from "@/lib/sync-webview-cookies";
 
 export default function LoginScreen() {
   const { data: session, isPending } = authClient.useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void clearWebViewAuthCookies();
+  }, []);
 
   if (isPending) {
     return (
@@ -19,7 +24,7 @@ export default function LoginScreen() {
   }
 
   if (session) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/" />;
   }
 
   const handleLogin = async () => {
@@ -29,7 +34,7 @@ export default function LoginScreen() {
     try {
       const result = await authClient.signIn.social({
         provider: "spotify",
-        callbackURL: "/(tabs)",
+        callbackURL: "/",
       });
 
       if (result.error) {
@@ -38,7 +43,7 @@ export default function LoginScreen() {
       }
 
       await authClient.getSession();
-      router.replace("/(tabs)");
+      router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {
