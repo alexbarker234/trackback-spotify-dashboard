@@ -1,17 +1,17 @@
-import { FlexWidget, FlexWidgetStyle, TextWidget } from "react-native-android-widget";
+import { FlexWidget, FlexWidgetStyle, TextWidget, TextWidgetStyle } from "react-native-android-widget";
 
 import { LABEL_FONT_SIZE } from "./constants";
 import { StatImage } from "./StatImage";
 import type { WidgetSizing } from "./types";
 
-const labelStyle = {
+const labelStyle: TextWidgetStyle = {
   fontSize: LABEL_FONT_SIZE,
   fontWeight: "600" as const,
   color: "#a3a3a3",
   width: "match_parent" as const,
 };
 
-const valueStyle = (sizing: WidgetSizing) => ({
+const valueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
   fontSize: sizing.valueFontSize,
   fontWeight: "600" as const,
   color: "#fafafa",
