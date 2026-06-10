@@ -7,16 +7,11 @@ export type WidgetSizing = {
   valueMaxLines: number;
   imageSize: number;
   imageCornerRadius: number;
-  imageBannerWidth: number;
-  imageBannerHeight: number;
-  stackedImage: boolean;
   gridGap: number;
   cardPadding: number;
   cardInnerGap: number;
   titleFontSize: number;
   stackedHeader: boolean;
-  headerHeight: number;
-  showSpacer: boolean;
 };
 
 export type StatWidgetProps = {

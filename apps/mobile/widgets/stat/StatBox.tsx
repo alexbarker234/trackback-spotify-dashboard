@@ -1,6 +1,6 @@
 import { FlexWidget, FlexWidgetStyle, TextWidget, TextWidgetStyle } from "react-native-android-widget";
 
-import { LABEL_FONT_SIZE } from "./constants";
+import { LABEL_FONT_SIZE, STAT_BOX_BG } from "./constants";
 import { StatImage } from "./StatImage";
 import type { WidgetSizing } from "./types";
 
@@ -23,36 +23,40 @@ type StatBoxProps = {
   value: string;
   sizing: WidgetSizing;
   imageUrl?: string | null;
+  fillCell?: boolean;
 };
 
-export function StatBox({ label, value, sizing, imageUrl }: StatBoxProps) {
+export function StatBox({ label, value, sizing, imageUrl, fillCell = false }: StatBoxProps) {
   const hasImage = imageUrl !== undefined;
   const radius = sizing.imageCornerRadius;
 
   const boxStyle: FlexWidgetStyle = {
     width: "match_parent",
-    backgroundColor: "#262626",
+    height: fillCell ? "match_parent" : undefined,
+    backgroundColor: STAT_BOX_BG,
     borderRadius: 10,
     padding: sizing.cardPadding,
     flexDirection: "column",
     flexGap: sizing.cardInnerGap,
+    ...(fillCell ? { flex: 1 } : {}),
   };
 
-  if (hasImage && sizing.stackedImage) {
+  if (hasImage && fillCell) {
     return (
       <FlexWidget style={boxStyle}>
         <TextWidget text={label} style={labelStyle} />
         <FlexWidget
           style={{
+            flex: 1,
             width: "match_parent",
-            flexDirection: "row",
             justifyContent: "center",
+            alignItems: "center",
           }}
         >
           <StatImage
             imageUrl={imageUrl}
-            width={sizing.imageBannerWidth}
-            height={sizing.imageBannerHeight}
+            width={sizing.imageSize}
+            height={sizing.imageSize}
             radius={radius}
           />
         </FlexWidget>

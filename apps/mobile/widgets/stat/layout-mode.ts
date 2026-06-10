@@ -1,15 +1,8 @@
+import { GRID_MIN_WIDTH } from "./constants";
 import type { LayoutMode } from "./types";
 
-export function getLayoutMode(width?: number, height?: number): LayoutMode {
-  if (!width) {
-    return "grid";
-  }
-
-  if (width < 300) {
-    return "column";
-  }
-
-  if (height && height > width && width < 360) {
+export function getLayoutMode(width?: number): LayoutMode {
+  if (!width || width <= GRID_MIN_WIDTH) {
     return "column";
   }
 

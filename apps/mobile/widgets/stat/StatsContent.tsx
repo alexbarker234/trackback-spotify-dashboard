@@ -5,7 +5,7 @@ import type { WidgetFourWeekStats } from "@/lib/types";
 
 import { REFRESHED_AT_FONT_SIZE } from "./constants";
 import { StatBox } from "./StatBox";
-import { GridSpacer, StatCell, StatRow } from "./grid";
+import { StatCell, StatRow } from "./grid";
 import type { LayoutMode, WidgetSizing } from "./types";
 
 function formatStreams(count: number): string {
@@ -34,6 +34,9 @@ type StatsContentProps = {
 export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsContentProps) {
   const topArtistName = stats.topArtist?.artistName ?? "—";
   const topTrackName = stats.topTrack?.trackName ?? "—";
+  const gap = sizing.gridGap;
+
+  const imageFillCell = layout === "grid";
 
   const cards = [
     <StatBox
@@ -42,6 +45,7 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
       value={formatTopItemValue(topArtistName, stats.topArtist?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topArtist?.artistImageUrl}
+      fillCell={imageFillCell}
     />,
     <StatBox
       key="track"
@@ -49,6 +53,7 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
       value={formatTopItemValue(topTrackName, stats.topTrack?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topTrack?.imageUrl}
+      fillCell={imageFillCell}
     />,
     <StatBox
       key="streams"
@@ -64,15 +69,11 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
     />,
   ];
 
-  const gap = sizing.gridGap;
-  const spacer = sizing.showSpacer ? <GridSpacer /> : null;
-  const grow = sizing.showSpacer ? 1 : undefined;
-
   const gridBody =
     layout === "column" ? (
       <FlexWidget
         style={{
-          flex: grow,
+          flex: 1,
           width: "match_parent",
           flexDirection: "column",
           flexGap: gap,
@@ -80,27 +81,25 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
       >
         <StatCell>{cards[0]}</StatCell>
         <StatCell>{cards[1]}</StatCell>
-        {spacer}
         <StatCell>{cards[2]}</StatCell>
         <StatCell>{cards[3]}</StatCell>
       </FlexWidget>
     ) : (
       <FlexWidget
         style={{
-          flex: grow,
+          flex: 1,
           width: "match_parent",
           flexDirection: "column",
           flexGap: gap,
         }}
       >
-        <StatRow gap={gap}>
-          <StatCell>{cards[0]}</StatCell>
-          <StatCell>{cards[1]}</StatCell>
+        <StatRow gap={gap} flex={1} fillHeight>
+          {cards[0]}
+          {cards[1]}
         </StatRow>
-        {spacer}
         <StatRow gap={gap}>
-          <StatCell>{cards[2]}</StatCell>
-          <StatCell>{cards[3]}</StatCell>
+          {cards[2]}
+          {cards[3]}
         </StatRow>
       </FlexWidget>
     );
@@ -135,16 +134,7 @@ export function StatsContent({ stats, layout, sizing, refreshedAt }: StatsConten
           />
         ) : null}
       </FlexWidget>
-      <FlexWidget
-        style={{
-          flex: grow,
-          width: "match_parent",
-          flexDirection: "column",
-          flexGap: gap,
-        }}
-      >
-        {gridBody}
-      </FlexWidget>
+      {gridBody}
     </FlexWidget>
   );
 }

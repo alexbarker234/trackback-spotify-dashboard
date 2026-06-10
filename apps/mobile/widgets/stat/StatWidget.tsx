@@ -18,8 +18,8 @@ export function StatWidget({
   width,
   height,
 }: StatWidgetProps) {
-  const layout = getLayoutMode(width, height);
-  const sizing = getWidgetSizing(width, height, layout);
+  const layout = getLayoutMode(width);
+  const sizing = getWidgetSizing(width);
 
   const frameProps = { width, height };
 
