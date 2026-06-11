@@ -1,4 +1,3 @@
-import { GRID_MIN_WIDTH, NARROW_TITLE_FONT_SIZE, NARROW_WIDGET_MAX_WIDTH } from "../stat/constants";
 import type { WidgetSizing } from "../stat/types";
 
 export type LifetimeGridLayout = "column" | "grid-2x3" | "grid-3x2";
@@ -17,8 +16,8 @@ export type LifetimeBreakpoint = {
 };
 
 const W = {
-  compact: 300,
-  narrow: GRID_MIN_WIDTH,
+  compact: 230,
+  narrow: 250,
   wide: 350,
 } as const;
 
@@ -26,6 +25,7 @@ const H = {
   tiny: 230,
   compact: 330,
   columnTall: 450,
+  wideTall: 460,
 } as const;
 
 export const LIFETIME_BREAKPOINTS: LifetimeBreakpoint[] = [
@@ -35,7 +35,19 @@ export const LIFETIME_BREAKPOINTS: LifetimeBreakpoint[] = [
     layout: "grid-3x2",
     labelFontSize: 8,
     valueFontSize: 9,
-    titleFontSize: NARROW_TITLE_FONT_SIZE,
+    titleFontSize: 14,
+    gridGap: 4,
+    cardPadding: 5,
+    cardInnerGap: 2,
+    shortLabels: true,
+  },
+  {
+    id: "compact-2x3-thin",
+    match: (width, height) => width < 160 && height < H.compact,
+    layout: "grid-2x3",
+    labelFontSize: 10,
+    valueFontSize: 12,
+    titleFontSize: 14,
     gridGap: 4,
     cardPadding: 5,
     cardInnerGap: 2,
@@ -46,8 +58,20 @@ export const LIFETIME_BREAKPOINTS: LifetimeBreakpoint[] = [
     match: (width, height) => width < W.compact && height < H.compact,
     layout: "grid-2x3",
     labelFontSize: 10,
-    valueFontSize: 11,
-    titleFontSize: NARROW_TITLE_FONT_SIZE,
+    valueFontSize: 16,
+    titleFontSize: 14,
+    gridGap: 4,
+    cardPadding: 5,
+    cardInnerGap: 2,
+    shortLabels: true,
+  },
+  {
+    id: "regular-2x3",
+    match: (width, height) => width < 300 && height < H.compact,
+    layout: "grid-2x3",
+    labelFontSize: 11,
+    valueFontSize: 18,
+    titleFontSize: 14,
     gridGap: 4,
     cardPadding: 5,
     cardInnerGap: 2,
@@ -59,7 +83,7 @@ export const LIFETIME_BREAKPOINTS: LifetimeBreakpoint[] = [
     layout: "column",
     labelFontSize: 11,
     valueFontSize: 22,
-    titleFontSize: NARROW_TITLE_FONT_SIZE,
+    titleFontSize: 14,
     gridGap: 8,
     cardPadding: 8,
     cardInnerGap: 4,
@@ -71,7 +95,7 @@ export const LIFETIME_BREAKPOINTS: LifetimeBreakpoint[] = [
     layout: "column",
     labelFontSize: 11,
     valueFontSize: 11,
-    titleFontSize: NARROW_TITLE_FONT_SIZE,
+    titleFontSize: 14,
     gridGap: 8,
     cardPadding: 8,
     cardInnerGap: 4,
@@ -81,8 +105,20 @@ export const LIFETIME_BREAKPOINTS: LifetimeBreakpoint[] = [
     id: "wide-short-3x2",
     match: (width, height) => width > W.wide && height < H.tiny,
     layout: "grid-3x2",
-    labelFontSize: 9,
+    labelFontSize: 11,
     valueFontSize: 18,
+    titleFontSize: 16,
+    gridGap: 8,
+    cardPadding: 10,
+    cardInnerGap: 4,
+    shortLabels: false,
+  },
+  {
+    id: "wide-tall-2x3",
+    match: (width, height) => width > W.wide && height > H.wideTall,
+    layout: "grid-2x3",
+    labelFontSize: 11,
+    valueFontSize: 30,
     titleFontSize: 16,
     gridGap: 8,
     cardPadding: 10,
@@ -93,7 +129,7 @@ export const LIFETIME_BREAKPOINTS: LifetimeBreakpoint[] = [
     id: "wide-3x2",
     match: (width) => width > W.wide,
     layout: "grid-3x2",
-    labelFontSize: 9,
+    labelFontSize: 11,
     valueFontSize: 28,
     titleFontSize: 16,
     gridGap: 8,
@@ -133,7 +169,7 @@ export function resolveLifetimeBreakpoint(
 export function getLifetimeWidgetSizing(width?: number, height?: number): WidgetSizing {
   const widgetWidth = width ?? 320;
   const breakpoint = resolveLifetimeBreakpoint(width, height);
-  const stackedHeader = widgetWidth <= NARROW_WIDGET_MAX_WIDTH;
+  const stackedHeader = widgetWidth <= 218;
 
   return {
     primaryValueFontSize: breakpoint.valueFontSize,
