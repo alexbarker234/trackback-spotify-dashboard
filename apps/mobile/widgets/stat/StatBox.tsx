@@ -147,12 +147,18 @@ export function StatBox({
             overflow: flexCell ? "hidden" : undefined,
           }}
         >
-          <StatImage
-            imageUrl={imageUrl}
-            width={40}
-            height={40}
-            radius={IMAGE_CORNER_RADIUS}
-          />
+          {/* Why does the image scale to the height but make the width of the flexbox its original size*/}
+          {/* What the hell is going on*/}
+          <FlexWidget
+            style={{ flex: 0, justifyContent: "flex-start", alignItems: "center" }}
+          >
+            <StatImage
+              imageUrl={imageUrl}
+              width={sizing.maxImageWidth}
+              height={sizing.maxImageWidth}
+              radius={IMAGE_CORNER_RADIUS}
+            />
+          </FlexWidget>
           <FlexWidget style={{ flex: 1, flexDirection: "column", justifyContent: "center" }}>
             <ValueBlock
               value={value}

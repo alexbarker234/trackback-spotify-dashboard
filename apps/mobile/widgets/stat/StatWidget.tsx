@@ -20,7 +20,7 @@ export function StatWidget({
   height,
 }: StatWidgetProps) {
   const layout = getLayoutMode(width);
-  const sizing = getWidgetSizing(width);
+  const sizing = getWidgetSizing(width, height);
 
   const frameProps = { width, height };
 

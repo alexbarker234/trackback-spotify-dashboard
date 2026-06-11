@@ -14,11 +14,15 @@ export const TITLE_LINE_HEIGHT = 20;
 export const STACKED_HEADER_GAP = 4;
 export const FONT_SCALE_MIN_WIDTH = 109;
 export const FONT_SCALE_MAX_WIDTH = 320;
+export const INLINE_IMAGE_MIN_WIDTH = 20;
+export const INLINE_IMAGE_MAX_WIDTH = 60;
+export const INLINE_IMAGE_SCALE_MIN_WIDTH = 140;
+export const INLINE_IMAGE_SCALE_MAX_WIDTH = 220;
 
 // For when theres primary and secondary values
-export const PRIMARY_VALUE_FONT_MIN = 15;
+export const PRIMARY_VALUE_FONT_MIN = 13;
 export const PRIMARY_VALUE_FONT_MAX = 20;
-export const SECONDARY_VALUE_FONT_MIN = 13;
+export const SECONDARY_VALUE_FONT_MIN = 11;
 export const SECONDARY_VALUE_FONT_MAX = 16;
 // For when theres only a single value
 export const SINGLE_VALUE_FONT_MIN = 18;
