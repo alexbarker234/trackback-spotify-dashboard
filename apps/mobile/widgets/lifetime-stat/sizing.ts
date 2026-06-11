@@ -5,6 +5,9 @@ import {
   LIFETIME_CARD_INNER_GAP_COMPACT,
   LIFETIME_CARD_PADDING,
   LIFETIME_CARD_PADDING_COMPACT,
+  LIFETIME_COMPACT_HEIGHT_2X3,
+  LIFETIME_COMPACT_HEIGHT_3X2,
+  LIFETIME_COMPACT_WIDTH,
   LIFETIME_GRID_GAP,
   LIFETIME_GRID_GAP_COMPACT,
   LIFETIME_LABEL_FONT_DEFAULT,
@@ -12,11 +15,10 @@ import {
   LIFETIME_LABEL_FONT_WIDE,
   LIFETIME_VALUE_FONT_MEDIUM,
   LIFETIME_VALUE_FONT_NARROW,
-  LIFETIME_VALUE_FONT_TINY,
   LIFETIME_VALUE_FONT_WIDE,
   LIFETIME_WIDE_GRID_MIN_WIDTH,
   NARROW_TITLE_FONT_SIZE,
-  NARROW_WIDGET_MAX_WIDTH,
+  NARROW_WIDGET_MAX_WIDTH
 } from "./constants";
 import { getLifetimeLayout } from "./layout-mode";
 
@@ -37,12 +39,21 @@ function getLifetimeCardLabelFontSize(
 
 function getLifetimeSingleValueFontSize(
   width: number,
-  height?: number,
-  tiny?: boolean,
+  height: number
 ): number {
-  if (tiny ?? false) {
-    return LIFETIME_VALUE_FONT_TINY;
+  if (width < 230 && height < LIFETIME_COMPACT_HEIGHT_3X2) {
+    return LIFETIME_LABEL_FONT_TINY
   }
+
+  if (width < LIFETIME_COMPACT_WIDTH && height < LIFETIME_COMPACT_HEIGHT_3X2) {
+    return LIFETIME_VALUE_FONT_NARROW
+  }
+
+  if (width < LIFETIME_COMPACT_WIDTH && height < LIFETIME_COMPACT_HEIGHT_2X3) {
+    return LIFETIME_LABEL_FONT_TINY
+  }
+
+  if (width < 230 && height > 500) return 20;
 
   if (width <= GRID_MIN_WIDTH) {
     if (height && height > 450) return LIFETIME_VALUE_FONT_MEDIUM
@@ -53,14 +64,15 @@ function getLifetimeSingleValueFontSize(
     return LIFETIME_VALUE_FONT_MEDIUM;
   }
 
-  if (height && height < 230) return 18;
+  if (height < 230) return 18;
   return LIFETIME_VALUE_FONT_WIDE;
 }
 
 export function getLifetimeWidgetSizing(width?: number, height?: number): WidgetSizing {
   const widgetWidth = width ?? 320;
+  const widgetHeight = height ?? 400;
   const { compact, tiny } = getLifetimeLayout(width, height);
-  const singleValueFontSize = getLifetimeSingleValueFontSize(widgetWidth, height, tiny);
+  const singleValueFontSize = getLifetimeSingleValueFontSize(widgetWidth, widgetHeight);
   const cardLabelFontSize = getLifetimeCardLabelFontSize(widgetWidth, tiny);
   const stackedHeader = widgetWidth <= NARROW_WIDGET_MAX_WIDTH;
 
