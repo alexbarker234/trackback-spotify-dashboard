@@ -16,6 +16,7 @@ const valueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
   fontWeight: "600" as const,
   color: "#fafafa",
   width: "match_parent" as const,
+  marginTop: -2,
 });
 
 const secondaryValueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
@@ -23,6 +24,7 @@ const secondaryValueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
   fontWeight: "500" as const,
   color: "#a3a3a3",
   width: "match_parent" as const,
+  marginTop: -2,
 });
 
 type ValueBlockProps = {
@@ -39,8 +41,7 @@ function ValueBlock({ value, secondaryValue, sizing, compact = false }: ValueBlo
     <FlexWidget
       style={{
         width: "match_parent",
-        flexDirection: "column",
-        flexGap: secondaryValue ? 2 : undefined,
+        flexDirection: "column"
       }}
     >
       <TextWidget text={value} maxLines={valueMaxLines} style={valueStyle(sizing)} />

@@ -45,7 +45,7 @@
               "minWidth": "109dp",
               "minHeight": "115dp",
               "maxResizeWidth": "600dp",
-              "maxResizeHeight": "400dp",
+              "maxResizeHeight": "530dp",
               "targetCellWidth": 2,
               "targetCellHeight": 3,
               "resizeMode": "horizontal|vertical",
