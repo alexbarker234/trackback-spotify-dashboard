@@ -3,9 +3,9 @@
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
 import { LoginContent } from "../stat/LoginContent";
-import { getLifetimeWidgetSizing } from "./breakpoints";
 import { widgetTextFont } from "../stat/typography";
 import { WidgetFrame } from "../stat/WidgetFrame";
+import { getLifetimeWidgetSizing } from "./breakpoints";
 import { LifetimeStatsContent } from "./LifetimeStatsContent";
 import type { LifetimeStatWidgetProps } from "./types";
 
@@ -19,7 +19,7 @@ export function LifetimeStatWidget({
   height,
 }: LifetimeStatWidgetProps) {
   const sizing = getLifetimeWidgetSizing(width, height);
-  const frameProps = { width, height };
+  const frameProps = { /*width, height */ };
 
   if (loading) {
     return (

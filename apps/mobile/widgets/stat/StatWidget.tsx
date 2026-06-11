@@ -22,7 +22,7 @@ export function StatWidget({
   const layout = getLayoutMode(width);
   const sizing = getWidgetSizing(width, height);
 
-  const frameProps = { width, height };
+  const frameProps = { /*width, height */ };
 
   if (loading) {
     return (
