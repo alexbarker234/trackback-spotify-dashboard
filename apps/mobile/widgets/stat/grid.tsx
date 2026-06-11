@@ -1,12 +1,19 @@
 import { Children, isValidElement, type ReactNode } from "react";
 import { FlexWidget } from "react-native-android-widget";
 
-export function StatCell({ children }: { children: ReactNode }) {
+export function StatCell({
+  children,
+  fillHeight = false,
+}: {
+  children: ReactNode;
+  fillHeight?: boolean;
+}) {
   return (
     <FlexWidget
       style={{
         flex: 1,
         width: "match_parent",
+        ...(fillHeight ? { height: "match_parent" } : {}),
       }}
     >
       {children}

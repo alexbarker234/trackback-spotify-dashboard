@@ -37,6 +37,7 @@ export function StatsContent({ stats, layout, sizing, refreshedAt, height }: Sta
   const topTrackName = stats.topTrack?.trackName ?? "—";
   const gap = sizing.gridGap;
 
+  const columnMode = layout === "column";
   const imageFillCell =
     layout === "grid" && (height === undefined || height >= GRID_MIN_HEIGHT);
 
@@ -49,6 +50,7 @@ export function StatsContent({ stats, layout, sizing, refreshedAt, height }: Sta
       sizing={sizing}
       imageUrl={stats.topArtist?.artistImageUrl}
       fillCell={imageFillCell}
+      flexCell={columnMode}
     />,
     <StatBox
       key="track"
@@ -58,18 +60,21 @@ export function StatsContent({ stats, layout, sizing, refreshedAt, height }: Sta
       sizing={sizing}
       imageUrl={stats.topTrack?.imageUrl}
       fillCell={imageFillCell}
+      flexCell={columnMode}
     />,
     <StatBox
       key="streams"
       label="Total streams"
       value={formatStreams(stats.totalStreams)}
       sizing={sizing}
+      flexCell={columnMode}
     />,
     <StatBox
       key="minutes"
       label="Total minutes"
       value={formatMinutes(stats.minutesListened)}
       sizing={sizing}
+      flexCell={columnMode}
     />,
   ];
 
@@ -83,10 +88,10 @@ export function StatsContent({ stats, layout, sizing, refreshedAt, height }: Sta
           flexGap: gap,
         }}
       >
-        <StatCell>{cards[0]}</StatCell>
-        <StatCell>{cards[1]}</StatCell>
-        <StatCell>{cards[2]}</StatCell>
-        <StatCell>{cards[3]}</StatCell>
+        <StatCell fillHeight>{cards[0]}</StatCell>
+        <StatCell fillHeight>{cards[1]}</StatCell>
+        <StatCell fillHeight>{cards[2]}</StatCell>
+        <StatCell fillHeight>{cards[3]}</StatCell>
       </FlexWidget>
     ) : (
       <FlexWidget

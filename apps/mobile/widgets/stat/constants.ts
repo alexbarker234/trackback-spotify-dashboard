@@ -3,6 +3,7 @@ export const GRID_GAP = 8;
 export const GRID_MIN_WIDTH = 250;
 export const GRID_MIN_HEIGHT = 250;
 export const LABEL_FONT_SIZE = 13;
+export const STAT_IMAGE_SIZE = 200;
 export const IMAGE_CORNER_RADIUS = 8;
 
 export const SHELL_OVERHEAD = 24;
