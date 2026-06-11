@@ -1,23 +1,23 @@
 import { FlexWidget, FlexWidgetStyle, TextWidget, TextWidgetStyle } from "react-native-android-widget";
 
-import { IMAGE_CORNER_RADIUS, LABEL_FONT_SIZE, STAT_BOX_BG, STAT_IMAGE_SIZE } from "./constants";
+import { IMAGE_CORNER_RADIUS, STAT_BOX_BG, STAT_IMAGE_SIZE } from "./constants";
 import { StatImage } from "./StatImage";
 import type { WidgetSizing } from "./types";
 import { widgetTextFont } from "./typography";
 
-const labelStyle: TextWidgetStyle = {
+const labelStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
   ...widgetTextFont("semiBold"),
-  fontSize: LABEL_FONT_SIZE,
+  fontSize: sizing.cardLabelFontSize,
   color: "#a3a3a3",
   width: "match_parent" as const,
-};
+});
 
 const valueStyle = (sizing: WidgetSizing, useSingleValueFontSize: boolean): TextWidgetStyle => ({
   ...widgetTextFont("semiBold"),
   fontSize: useSingleValueFontSize ? sizing.singleValueFontSize : sizing.primaryValueFontSize,
   color: "#fafafa",
   width: "match_parent" as const,
-  marginTop: -2,
+  marginTop: -4,
 });
 
 const secondaryValueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
@@ -25,7 +25,7 @@ const secondaryValueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
   fontSize: sizing.secondaryValueFontSize,
   color: "#a3a3a3",
   width: "match_parent" as const,
-  marginTop: -2,
+  marginTop: -4,
 });
 
 type ValueBlockProps = {
@@ -105,7 +105,7 @@ export function StatBox({
   if (hasImage && fillCell) {
     return (
       <FlexWidget style={boxStyle}>
-        <TextWidget text={label} style={labelStyle} />
+        <TextWidget text={label} style={labelStyle(sizing)} />
         <ValueBlock
           value={value}
           secondaryValue={secondaryValue}
@@ -136,7 +136,7 @@ export function StatBox({
   if (hasImage) {
     return (
       <FlexWidget style={boxStyle}>
-        <TextWidget text={label} style={labelStyle} />
+        <TextWidget text={label} style={labelStyle(sizing)} />
         <FlexWidget
           style={{
             flex: flexCell ? 1 : undefined,
@@ -175,7 +175,7 @@ export function StatBox({
 
   return (
     <FlexWidget style={boxStyle}>
-      <TextWidget text={label} style={labelStyle} />
+      <TextWidget text={label} style={labelStyle(sizing)} />
       <FlexWidget
         style={{
           flex: flexCell ? 1 : undefined,

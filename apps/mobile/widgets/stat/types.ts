@@ -10,6 +10,7 @@ export type WidgetSizing = {
   gridGap: number;
   cardPadding: number;
   cardInnerGap: number;
+  cardLabelFontSize: number;
   titleFontSize: number;
   maxImageWidth: number;
   stackedHeader: boolean;

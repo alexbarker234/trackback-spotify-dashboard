@@ -1,6 +1,8 @@
 import { lerp } from "@/lib/lerp";
 
 import {
+  CARD_LABEL_FONT_MAX,
+  CARD_LABEL_FONT_MIN,
   FONT_SCALE_MAX_WIDTH,
   FONT_SCALE_MIN_WIDTH,
   GRID_GAP,
@@ -52,7 +54,7 @@ export function getWidgetSizing(width?: number, height?: number): WidgetSizing {
   var singleValueFontSize = fontSizeForWidth(SINGLE_VALUE_FONT_MIN, SINGLE_VALUE_FONT_MAX, widgetWidth);
   // Larger font for thin but tall widgets
   if (height && height > 400) {
-    singleValueFontSize = valueForScale(SINGLE_VALUE_FONT_MIN, SINGLE_VALUE_FONT_MAX, height, 400, 500);
+    singleValueFontSize = valueForScale(SINGLE_VALUE_FONT_MIN, 34, height, 400, 500);
   }
 
   var maxImageWidth = valueForScale(
@@ -65,6 +67,7 @@ export function getWidgetSizing(width?: number, height?: number): WidgetSizing {
   if (height && height < 450) {
     maxImageWidth = valueForScale(20, 30, height, 200, 450);
   }
+  const cardLabelFontSize = fontSizeForWidth(CARD_LABEL_FONT_MIN, CARD_LABEL_FONT_MAX, widgetWidth);
   const stackedHeader = widgetWidth <= NARROW_WIDGET_MAX_WIDTH;
 
   return {
@@ -75,6 +78,7 @@ export function getWidgetSizing(width?: number, height?: number): WidgetSizing {
     gridGap: GRID_GAP,
     cardPadding: 10,
     cardInnerGap: 6,
+    cardLabelFontSize,
     titleFontSize: stackedHeader ? NARROW_TITLE_FONT_SIZE : 16,
     maxImageWidth,
     stackedHeader,

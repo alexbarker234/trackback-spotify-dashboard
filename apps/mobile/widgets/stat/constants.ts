@@ -2,7 +2,8 @@ export const STAT_BOX_BG = "#262626";
 export const GRID_GAP = 8;
 export const GRID_MIN_WIDTH = 250;
 export const GRID_MIN_HEIGHT = 250;
-export const LABEL_FONT_SIZE = 13;
+export const CARD_LABEL_FONT_MIN = 11;
+export const CARD_LABEL_FONT_MAX = 13;
 export const STAT_IMAGE_SIZE = 200;
 export const IMAGE_CORNER_RADIUS = 8;
 
