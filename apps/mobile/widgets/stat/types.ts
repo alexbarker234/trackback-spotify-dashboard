@@ -3,7 +3,7 @@ import type { WidgetFourWeekStats } from "@/lib/types";
 export type LayoutMode = "grid" | "column";
 
 export type WidgetSizing = {
-  valueFontSize: number;
+  primaryValueFontSize: number;
   secondaryValueFontSize: number;
   singleValueFontSize: number;
   valueMaxLines: number;

@@ -12,9 +12,9 @@ const labelStyle: TextWidgetStyle = {
   width: "match_parent" as const,
 };
 
-const valueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
+const valueStyle = (sizing: WidgetSizing, useSingleValueFontSize: boolean): TextWidgetStyle => ({
   ...widgetTextFont("semiBold"),
-  fontSize: sizing.valueFontSize,
+  fontSize: useSingleValueFontSize ? sizing.singleValueFontSize : sizing.primaryValueFontSize,
   color: "#fafafa",
   width: "match_parent" as const,
   marginTop: -2,
@@ -33,9 +33,16 @@ type ValueBlockProps = {
   secondaryValue?: string;
   sizing: WidgetSizing;
   compact?: boolean;
+  useSingleValueFontSize?: boolean;
 };
 
-function ValueBlock({ value, secondaryValue, sizing, compact = false }: ValueBlockProps) {
+function ValueBlock({
+  value,
+  secondaryValue,
+  sizing,
+  compact = false,
+  useSingleValueFontSize = false,
+}: ValueBlockProps) {
   const valueMaxLines = compact ? 1 : secondaryValue ? 1 : sizing.valueMaxLines;
 
   return (
@@ -45,7 +52,11 @@ function ValueBlock({ value, secondaryValue, sizing, compact = false }: ValueBlo
         flexDirection: "column"
       }}
     >
-      <TextWidget text={value} maxLines={valueMaxLines} style={valueStyle(sizing)} />
+      <TextWidget
+        text={value}
+        maxLines={valueMaxLines}
+        style={valueStyle(sizing, useSingleValueFontSize)}
+      />
       {secondaryValue ? (
         <TextWidget
           text={secondaryValue}
@@ -78,6 +89,7 @@ export function StatBox({
 }: StatBoxProps) {
   const hasImage = imageUrl !== undefined;
   const compact = flexCell && !fillCell;
+  const useSingleValueFontSize = !hasImage && !secondaryValue;
 
   const boxStyle: FlexWidgetStyle = {
     width: "match_parent",
@@ -99,6 +111,7 @@ export function StatBox({
           secondaryValue={secondaryValue}
           sizing={sizing}
           compact={compact}
+          useSingleValueFontSize={useSingleValueFontSize}
         />
         <FlexWidget
           style={{
@@ -146,6 +159,7 @@ export function StatBox({
               secondaryValue={secondaryValue}
               sizing={sizing}
               compact={compact}
+              useSingleValueFontSize={useSingleValueFontSize}
             />
           </FlexWidget>
         </FlexWidget>
@@ -169,6 +183,7 @@ export function StatBox({
           secondaryValue={secondaryValue}
           sizing={sizing}
           compact={compact}
+          useSingleValueFontSize={useSingleValueFontSize}
         />
       </FlexWidget>
     </FlexWidget>
