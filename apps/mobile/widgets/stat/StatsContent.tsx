@@ -7,6 +7,7 @@ import { GRID_MIN_HEIGHT, REFRESHED_AT_FONT_SIZE } from "./constants";
 import { StatCell, StatRow } from "./grid";
 import { StatBox } from "./StatBox";
 import type { LayoutMode, WidgetSizing } from "./types";
+import { widgetTextFont } from "./typography";
 
 function formatStreams(count: number): string {
   return count.toLocaleString();
@@ -134,12 +135,12 @@ export function StatsContent({ stats, layout, sizing, refreshedAt, height }: Sta
       >
         <TextWidget
           text="Last 4 weeks"
-          style={{ fontSize: sizing.titleFontSize, fontWeight: "bold", color: "#fafafa" }}
+          style={{ ...widgetTextFont("bold"), fontSize: sizing.titleFontSize, color: "#fafafa" }}
         />
         {refreshedAt ? (
           <TextWidget
             text={formatRefreshedAt(refreshedAt)}
-            style={{ fontSize: REFRESHED_AT_FONT_SIZE, color: "#737373" }}
+            style={{ ...widgetTextFont("regular"), fontSize: REFRESHED_AT_FONT_SIZE, color: "#737373" }}
           />
         ) : null}
       </FlexWidget>

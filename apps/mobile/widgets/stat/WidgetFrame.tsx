@@ -1,6 +1,8 @@
 import { type ReactNode } from "react";
 import { FlexWidget, FlexWidgetStyle, TextWidget } from "react-native-android-widget";
 
+import { widgetTextFont } from "./typography";
+
 const shellStyle: FlexWidgetStyle = {
   height: "match_parent",
   width: "match_parent",
@@ -41,7 +43,10 @@ export function WidgetFrame({ children, width, height }: WidgetFrameProps) {
             marginTop: 4,
           }}
         >
-          <TextWidget text={debugSize} style={{ fontSize: 10, color: "#737373" }} />
+          <TextWidget
+            text={debugSize}
+            style={{ ...widgetTextFont("regular"), fontSize: 10, color: "#737373" }}
+          />
         </FlexWidget>
       ) : null}
     </FlexWidget>

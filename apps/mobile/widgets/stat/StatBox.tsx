@@ -3,25 +3,26 @@ import { FlexWidget, FlexWidgetStyle, TextWidget, TextWidgetStyle } from "react-
 import { IMAGE_CORNER_RADIUS, LABEL_FONT_SIZE, STAT_BOX_BG, STAT_IMAGE_SIZE } from "./constants";
 import { StatImage } from "./StatImage";
 import type { WidgetSizing } from "./types";
+import { widgetTextFont } from "./typography";
 
 const labelStyle: TextWidgetStyle = {
+  ...widgetTextFont("semiBold"),
   fontSize: LABEL_FONT_SIZE,
-  fontWeight: "600" as const,
   color: "#a3a3a3",
   width: "match_parent" as const,
 };
 
 const valueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
+  ...widgetTextFont("semiBold"),
   fontSize: sizing.valueFontSize,
-  fontWeight: "600" as const,
   color: "#fafafa",
   width: "match_parent" as const,
   marginTop: -2,
 });
 
 const secondaryValueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
+  ...widgetTextFont("medium"),
   fontSize: sizing.secondaryValueFontSize,
-  fontWeight: "500" as const,
   color: "#a3a3a3",
   width: "match_parent" as const,
   marginTop: -2,

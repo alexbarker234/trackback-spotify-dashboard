@@ -38,6 +38,12 @@
       [
         "react-native-android-widget",
         {
+          "fonts": [
+            "./assets/fonts/Poppins_400Regular.ttf",
+            "./assets/fonts/Poppins_500Medium.ttf",
+            "./assets/fonts/Poppins_600SemiBold.ttf",
+            "./assets/fonts/Poppins_700Bold.ttf"
+          ],
           "widgets": [
             {
               "name": "Stat",

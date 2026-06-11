@@ -7,6 +7,7 @@ import { LoginContent } from "./LoginContent";
 import { getWidgetSizing } from "./sizing";
 import { StatsContent } from "./StatsContent";
 import type { StatWidgetProps } from "./types";
+import { widgetTextFont } from "./typography";
 import { WidgetFrame } from "./WidgetFrame";
 
 export function StatWidget({
@@ -34,7 +35,10 @@ export function StatWidget({
             alignItems: "center",
           }}
         >
-          <TextWidget text="Loading stats..." style={{ fontSize: 14, color: "#a3a3a3" }} />
+          <TextWidget
+            text="Loading stats..."
+            style={{ ...widgetTextFont("regular"), fontSize: 14, color: "#a3a3a3" }}
+          />
         </FlexWidget>
       </WidgetFrame>
     );
@@ -62,9 +66,13 @@ export function StatWidget({
         >
           <TextWidget
             text="Last 4 weeks"
-            style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa", marginBottom: 8 }}
+            style={{ ...widgetTextFont("bold"), fontSize: 16, color: "#fafafa", marginBottom: 8 }}
           />
-          <TextWidget text={error} style={{ fontSize: 12, color: "#f87171" }} maxLines={3} />
+          <TextWidget
+            text={error}
+            style={{ ...widgetTextFont("regular"), fontSize: 12, color: "#f87171" }}
+            maxLines={3}
+          />
         </FlexWidget>
       </WidgetFrame>
     );
@@ -81,7 +89,10 @@ export function StatWidget({
             alignItems: "center",
           }}
         >
-          <TextWidget text="No stats available" style={{ fontSize: 14, color: "#a3a3a3" }} />
+          <TextWidget
+            text="No stats available"
+            style={{ ...widgetTextFont("regular"), fontSize: 14, color: "#a3a3a3" }}
+          />
         </FlexWidget>
       </WidgetFrame>
     );
