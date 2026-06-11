@@ -20,7 +20,7 @@ const valueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
 });
 
 const secondaryValueStyle = (sizing: WidgetSizing): TextWidgetStyle => ({
-  fontSize: sizing.valueFontSize - 2,
+  fontSize: sizing.secondaryValueFontSize,
   fontWeight: "500" as const,
   color: "#a3a3a3",
   width: "match_parent" as const,

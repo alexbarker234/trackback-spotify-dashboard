@@ -4,6 +4,8 @@ export type LayoutMode = "grid" | "column";
 
 export type WidgetSizing = {
   valueFontSize: number;
+  secondaryValueFontSize: number;
+  singleValueFontSize: number;
   valueMaxLines: number;
   gridGap: number;
   cardPadding: number;

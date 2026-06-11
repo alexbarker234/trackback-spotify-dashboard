@@ -13,4 +13,6 @@ export const REFRESHED_AT_FONT_SIZE = 10;
 export const TITLE_LINE_HEIGHT = 20;
 export const STACKED_HEADER_GAP = 4;
 export const VALUE_FONT_MIN = 15;
-export const VALUE_FONT_MAX = 20;
+export const VALUE_FONT_MAX = 26;
+export const SECONDARY_VALUE_FONT_MIN = 13;
+export const SECONDARY_VALUE_FONT_MAX = 20;
