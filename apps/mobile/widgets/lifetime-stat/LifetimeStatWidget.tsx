@@ -2,15 +2,14 @@
 
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
-import { getLayoutMode } from "./layout-mode";
-import { LoginContent } from "./LoginContent";
-import { getWidgetSizing } from "./sizing";
-import { StatsContent } from "./StatsContent";
-import type { StatWidgetProps } from "./types";
-import { widgetTextFont } from "./typography";
-import { WidgetFrame } from "./WidgetFrame";
+import { LoginContent } from "../stat/LoginContent";
+import { widgetTextFont } from "../stat/typography";
+import { WidgetFrame } from "../stat/WidgetFrame";
+import { getLifetimeWidgetSizing } from "./breakpoints";
+import { LifetimeStatsContent } from "./LifetimeStatsContent";
+import type { LifetimeStatWidgetProps } from "./types";
 
-export function StatWidget({
+export function LifetimeStatWidget({
   stats,
   refreshedAt,
   error,
@@ -18,10 +17,8 @@ export function StatWidget({
   needsLogin,
   width,
   height,
-}: StatWidgetProps) {
-  const layout = getLayoutMode(width);
-  const sizing = getWidgetSizing(width, height);
-
+}: LifetimeStatWidgetProps) {
+  const sizing = getLifetimeWidgetSizing(width, height);
   const frameProps = { /*width, height */ };
 
   if (loading) {
@@ -47,7 +44,7 @@ export function StatWidget({
   if (needsLogin) {
     return (
       <WidgetFrame {...frameProps}>
-        <LoginContent />
+        <LoginContent title="Lifetime" />
       </WidgetFrame>
     );
   }
@@ -65,7 +62,7 @@ export function StatWidget({
           }}
         >
           <TextWidget
-            text="Last 4 weeks"
+            text="Lifetime"
             style={{ ...widgetTextFont("bold"), fontSize: 16, color: "#fafafa", marginBottom: 8 }}
           />
           <TextWidget
@@ -100,11 +97,11 @@ export function StatWidget({
 
   return (
     <WidgetFrame {...frameProps}>
-      <StatsContent
+      <LifetimeStatsContent
         stats={stats}
-        layout={layout}
         sizing={sizing}
         refreshedAt={refreshedAt}
+        width={width}
         height={height}
       />
     </WidgetFrame>

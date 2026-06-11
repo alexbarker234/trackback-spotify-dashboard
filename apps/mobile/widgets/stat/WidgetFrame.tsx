@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { FlexWidget, FlexWidgetStyle, TextWidget } from "react-native-android-widget";
 
-import { formatRefreshedAt } from "@/lib/format-refreshed-at";
+import { widgetTextFont } from "./typography";
 
 const shellStyle: FlexWidgetStyle = {
   height: "match_parent",
@@ -9,16 +9,22 @@ const shellStyle: FlexWidgetStyle = {
   backgroundColor: "#0a0a0a",
   paddingHorizontal: 12,
   paddingTop: 12,
-  paddingBottom: 6,
+  paddingBottom: 12,
   flexDirection: "column",
 };
 
 type WidgetFrameProps = {
   children: ReactNode;
-  refreshedAt?: string;
+  width?: number;
+  height?: number;
 };
 
-export function WidgetFrame({ children, refreshedAt }: WidgetFrameProps) {
+export function WidgetFrame({ children, width, height }: WidgetFrameProps) {
+  const debugSize =
+    width !== undefined || height !== undefined
+      ? `${width ?? "?"}×${height ?? "?"} px`
+      : undefined;
+
   return (
     <FlexWidget style={shellStyle}>
       <FlexWidget
@@ -30,7 +36,7 @@ export function WidgetFrame({ children, refreshedAt }: WidgetFrameProps) {
       >
         {children}
       </FlexWidget>
-      {refreshedAt ? (
+      {debugSize ? (
         <FlexWidget
           style={{
             width: "match_parent",
@@ -38,8 +44,8 @@ export function WidgetFrame({ children, refreshedAt }: WidgetFrameProps) {
           }}
         >
           <TextWidget
-            text={formatRefreshedAt(refreshedAt)}
-            style={{ fontSize: 10, color: "#737373" }}
+            text={debugSize}
+            style={{ ...widgetTextFont("regular"), fontSize: 10, color: "#737373" }}
           />
         </FlexWidget>
       ) : null}

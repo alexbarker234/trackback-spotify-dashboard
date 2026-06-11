@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@better-auth/expo": "^1.6.14",
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@preeternal/react-native-cookie-manager": "^6.3.0",
     "@tanstack/react-query": "^5.76.1",
     "axios": "^1.9.0",

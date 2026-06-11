@@ -3,18 +3,17 @@ import type { WidgetFourWeekStats } from "@/lib/types";
 export type LayoutMode = "grid" | "column";
 
 export type WidgetSizing = {
-  valueFontSize: number;
+  primaryValueFontSize: number;
+  secondaryValueFontSize: number;
+  singleValueFontSize: number;
   valueMaxLines: number;
-  imageSize: number;
-  imageCornerRadius: number;
-  imageBannerWidth: number;
-  imageBannerHeight: number;
-  stackedImage: boolean;
   gridGap: number;
   cardPadding: number;
   cardInnerGap: number;
+  cardLabelFontSize: number;
   titleFontSize: number;
-  showSpacer: boolean;
+  maxImageWidth: number;
+  stackedHeader: boolean;
 };
 
 export type StatWidgetProps = {

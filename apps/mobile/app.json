@@ -38,18 +38,38 @@
       [
         "react-native-android-widget",
         {
+          "fonts": [
+            "./assets/fonts/Poppins_400Regular.ttf",
+            "./assets/fonts/Poppins_500Medium.ttf",
+            "./assets/fonts/Poppins_600SemiBold.ttf",
+            "./assets/fonts/Poppins_700Bold.ttf"
+          ],
           "widgets": [
             {
               "name": "Stat",
               "label": "Stat widget",
-              "minWidth": "110dp",
-              "minHeight": "180dp",
+              "minWidth": "109dp",
+              "minHeight": "115dp",
               "maxResizeWidth": "600dp",
-              "maxResizeHeight": "400dp",
+              "maxResizeHeight": "530dp",
               "targetCellWidth": 2,
               "targetCellHeight": 3,
               "resizeMode": "horizontal|vertical",
               "description": "Last 4 weeks: top artist, top track, streams, and minutes",
+              "previewImage": "./assets/images/icon.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "LifetimeStat",
+              "label": "Lifetime stats",
+              "minWidth": "109dp",
+              "minHeight": "180dp",
+              "maxResizeWidth": "600dp",
+              "maxResizeHeight": "530dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 4,
+              "resizeMode": "horizontal|vertical",
+              "description": "Lifetime: streams, minutes, hours, and unique tracks, albums, and artists",
               "previewImage": "./assets/images/icon.png",
               "updatePeriodMillis": 1800000
             }

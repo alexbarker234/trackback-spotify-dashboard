@@ -18,18 +18,30 @@ export type TopTrack = {
   }[];
 };
 
+export type WidgetLifetimeStats = {
+  period: "lifetime";
+  totalStreams: number;
+  minutesListened: number;
+  hoursListened: number;
+  uniqueTracks: number;
+  uniqueAlbums: number;
+  uniqueArtists: number;
+};
+
 export type WidgetFourWeekStats = {
   period: "4weeks";
   topArtist: {
     artistName: string;
     artistId: string;
     artistImageUrl: string | null;
+    listenCount: number;
   } | null;
   topTrack: {
     trackName: string;
     trackIsrc: string;
     imageUrl: string | null;
     artistName: string | null;
+    listenCount: number;
   } | null;
   totalStreams: number;
   minutesListened: number;

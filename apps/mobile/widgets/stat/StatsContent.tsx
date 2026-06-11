@@ -1,10 +1,13 @@
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
+import { formatRefreshedAt } from "@/lib/format-refreshed-at";
 import type { WidgetFourWeekStats } from "@/lib/types";
 
+import { GRID_MIN_HEIGHT, REFRESHED_AT_FONT_SIZE } from "./constants";
+import { StatCell, StatRow } from "./grid";
 import { StatBox } from "./StatBox";
-import { GridSpacer, StatCell, StatRow } from "./grid";
 import type { LayoutMode, WidgetSizing } from "./types";
+import { widgetTextFont } from "./typography";
 
 function formatStreams(count: number): string {
   return count.toLocaleString();
@@ -14,82 +17,99 @@ function formatMinutes(minutes: number): string {
   return minutes.toLocaleString();
 }
 
+function formatStreamCount(listenCount: number | undefined): string | undefined {
+  if (listenCount === undefined) {
+    return undefined;
+  }
+
+  return `${formatStreams(listenCount)} streams`;
+}
+
 type StatsContentProps = {
   stats: WidgetFourWeekStats;
   layout: LayoutMode;
   sizing: WidgetSizing;
+  refreshedAt?: string;
+  height?: number;
 };
 
-export function StatsContent({ stats, layout, sizing }: StatsContentProps) {
+export function StatsContent({ stats, layout, sizing, refreshedAt, height }: StatsContentProps) {
   const topArtistName = stats.topArtist?.artistName ?? "—";
   const topTrackName = stats.topTrack?.trackName ?? "—";
+  const gap = sizing.gridGap;
+
+  const columnMode = layout === "column";
+  const imageFillCell =
+    layout === "grid" && (height === undefined || height >= GRID_MIN_HEIGHT);
 
   const cards = [
     <StatBox
       key="artist"
       label="Top artist"
       value={topArtistName}
+      secondaryValue={formatStreamCount(stats.topArtist?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topArtist?.artistImageUrl}
+      fillCell={imageFillCell}
+      flexCell={columnMode}
     />,
     <StatBox
       key="track"
       label="Top track"
       value={topTrackName}
+      secondaryValue={formatStreamCount(stats.topTrack?.listenCount)}
       sizing={sizing}
       imageUrl={stats.topTrack?.imageUrl}
+      fillCell={imageFillCell}
+      flexCell={columnMode}
     />,
     <StatBox
       key="streams"
-      label="Streams"
+      label="Total streams"
       value={formatStreams(stats.totalStreams)}
       sizing={sizing}
+      flexCell={columnMode}
     />,
     <StatBox
       key="minutes"
-      label="Minutes listened"
+      label="Total minutes"
       value={formatMinutes(stats.minutesListened)}
       sizing={sizing}
+      flexCell={columnMode}
     />,
   ];
-
-  const gap = sizing.gridGap;
-  const spacer = sizing.showSpacer ? <GridSpacer /> : null;
-  const grow = sizing.showSpacer ? 1 : undefined;
 
   const gridBody =
     layout === "column" ? (
       <FlexWidget
         style={{
-          flex: grow,
+          flex: 1,
           width: "match_parent",
           flexDirection: "column",
           flexGap: gap,
         }}
       >
-        <StatCell>{cards[0]}</StatCell>
-        <StatCell>{cards[1]}</StatCell>
-        {spacer}
-        <StatCell>{cards[2]}</StatCell>
-        <StatCell>{cards[3]}</StatCell>
+        <StatCell fillHeight>{cards[0]}</StatCell>
+        <StatCell fillHeight>{cards[1]}</StatCell>
+        <StatCell fillHeight>{cards[2]}</StatCell>
+        <StatCell fillHeight>{cards[3]}</StatCell>
       </FlexWidget>
     ) : (
       <FlexWidget
         style={{
-          flex: grow,
+          flex: 1,
           width: "match_parent",
           flexDirection: "column",
           flexGap: gap,
         }}
       >
-        <StatRow gap={gap}>
-          <StatCell>{cards[0]}</StatCell>
-          <StatCell>{cards[1]}</StatCell>
+        <StatRow gap={gap} flex={imageFillCell ? 1 : undefined} fillHeight={imageFillCell}>
+          {cards[0]}
+          {cards[1]}
         </StatRow>
-        {spacer}
         <StatRow gap={gap}>
-          <StatCell>{cards[2]}</StatCell>
-          <StatCell>{cards[3]}</StatCell>
+          {cards[2]}
+          {cards[3]}
         </StatRow>
       </FlexWidget>
     );
@@ -104,20 +124,27 @@ export function StatsContent({ stats, layout, sizing }: StatsContentProps) {
         flexGap: gap,
       }}
     >
-      <TextWidget
-        text="Last 4 weeks"
-        style={{ fontSize: sizing.titleFontSize, fontWeight: "bold", color: "#fafafa" }}
-      />
       <FlexWidget
         style={{
-          flex: grow,
           width: "match_parent",
-          flexDirection: "column",
-          flexGap: gap,
+          flexDirection: sizing.stackedHeader ? "column" : "row",
+          justifyContent: sizing.stackedHeader ? "flex-start" : "space-between",
+          alignItems: sizing.stackedHeader ? "flex-start" : "center",
+          flexGap: sizing.stackedHeader ? 4 : undefined,
         }}
       >
-        {gridBody}
+        <TextWidget
+          text="Last 4 weeks"
+          style={{ ...widgetTextFont("bold"), fontSize: sizing.titleFontSize, color: "#fafafa" }}
+        />
+        {refreshedAt ? (
+          <TextWidget
+            text={formatRefreshedAt(refreshedAt)}
+            style={{ ...widgetTextFont("regular"), fontSize: REFRESHED_AT_FONT_SIZE, color: "#737373" }}
+          />
+        ) : null}
       </FlexWidget>
+      {gridBody}
     </FlexWidget>
   );
 }
