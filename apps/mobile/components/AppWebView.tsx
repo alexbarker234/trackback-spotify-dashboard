@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, BackHandler, Linking, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,8 +6,13 @@ import { WebView, type WebViewNavigation } from "react-native-webview";
 
 import { authClient } from "@/lib/auth-client";
 import { API_URL } from "@/lib/config";
+import {
+  consumePendingWidgetPath,
+  webUrlFromWidgetPath,
+} from "@/lib/pending-widget-navigation";
 import { clearWebViewAuthCookies, syncAuthCookiesToWebView } from "@/lib/sync-webview-cookies";
 import { verifyServerSession } from "@/lib/verify-server-session";
+import { deepLinkToWebUrl } from "@/lib/widget-links";
 
 const DASHBOARD_URL = `${API_URL}/dashboard`;
 
@@ -37,6 +42,26 @@ export function AppWebView() {
   const webViewRef = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [webViewUrl, setWebViewUrl] = useState(DASHBOARD_URL);
+
+  const navigateWebViewTo = useCallback((nextUrl: string) => {
+    if (ready && webViewRef.current) {
+      webViewRef.current.injectJavaScript(
+        `window.location.href = ${JSON.stringify(nextUrl)}; true;`,
+      );
+      return;
+    }
+
+    setWebViewUrl(nextUrl);
+  }, [ready]);
+
+  const applyPendingWidgetPath = useCallback(() => {
+    const pendingPath = consumePendingWidgetPath();
+    if (pendingPath) {
+      navigateWebViewTo(webUrlFromWidgetPath(pendingPath));
+    }
+  }, [navigateWebViewTo]);
+
   const prepareWebView = useCallback(async () => {
     setReady(false);
 
@@ -46,12 +71,30 @@ export function AppWebView() {
       return;
     }
 
+    applyPendingWidgetPath();
     setReady(true);
-  }, []);
+  }, [applyPendingWidgetPath]);
 
   useEffect(() => {
     void prepareWebView();
   }, [prepareWebView]);
+
+  useFocusEffect(
+    useCallback(() => {
+      applyPendingWidgetPath();
+    }, [applyPendingWidgetPath]),
+  );
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      const webUrl = deepLinkToWebUrl(url);
+      if (webUrl) {
+        navigateWebViewTo(webUrl);
+      }
+    });
+
+    return () => subscription.remove();
+  }, [navigateWebViewTo]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -105,7 +148,7 @@ export function AppWebView() {
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <WebView
         ref={webViewRef}
-        source={{ uri: DASHBOARD_URL }}
+        source={{ uri: webViewUrl }}
         style={styles.webview}
         applicationNameForUserAgent="TrackbackApp"
         sharedCookiesEnabled

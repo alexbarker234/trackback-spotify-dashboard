@@ -76,6 +76,8 @@ type StatBoxProps = {
   imageUrl?: string | null;
   fillCell?: boolean;
   flexCell?: boolean;
+  clickAction?: "OPEN_APP" | "OPEN_URI" | string;
+  clickActionData?: Record<string, unknown>;
 };
 
 export function StatBox({
@@ -86,7 +88,13 @@ export function StatBox({
   imageUrl,
   fillCell = false,
   flexCell = false,
+  clickAction,
+  clickActionData,
 }: StatBoxProps) {
+  const clickProps =
+    clickAction !== undefined
+      ? { clickAction, clickActionData: clickActionData ?? {} }
+      : {};
   const hasImage = imageUrl !== undefined;
   const compact = flexCell && !fillCell;
   const useSingleValueFontSize = !hasImage && !secondaryValue;
@@ -104,7 +112,7 @@ export function StatBox({
 
   if (hasImage && fillCell) {
     return (
-      <FlexWidget style={boxStyle}>
+      <FlexWidget style={boxStyle} {...clickProps}>
         <TextWidget text={label} style={labelStyle(sizing)} />
         <ValueBlock
           value={value}
@@ -135,7 +143,7 @@ export function StatBox({
 
   if (hasImage) {
     return (
-      <FlexWidget style={boxStyle}>
+      <FlexWidget style={boxStyle} {...clickProps}>
         <TextWidget text={label} style={labelStyle(sizing)} />
         <FlexWidget
           style={{
@@ -174,7 +182,7 @@ export function StatBox({
   }
 
   return (
-    <FlexWidget style={boxStyle}>
+    <FlexWidget style={boxStyle} {...clickProps}>
       <TextWidget text={label} style={labelStyle(sizing)} />
       <FlexWidget
         style={{
