@@ -6,7 +6,7 @@ import type { WidgetLifetimeStats } from "@/lib/types";
 import { REFRESHED_AT_FONT_SIZE } from "../stat/constants";
 import { StatCell, StatRow } from "../stat/grid";
 import { StatBox } from "../stat/StatBox";
-import { getLifetimeGridLayout } from "./layout-mode";
+import { getLifetimeLayout } from "./layout-mode";
 import type { WidgetSizing } from "../stat/types";
 import { widgetTextFont } from "../stat/typography";
 
@@ -19,6 +19,7 @@ type LifetimeStatsContentProps = {
   sizing: WidgetSizing;
   refreshedAt?: string;
   width?: number;
+  height?: number;
 };
 
 export function LifetimeStatsContent({
@@ -26,49 +27,50 @@ export function LifetimeStatsContent({
   sizing,
   refreshedAt,
   width,
+  height,
 }: LifetimeStatsContentProps) {
-  const layout = getLifetimeGridLayout(width);
+  const { layout, compact } = getLifetimeLayout(width, height);
   const gap = sizing.gridGap;
 
   const cards = [
     <StatBox
       key="streams"
-      label="Total streams"
+      label={compact ? "Streams" : "Total streams"}
       value={formatCount(stats.totalStreams)}
       sizing={sizing}
       flexCell
     />,
     <StatBox
       key="minutes"
-      label="Total minutes"
+      label={compact ? "Minutes" : "Total minutes"}
       value={formatCount(stats.minutesListened)}
       sizing={sizing}
       flexCell
     />,
     <StatBox
       key="hours"
-      label="Total hours"
+      label={compact ? "Hours" : "Total hours"}
       value={formatCount(stats.hoursListened)}
       sizing={sizing}
       flexCell
     />,
     <StatBox
       key="tracks"
-      label="Unique tracks"
+      label={compact ? "Tracks" : "Unique tracks"}
       value={formatCount(stats.uniqueTracks)}
       sizing={sizing}
       flexCell
     />,
     <StatBox
       key="albums"
-      label="Unique albums"
+      label={compact ? "Albums" : "Unique albums"}
       value={formatCount(stats.uniqueAlbums)}
       sizing={sizing}
       flexCell
     />,
     <StatBox
       key="artists"
-      label="Unique artists"
+      label={compact ? "Artists" : "Unique artists"}
       value={formatCount(stats.uniqueArtists)}
       sizing={sizing}
       flexCell

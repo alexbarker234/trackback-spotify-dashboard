@@ -102,6 +102,7 @@ export function LifetimeStatWidget({
         sizing={sizing}
         refreshedAt={refreshedAt}
         width={width}
+        height={height}
       />
     </WidgetFrame>
   );
