@@ -2,7 +2,11 @@ import { FlexWidget, TextWidget } from "react-native-android-widget";
 
 import { widgetTextFont } from "./typography";
 
-export function LoginContent() {
+type LoginContentProps = {
+  title?: string;
+};
+
+export function LoginContent({ title = "Last 4 weeks" }: LoginContentProps) {
   return (
     <FlexWidget
       clickAction="OPEN_APP"
@@ -16,7 +20,7 @@ export function LoginContent() {
       }}
     >
       <TextWidget
-        text="Last 4 weeks"
+        text={title}
         style={{ ...widgetTextFont("bold"), fontSize: 16, color: "#fafafa" }}
       />
       <TextWidget

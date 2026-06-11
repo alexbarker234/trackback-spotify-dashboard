@@ -18,6 +18,16 @@ export type TopTrack = {
   }[];
 };
 
+export type WidgetLifetimeStats = {
+  period: "lifetime";
+  totalStreams: number;
+  minutesListened: number;
+  hoursListened: number;
+  uniqueTracks: number;
+  uniqueAlbums: number;
+  uniqueArtists: number;
+};
+
 export type WidgetFourWeekStats = {
   period: "4weeks";
   topArtist: {

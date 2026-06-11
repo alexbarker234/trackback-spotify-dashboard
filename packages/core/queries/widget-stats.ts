@@ -1,7 +1,17 @@
-import { and, db, gte, listen, sql } from "@workspace/database";
+import { albumTrack, and, db, eq, gte, listen, sql, track, trackArtist } from "@workspace/database";
 
 import { getTopArtists } from "./artists";
 import { getTopTracks } from "./tracks";
+
+export type WidgetLifetimeStats = {
+  period: "lifetime";
+  totalStreams: number;
+  minutesListened: number;
+  hoursListened: number;
+  uniqueTracks: number;
+  uniqueAlbums: number;
+  uniqueArtists: number;
+};
 
 export type WidgetFourWeekStats = {
   period: "4weeks";
@@ -47,6 +57,34 @@ async function getListenTotalsForRange(startDate: Date, endDate: Date) {
   return {
     streamCount: Number(row?.streamCount ?? 0),
     totalDurationMs: Number(row?.totalDurationMs ?? 0)
+  };
+}
+
+export async function getWidgetLifetimeStats(): Promise<WidgetLifetimeStats> {
+  const [row] = await db
+    .select({
+      streamCount: sql<number>`count(*)`.as("streamCount"),
+      totalDurationMs: sql<number>`coalesce(sum(${listen.durationMS}), 0)`.as("totalDurationMs"),
+      uniqueTracks: sql<number>`count(distinct ${track.isrc})`.as("uniqueTracks"),
+      uniqueAlbums: sql<number>`count(distinct ${albumTrack.albumId})`.as("uniqueAlbums"),
+      uniqueArtists: sql<number>`count(distinct ${trackArtist.artistId})`.as("uniqueArtists")
+    })
+    .from(listen)
+    .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+    .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+    .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+    .where(gte(listen.durationMS, 30000));
+
+  const totalDurationMs = Number(row?.totalDurationMs ?? 0);
+
+  return {
+    period: "lifetime",
+    totalStreams: Number(row?.streamCount ?? 0),
+    minutesListened: Math.round(totalDurationMs / 60000),
+    hoursListened: Math.round(totalDurationMs / 3600000),
+    uniqueTracks: Number(row?.uniqueTracks ?? 0),
+    uniqueAlbums: Number(row?.uniqueAlbums ?? 0),
+    uniqueArtists: Number(row?.uniqueArtists ?? 0)
   };
 }
 

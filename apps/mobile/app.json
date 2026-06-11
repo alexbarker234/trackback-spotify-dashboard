@@ -58,6 +58,20 @@
               "description": "Last 4 weeks: top artist, top track, streams, and minutes",
               "previewImage": "./assets/images/icon.png",
               "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "LifetimeStat",
+              "label": "Lifetime stats",
+              "minWidth": "109dp",
+              "minHeight": "180dp",
+              "maxResizeWidth": "600dp",
+              "maxResizeHeight": "530dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 4,
+              "resizeMode": "horizontal|vertical",
+              "description": "Lifetime: streams, minutes, hours, and unique tracks, albums, and artists",
+              "previewImage": "./assets/images/icon.png",
+              "updatePeriodMillis": 1800000
             }
           ]
         }
