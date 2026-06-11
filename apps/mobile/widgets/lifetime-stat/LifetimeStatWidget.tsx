@@ -3,7 +3,7 @@
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
 import { LoginContent } from "../stat/LoginContent";
-import { getLifetimeWidgetSizing } from "./sizing";
+import { getLifetimeWidgetSizing } from "./breakpoints";
 import { widgetTextFont } from "../stat/typography";
 import { WidgetFrame } from "../stat/WidgetFrame";
 import { LifetimeStatsContent } from "./LifetimeStatsContent";

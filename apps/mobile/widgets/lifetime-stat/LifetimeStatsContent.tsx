@@ -6,9 +6,14 @@ import type { WidgetLifetimeStats } from "@/lib/types";
 import { REFRESHED_AT_FONT_SIZE } from "../stat/constants";
 import { StatCell, StatRow } from "../stat/grid";
 import { StatBox } from "../stat/StatBox";
-import { getLifetimeLayout } from "./layout-mode";
 import type { WidgetSizing } from "../stat/types";
 import { widgetTextFont } from "../stat/typography";
+import { resolveLifetimeBreakpoint } from "./breakpoints";
+import {
+  getLifetimeStatLabel,
+  getLifetimeStatValue,
+  LIFETIME_STAT_KEYS,
+} from "./labels";
 
 function formatCount(count: number): string {
   return count.toLocaleString();
@@ -29,53 +34,19 @@ export function LifetimeStatsContent({
   width,
   height,
 }: LifetimeStatsContentProps) {
-  const { layout, compact } = getLifetimeLayout(width, height);
+  const breakpoint = resolveLifetimeBreakpoint(width, height);
+  const { layout, shortLabels } = breakpoint;
   const gap = sizing.gridGap;
 
-  const cards = [
+  const cards = LIFETIME_STAT_KEYS.map((key) => (
     <StatBox
-      key="streams"
-      label={compact ? "Streams" : "Total streams"}
-      value={formatCount(stats.totalStreams)}
+      key={key}
+      label={getLifetimeStatLabel(key, shortLabels)}
+      value={formatCount(getLifetimeStatValue(stats, key))}
       sizing={sizing}
       flexCell
-    />,
-    <StatBox
-      key="minutes"
-      label={compact ? "Minutes" : "Total minutes"}
-      value={formatCount(stats.minutesListened)}
-      sizing={sizing}
-      flexCell
-    />,
-    <StatBox
-      key="hours"
-      label={compact ? "Hours" : "Total hours"}
-      value={formatCount(stats.hoursListened)}
-      sizing={sizing}
-      flexCell
-    />,
-    <StatBox
-      key="tracks"
-      label={compact ? "Tracks" : "Unique tracks"}
-      value={formatCount(stats.uniqueTracks)}
-      sizing={sizing}
-      flexCell
-    />,
-    <StatBox
-      key="albums"
-      label={compact ? "Albums" : "Unique albums"}
-      value={formatCount(stats.uniqueAlbums)}
-      sizing={sizing}
-      flexCell
-    />,
-    <StatBox
-      key="artists"
-      label={compact ? "Artists" : "Unique artists"}
-      value={formatCount(stats.uniqueArtists)}
-      sizing={sizing}
-      flexCell
-    />,
-  ];
+    />
+  ));
 
   const gridBody =
     layout === "column" ? (
