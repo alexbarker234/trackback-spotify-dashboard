@@ -1,11 +1,10 @@
 package com.alexbarker234.trackback.data
 
 import android.content.Context
-import android.net.Uri
 import com.alexbarker234.trackback.sync.WearSyncConstants
 import com.google.android.gms.tasks.Tasks
+import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMapItem
-import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import java.util.concurrent.TimeUnit
 
@@ -26,17 +25,9 @@ object StatsRepository {
 
     fun refreshFromDataLayer(context: Context): StatsCache? {
         val appContext = context.applicationContext
-        val uri = Uri.Builder()
-            .scheme(PutDataRequest.WEAR_URI_SCHEME)
-            .path(WearSyncConstants.STATS_PATH)
-            .build()
 
         return try {
-            val dataItem = Tasks.await(
-                Wearable.getDataClient(appContext).getDataItem(uri),
-                3,
-                TimeUnit.SECONDS,
-            ) ?: return get(appContext)
+            val dataItem = findStatsDataItem(appContext) ?: return get(appContext)
 
             val payload = DataMapItem.fromDataItem(dataItem)
                 .dataMap
@@ -47,6 +38,22 @@ object StatsRepository {
             StatsPayloadParser.parse(payload)
         } catch (_: Exception) {
             get(appContext)
+        }
+    }
+
+    private fun findStatsDataItem(context: Context): DataItem? {
+        val buffer = Tasks.await(
+            Wearable.getDataClient(context).dataItems,
+            3,
+            TimeUnit.SECONDS,
+        )
+
+        return try {
+            (0 until buffer.count)
+                .map { buffer.get(it) }
+                .firstOrNull { it.uri.path == WearSyncConstants.STATS_PATH }
+        } finally {
+            buffer.release()
         }
     }
 }

@@ -2,7 +2,10 @@ import { requireNativeModule } from "expo-modules-core";
 import { Platform } from "react-native";
 
 type TrackbackWearSyncModule = {
-  syncStats(payload: string): Promise<void>;
+  syncStats(payload: string): Promise<{
+    connectedNodes: number;
+    messagesSent: number;
+  }>;
 };
 
 const NativeModule =
@@ -10,12 +13,15 @@ const NativeModule =
     ? requireNativeModule<TrackbackWearSyncModule>("TrackbackWearSync")
     : null;
 
-export async function syncStats(payload: string): Promise<void> {
+export async function syncStats(payload: string): Promise<{
+  connectedNodes: number;
+  messagesSent: number;
+} | null> {
   if (!NativeModule) {
-    return;
+    return null;
   }
 
-  await NativeModule.syncStats(payload);
+  return NativeModule.syncStats(payload);
 }
 
 export const WEAR_STATS_PATH = "/trackback/stats";

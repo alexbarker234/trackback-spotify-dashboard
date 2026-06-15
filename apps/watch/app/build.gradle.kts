@@ -20,7 +20,20 @@ android {
 
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Must match apps/mobile/android/app/debug.keystore for Wear Data Layer sync.
+            storeFile = file("../../mobile/android/app/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(

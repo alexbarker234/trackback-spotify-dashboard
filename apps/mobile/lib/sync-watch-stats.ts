@@ -12,8 +12,13 @@ export type WatchSyncPayload = {
 
 async function pushWatchPayload(payload: WatchSyncPayload): Promise<void> {
   try {
-    await syncStats(JSON.stringify(payload));
-    console.log("Synced stats to watch");
+    const result = await syncStats(JSON.stringify(payload));
+    console.log("Synced stats to watch", JSON.stringify(payload, null, 2), result);
+    if (result && result.connectedNodes === 0) {
+      console.warn(
+        "No Wear OS nodes connected — stats were saved on phone only. Check Bluetooth pairing in the Wear OS app.",
+      );
+    }
   } catch (error) {
     console.warn("Failed to sync stats to watch", error);
   }
