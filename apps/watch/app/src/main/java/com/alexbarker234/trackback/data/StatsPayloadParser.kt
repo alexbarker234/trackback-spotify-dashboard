@@ -35,7 +35,7 @@ object StatsPayloadParser {
                     artistName = artist.optString("artistName"),
                     artistId = artist.optString("artistId"),
                     artistImageUrl = artist.optString("artistImageUrl").takeIf { it.isNotEmpty() },
-                    listenCount = artist.optInt("listenCount"),
+                    listenCount = artist.parseListenCount("listenCount"),
                 )
             },
             topTrack = json.optJSONObject("topTrack")?.let { track ->
@@ -44,11 +44,23 @@ object StatsPayloadParser {
                     trackIsrc = track.optString("trackIsrc"),
                     imageUrl = track.optString("imageUrl").takeIf { it.isNotEmpty() },
                     artistName = track.optString("artistName").takeIf { it.isNotEmpty() },
-                    listenCount = track.optInt("listenCount"),
+                    listenCount = track.parseListenCount("listenCount"),
                 )
             },
-            totalStreams = json.optInt("totalStreams"),
-            minutesListened = json.optInt("minutesListened"),
+            totalStreams = json.parseListenCount("totalStreams"),
+            minutesListened = json.parseListenCount("minutesListened"),
         )
+    }
+
+    private fun JSONObject.parseListenCount(key: String): Int {
+        if (!has(key) || isNull(key)) {
+            return 0
+        }
+
+        return when (val raw = get(key)) {
+            is Number -> raw.toInt()
+            is String -> raw.toIntOrNull() ?: 0
+            else -> optInt(key)
+        }
     }
 }

@@ -5,6 +5,7 @@ import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
 import androidx.wear.protolayout.material3.MaterialScope
 import androidx.wear.protolayout.material3.Typography.BODY_MEDIUM
 import androidx.wear.protolayout.material3.Typography.BODY_SMALL
+import androidx.wear.protolayout.material3.Typography.TITLE_SMALL
 import androidx.wear.protolayout.material3.primaryLayout
 import androidx.wear.protolayout.material3.text
 import androidx.wear.protolayout.types.layoutString
@@ -20,6 +21,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object StatTileRenderer {
+    private const val STATS_MAX_LINES = 6
+
     fun MaterialScope.render(cache: StatsCache?, context: Context): LayoutElement {
         return when {
             cache == null || !cache.authenticated -> renderNeedsLogin(context)
@@ -34,6 +37,7 @@ object StatTileRenderer {
                 text(
                     context.getString(R.string.tile_sign_in).layoutString,
                     typography = BODY_MEDIUM,
+                    maxLines = 4,
                 )
             },
         )
@@ -41,13 +45,18 @@ object StatTileRenderer {
 
     private fun MaterialScope.renderEmpty(context: Context): LayoutElement {
         return primaryLayout(
+            titleSlot = {
+                text(
+                    context.getString(R.string.tile_title).layoutString,
+                    typography = TITLE_SMALL,
+                    maxLines = 1,
+                )
+            },
             mainSlot = {
                 text(
-                    buildString {
-                        appendLine(context.getString(R.string.tile_title))
-                        append(context.getString(R.string.tile_no_stats))
-                    }.layoutString,
+                    context.getString(R.string.tile_no_stats).layoutString,
                     typography = BODY_SMALL,
+                    maxLines = 3,
                 )
             },
         )
@@ -55,15 +64,21 @@ object StatTileRenderer {
 
     private fun MaterialScope.renderStats(cache: StatsCache, context: Context): LayoutElement {
         val stats = cache.stats ?: return renderEmpty(context)
-        val body = buildString {
-            appendLine(context.getString(R.string.tile_title))
-            appendLine()
-            append(buildStatsBody(context, stats, cache.refreshedAt))
-        }
 
         return primaryLayout(
+            titleSlot = {
+                text(
+                    context.getString(R.string.tile_title).layoutString,
+                    typography = TITLE_SMALL,
+                    maxLines = 1,
+                )
+            },
             mainSlot = {
-                text(body.layoutString, typography = BODY_SMALL)
+                text(
+                    buildStatsBody(context, stats, cache.refreshedAt).layoutString,
+                    typography = BODY_SMALL,
+                    maxLines = STATS_MAX_LINES,
+                )
             },
         )
     }
