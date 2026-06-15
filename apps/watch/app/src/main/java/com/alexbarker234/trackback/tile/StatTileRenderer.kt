@@ -1,13 +1,28 @@
 package com.alexbarker234.trackback.tile
 
 import android.content.Context
+import androidx.wear.protolayout.DimensionBuilders.dp
+import androidx.wear.protolayout.DimensionBuilders.expand
+import androidx.wear.protolayout.DimensionBuilders.weight
+import androidx.wear.protolayout.LayoutElementBuilders.Column
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
+import androidx.wear.protolayout.material3.ButtonGroupDefaults.DEFAULT_SPACER_BETWEEN_BUTTON_GROUPS
+import androidx.wear.protolayout.material3.CardDefaults.filledTonalCardColors
+import androidx.wear.protolayout.material3.DataCardStyle.Companion.largeCompactDataCardStyle
 import androidx.wear.protolayout.material3.MaterialScope
 import androidx.wear.protolayout.material3.Typography.BODY_MEDIUM
 import androidx.wear.protolayout.material3.Typography.BODY_SMALL
+import androidx.wear.protolayout.material3.Typography.LABEL_SMALL
 import androidx.wear.protolayout.material3.Typography.TITLE_SMALL
+import androidx.wear.protolayout.material3.buttonGroup
+import androidx.wear.protolayout.material3.icon
+import androidx.wear.protolayout.material3.iconDataCard
 import androidx.wear.protolayout.material3.primaryLayout
 import androidx.wear.protolayout.material3.text
+import androidx.wear.protolayout.material3.textDataCard
+import androidx.wear.protolayout.modifiers.LayoutModifier
+import androidx.wear.protolayout.modifiers.clickable
+import androidx.wear.protolayout.modifiers.contentDescription
 import androidx.wear.protolayout.types.layoutString
 import com.alexbarker234.trackback.R
 import com.alexbarker234.trackback.data.StatsCache
@@ -15,19 +30,23 @@ import com.alexbarker234.trackback.data.TopArtistStat
 import com.alexbarker234.trackback.data.TopTrackStat
 import com.alexbarker234.trackback.data.WidgetFourWeekStats
 import java.text.NumberFormat
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-object StatTileRenderer {
-    private const val STATS_MAX_LINES = 6
+data class TileImageState(
+    val hasArtistImage: Boolean = false,
+    val hasTrackImage: Boolean = false,
+)
 
-    fun MaterialScope.render(cache: StatsCache?, context: Context): LayoutElement {
+object StatTileRenderer {
+    fun MaterialScope.render(
+        cache: StatsCache?,
+        context: Context,
+        images: TileImageState,
+    ): LayoutElement {
         return when {
             cache == null || !cache.authenticated -> renderNeedsLogin(context)
             cache.stats == null -> renderEmpty(context)
-            else -> renderStats(cache, context)
+            else -> renderStats(cache, context, images)
         }
     }
 
@@ -62,7 +81,11 @@ object StatTileRenderer {
         )
     }
 
-    private fun MaterialScope.renderStats(cache: StatsCache, context: Context): LayoutElement {
+    private fun MaterialScope.renderStats(
+        cache: StatsCache,
+        context: Context,
+        images: TileImageState,
+    ): LayoutElement {
         val stats = cache.stats ?: return renderEmpty(context)
 
         return primaryLayout(
@@ -73,12 +96,190 @@ object StatTileRenderer {
                     maxLines = 1,
                 )
             },
-            mainSlot = {
-                text(
-                    buildStatsBody(context, stats, cache.refreshedAt).layoutString,
-                    typography = BODY_SMALL,
-                    maxLines = STATS_MAX_LINES,
-                )
+            mainSlot = { renderStatsGrid(context, stats, images) },
+        )
+    }
+
+    private fun MaterialScope.renderStatsGrid(
+        context: Context,
+        stats: WidgetFourWeekStats,
+        images: TileImageState,
+    ): LayoutElement {
+        return Column.Builder()
+            .setWidth(expand())
+            .setHeight(expand())
+            .addContent(
+                buttonGroup {
+                    buttonGroupItem {
+                        renderArtistCard(context, stats.topArtist, images.hasArtistImage)
+                    }
+                    buttonGroupItem {
+                        renderTrackCard(context, stats.topTrack, images.hasTrackImage)
+                    }
+                },
+            )
+            .addContent(DEFAULT_SPACER_BETWEEN_BUTTON_GROUPS)
+            .addContent(
+                buttonGroup {
+                    buttonGroupItem {
+                        renderMetricCard(
+                            context = context,
+                            label = context.getString(R.string.tile_streams_label),
+                            value = formatNumber(stats.totalStreams),
+                            description = context.getString(R.string.tile_card_streams),
+                        )
+                    }
+                    buttonGroupItem {
+                        renderMetricCard(
+                            context = context,
+                            label = context.getString(R.string.tile_minutes_label),
+                            value = formatNumber(stats.minutesListened),
+                            description = context.getString(R.string.tile_card_minutes),
+                        )
+                    }
+                },
+            )
+            .build()
+    }
+
+    private fun MaterialScope.renderArtistCard(
+        context: Context,
+        artist: TopArtistStat?,
+        hasImage: Boolean,
+    ): LayoutElement {
+        val name = artist?.artistName?.takeIf { it.isNotEmpty() } ?: "—"
+        val streams = artist?.listenCount?.takeIf { it > 0 }?.let { formatStreams(context, it) }
+
+        return if (hasImage) {
+            iconDataCard(
+                onClick = clickable(),
+                modifier = LayoutModifier.contentDescription(
+                    context.getString(R.string.tile_card_artist, name),
+                ),
+                width = weight(1f),
+                height = expand(),
+                colors = filledTonalCardColors(),
+                style = largeCompactDataCardStyle(),
+                title = {
+                    text(name.layoutString, typography = BODY_SMALL, maxLines = 2)
+                },
+                content = {
+                    text(
+                        (streams ?: context.getString(R.string.tile_card_artist_label)).layoutString,
+                        typography = LABEL_SMALL,
+                        maxLines = 1,
+                    )
+                },
+                secondaryIcon = {
+                    icon(
+                        TileImageCache.ARTIST_RESOURCE_ID,
+                        width = dp(32f),
+                        height = dp(32f),
+                    )
+                },
+            )
+        } else {
+            textDataCard(
+                onClick = clickable(),
+                modifier = LayoutModifier.contentDescription(
+                    context.getString(R.string.tile_card_artist, name),
+                ),
+                width = weight(1f),
+                height = expand(),
+                colors = filledTonalCardColors(),
+                style = largeCompactDataCardStyle(),
+                title = {
+                    text(name.layoutString, typography = BODY_SMALL, maxLines = 2)
+                },
+                content = {
+                    text(
+                        (streams ?: context.getString(R.string.tile_card_artist_label)).layoutString,
+                        typography = LABEL_SMALL,
+                        maxLines = 1,
+                    )
+                },
+            )
+        }
+    }
+
+    private fun MaterialScope.renderTrackCard(
+        context: Context,
+        track: TopTrackStat?,
+        hasImage: Boolean,
+    ): LayoutElement {
+        val name = track?.trackName?.takeIf { it.isNotEmpty() } ?: "—"
+        val streams = track?.listenCount?.takeIf { it > 0 }?.let { formatStreams(context, it) }
+
+        return if (hasImage) {
+            iconDataCard(
+                onClick = clickable(),
+                modifier = LayoutModifier.contentDescription(
+                    context.getString(R.string.tile_card_track, name),
+                ),
+                width = weight(1f),
+                height = expand(),
+                colors = filledTonalCardColors(),
+                style = largeCompactDataCardStyle(),
+                title = {
+                    text(name.layoutString, typography = BODY_SMALL, maxLines = 2)
+                },
+                content = {
+                    text(
+                        (streams ?: context.getString(R.string.tile_card_track_label)).layoutString,
+                        typography = LABEL_SMALL,
+                        maxLines = 1,
+                    )
+                },
+                secondaryIcon = {
+                    icon(
+                        TileImageCache.TRACK_RESOURCE_ID,
+                        width = dp(32f),
+                        height = dp(32f),
+                    )
+                },
+            )
+        } else {
+            textDataCard(
+                onClick = clickable(),
+                modifier = LayoutModifier.contentDescription(
+                    context.getString(R.string.tile_card_track, name),
+                ),
+                width = weight(1f),
+                height = expand(),
+                colors = filledTonalCardColors(),
+                style = largeCompactDataCardStyle(),
+                title = {
+                    text(name.layoutString, typography = BODY_SMALL, maxLines = 2)
+                },
+                content = {
+                    text(
+                        (streams ?: context.getString(R.string.tile_card_track_label)).layoutString,
+                        typography = LABEL_SMALL,
+                        maxLines = 1,
+                    )
+                },
+            )
+        }
+    }
+
+    private fun MaterialScope.renderMetricCard(
+        context: Context,
+        label: String,
+        value: String,
+        description: String,
+    ): LayoutElement {
+        return textDataCard(
+            onClick = clickable(),
+            modifier = LayoutModifier.contentDescription(description),
+            width = weight(1f),
+            height = expand(),
+            colors = filledTonalCardColors(),
+            style = largeCompactDataCardStyle(),
+            title = {
+                text(value.layoutString, typography = BODY_MEDIUM, maxLines = 1)
+            },
+            content = {
+                text(label.layoutString, typography = LABEL_SMALL, maxLines = 1)
             },
         )
     }
@@ -86,7 +287,7 @@ object StatTileRenderer {
     fun previewCache(): StatsCache {
         return StatsCache(
             authenticated = true,
-            refreshedAt = Instant.now().toString(),
+            refreshedAt = "2026-01-01T00:00:00Z",
             stats = WidgetFourWeekStats(
                 period = "4weeks",
                 topArtist = TopArtistStat(
@@ -108,55 +309,9 @@ object StatTileRenderer {
         )
     }
 
-    private fun buildStatsBody(
-        context: Context,
-        stats: WidgetFourWeekStats,
-        refreshedAt: String?,
-    ): String {
-        val lines = mutableListOf<String>()
-
-        val topArtist = stats.topArtist?.artistName ?: "—"
-        val artistStreams = stats.topArtist?.listenCount?.let { formatStreams(it) }
-        lines += if (artistStreams != null) {
-            context.getString(R.string.tile_top_artist_line, topArtist, artistStreams)
-        } else {
-            context.getString(R.string.tile_top_artist_plain, topArtist)
-        }
-
-        val topTrack = stats.topTrack?.trackName ?: "—"
-        val trackStreams = stats.topTrack?.listenCount?.let { formatStreams(it) }
-        lines += if (trackStreams != null) {
-            context.getString(R.string.tile_top_track_line, topTrack, trackStreams)
-        } else {
-            context.getString(R.string.tile_top_track_plain, topTrack)
-        }
-
-        lines += context.getString(
-            R.string.tile_totals_line,
-            formatNumber(stats.totalStreams),
-            formatNumber(stats.minutesListened),
-        )
-
-        refreshedAt?.let { lines += formatRefreshedAt(it) }
-
-        return lines.joinToString("\n")
-    }
-
-    private fun formatStreams(count: Int): String =
-        "${formatNumber(count)} streams"
+    private fun formatStreams(context: Context, count: Int): String =
+        context.getString(R.string.tile_stream_count, formatNumber(count))
 
     private fun formatNumber(value: Int): String =
         NumberFormat.getNumberInstance(Locale.getDefault()).format(value)
-
-    private fun formatRefreshedAt(iso: String): String {
-        return try {
-            val instant = Instant.parse(iso)
-            val formatted = DateTimeFormatter.ofPattern("MMM d, h:mm a")
-                .withZone(ZoneId.systemDefault())
-                .format(instant)
-            "Refreshed $formatted"
-        } catch (_: Exception) {
-            ""
-        }
-    }
 }

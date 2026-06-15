@@ -5,10 +5,14 @@
     <string name="tile_title">Last 4 weeks</string>
     <string name="tile_sign_in">Sign in on phone to see your listening stats</string>
     <string name="tile_no_stats">No stats available yet. Open Trackback on your phone.</string>
-    <string name="tile_top_artist_line">Top artist: %1$s · %2$s</string>
-    <string name="tile_top_artist_plain">Top artist: %1$s</string>
-    <string name="tile_top_track_line">Top track: %1$s · %2$s</string>
-    <string name="tile_top_track_plain">Top track: %1$s</string>
-    <string name="tile_totals_line">%1$s streams · %2$s min</string>
+    <string name="tile_card_artist_label">Top artist</string>
+    <string name="tile_card_track_label">Top track</string>
+    <string name="tile_card_artist">Top artist: %1$s</string>
+    <string name="tile_card_track">Top track: %1$s</string>
+    <string name="tile_streams_label">Streams</string>
+    <string name="tile_minutes_label">Minutes</string>
+    <string name="tile_card_streams">Total streams in the last 4 weeks</string>
+    <string name="tile_card_minutes">Total minutes listened in the last 4 weeks</string>
+    <string name="tile_stream_count">%1$s streams</string>
     <string name="complication_label">Example complication</string>
 </resources>

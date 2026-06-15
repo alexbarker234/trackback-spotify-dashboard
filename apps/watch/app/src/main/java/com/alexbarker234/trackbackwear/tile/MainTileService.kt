@@ -15,20 +15,12 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import androidx.wear.protolayout.material3.materialScope
 
-private const val RESOURCES_VERSION = "0"
-
 class MainTileService : TileService() {
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<TileBuilders.Tile> =
         Futures.immediateFuture(tile(requestParams, this))
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
-        Futures.immediateFuture(resources(requestParams))
-}
-
-private fun resources(requestParams: ResourcesRequest): Resources {
-    return Resources.Builder()
-        .setVersion(RESOURCES_VERSION)
-        .build()
+        Futures.immediateFuture(buildTileResources(this))
 }
 
 private fun tile(
@@ -36,13 +28,17 @@ private fun tile(
     context: Context,
 ): TileBuilders.Tile {
     val cache = StatsRepository.refreshFromDataLayer(context)
+    val images = TileImageState(
+        hasArtistImage = TileImageCache.readArtistBytes(context) != null,
+        hasTrackImage = TileImageCache.readTrackBytes(context) != null,
+    )
 
     return TileBuilders.Tile.Builder()
-        .setResourcesVersion(RESOURCES_VERSION)
+        .setResourcesVersion(TILE_RESOURCES_VERSION)
         .setTileTimeline(
             TimelineBuilders.Timeline.fromLayoutElement(
                 materialScope(context, requestParams.deviceConfiguration) {
-                    StatTileRenderer.run { render(cache, context) }
+                    StatTileRenderer.run { render(cache, context, images) }
                 },
             ),
         )
@@ -51,13 +47,13 @@ private fun tile(
 
 @Preview(device = WearDevices.SMALL_ROUND)
 @Preview(device = WearDevices.LARGE_ROUND)
-fun tilePreview(context: Context) = TilePreviewData(::resources) { requestParams ->
+fun tilePreview(context: Context) = TilePreviewData(onTileResourceRequest = { buildTileResources(context) }) { requestParams ->
     TileBuilders.Tile.Builder()
-        .setResourcesVersion(RESOURCES_VERSION)
+        .setResourcesVersion(TILE_RESOURCES_VERSION)
         .setTileTimeline(
             TimelineBuilders.Timeline.fromLayoutElement(
                 materialScope(context, requestParams.deviceConfiguration) {
-                    StatTileRenderer.run { render(StatTileRenderer.previewCache(), context) }
+                    StatTileRenderer.run { render(StatTileRenderer.previewCache(), context, TileImageState()) }
                 },
             ),
         )

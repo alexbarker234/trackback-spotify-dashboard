@@ -2,8 +2,10 @@ package com.alexbarker234.trackback.sync
 
 import android.util.Log
 import androidx.wear.tiles.TileService
+import com.alexbarker234.trackback.data.StatsPayloadParser
 import com.alexbarker234.trackback.data.StatsRepository
 import com.alexbarker234.trackback.tile.MainTileService
+import com.alexbarker234.trackback.tile.TileImageCache
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -43,6 +45,12 @@ class StatsSyncListenerService : WearableListenerService() {
     private fun applyPayload(payload: String) {
         Log.i(TAG, "Received watch payload (${payload.length} chars)")
         StatsRepository.save(applicationContext, payload)
+        StatsPayloadParser.parse(payload)?.stats?.let { stats ->
+            Thread {
+                TileImageCache.syncFromStats(applicationContext, stats)
+                TileService.getUpdater(applicationContext).requestUpdate(MainTileService::class.java)
+            }.start()
+        }
         TileService.getUpdater(applicationContext).requestUpdate(MainTileService::class.java)
     }
 
