@@ -1,11 +1,19 @@
 import { Redirect } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 import { AppWebView } from "@/components/AppWebView";
 import { authClient } from "@/lib/auth-client";
+import { syncWatchStatsFromCache } from "@/lib/sync-watch-stats";
 
 export default function HomeScreen() {
   const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (session) {
+      void syncWatchStatsFromCache();
+    }
+  }, [session]);
 
   if (isPending) {
     return (

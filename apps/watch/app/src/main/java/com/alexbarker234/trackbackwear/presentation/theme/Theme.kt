@@ -1,4 +1,4 @@
-package com.alexbarker234.trackbackwear.presentation.theme
+package com.alexbarker234.trackback.presentation.theme
 
 import androidx.compose.runtime.Composable
 import androidx.wear.compose.material3.MaterialTheme

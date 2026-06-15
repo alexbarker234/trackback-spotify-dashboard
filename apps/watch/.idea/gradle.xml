@@ -5,6 +5,7 @@
       <GradleProjectSettings>
         <option name="testRunner" value="CHOOSE_PER_TEST" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot" />
       </GradleProjectSettings>
     </option>
   </component>

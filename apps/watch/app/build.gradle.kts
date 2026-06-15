@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.alexbarker234.trackbackwear"
+    namespace = "com.alexbarker234.trackback"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.alexbarker234.trackbackwear"
+        applicationId = "com.alexbarker234.trackback"
         minSdk = 30
         targetSdk = 36
         versionCode = 1

@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">Trackback</string>
     <string name="hello_world">Hello, %1$s!</string>
-    <string name="tile_label">Example tile</string>
+    <string name="tile_label">Last 4 weeks</string>
+    <string name="tile_title">Last 4 weeks</string>
+    <string name="tile_sign_in">Sign in on phone to see your listening stats</string>
+    <string name="tile_no_stats">No stats available yet. Open Trackback on your phone.</string>
+    <string name="tile_top_artist_line">Top artist: %1$s · %2$s</string>
+    <string name="tile_top_artist_plain">Top artist: %1$s</string>
+    <string name="tile_top_track_line">Top track: %1$s · %2$s</string>
+    <string name="tile_top_track_plain">Top track: %1$s</string>
+    <string name="tile_totals_line">%1$s streams · %2$s min</string>
     <string name="complication_label">Example complication</string>
 </resources>

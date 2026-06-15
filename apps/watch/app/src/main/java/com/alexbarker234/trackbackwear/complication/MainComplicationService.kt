@@ -1,4 +1,4 @@
-package com.alexbarker234.trackbackwear.complication
+package com.alexbarker234.trackback.complication
 
 import androidx.wear.watchface.complications.data.ComplicationData
 import androidx.wear.watchface.complications.data.ComplicationType

@@ -1,0 +1,11 @@
+{
+  "name": "trackback-wear-sync",
+  "version": "1.0.0",
+  "description": "Sync Trackback widget stats to Wear OS via the Data Layer",
+  "main": "src/index.ts",
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

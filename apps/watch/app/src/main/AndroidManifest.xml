@@ -28,6 +28,17 @@
                 android:value="3600" />
         </service>
         <service
+            android:name=".sync.StatsSyncListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/trackback/stats"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+        <service
             android:name=".tile.MainTileService"
             android:exported="true"
             android:label="@string/tile_label"

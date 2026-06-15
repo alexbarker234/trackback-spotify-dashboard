@@ -3,7 +3,7 @@
  * most up to date changes to the libraries and their usages.
  */
 
-package com.alexbarker234.trackbackwear.presentation
+package com.alexbarker234.trackback.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,8 +27,8 @@ import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
-import com.alexbarker234.trackbackwear.R
-import com.alexbarker234.trackbackwear.presentation.theme.TrackbackTheme
+import com.alexbarker234.trackback.R
+import com.alexbarker234.trackback.presentation.theme.TrackbackTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
