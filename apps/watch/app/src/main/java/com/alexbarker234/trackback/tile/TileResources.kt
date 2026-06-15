@@ -5,7 +5,7 @@ import androidx.wear.protolayout.ResourceBuilders.ImageResource
 import androidx.wear.protolayout.ResourceBuilders.InlineImageResource
 import androidx.wear.protolayout.ResourceBuilders.Resources
 
-const val TILE_RESOURCES_VERSION = "1"
+const val TILE_RESOURCES_VERSION = "2"
 
 fun buildTileResources(context: Context): Resources {
     val builder = Resources.Builder().setVersion(TILE_RESOURCES_VERSION)

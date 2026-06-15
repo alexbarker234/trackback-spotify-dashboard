@@ -14,8 +14,8 @@ import androidx.wear.protolayout.material3.Typography.BODY_MEDIUM
 import androidx.wear.protolayout.material3.Typography.BODY_SMALL
 import androidx.wear.protolayout.material3.Typography.LABEL_SMALL
 import androidx.wear.protolayout.material3.Typography.TITLE_SMALL
+import androidx.wear.protolayout.material3.avatarImage
 import androidx.wear.protolayout.material3.buttonGroup
-import androidx.wear.protolayout.material3.icon
 import androidx.wear.protolayout.material3.iconDataCard
 import androidx.wear.protolayout.material3.primaryLayout
 import androidx.wear.protolayout.material3.text
@@ -171,10 +171,10 @@ object StatTileRenderer {
                     )
                 },
                 secondaryIcon = {
-                    icon(
+                    avatarImage(
                         TileImageCache.ARTIST_RESOURCE_ID,
-                        width = dp(32f),
-                        height = dp(32f),
+                        width = dp(36f),
+                        height = dp(36f),
                     )
                 },
             )
@@ -231,10 +231,10 @@ object StatTileRenderer {
                     )
                 },
                 secondaryIcon = {
-                    icon(
+                    avatarImage(
                         TileImageCache.TRACK_RESOURCE_ID,
-                        width = dp(32f),
-                        height = dp(32f),
+                        width = dp(36f),
+                        height = dp(36f),
                     )
                 },
             )

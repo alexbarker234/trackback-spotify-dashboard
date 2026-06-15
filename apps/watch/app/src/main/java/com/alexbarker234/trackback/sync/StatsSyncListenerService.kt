@@ -46,10 +46,9 @@ class StatsSyncListenerService : WearableListenerService() {
         Log.i(TAG, "Received watch payload (${payload.length} chars)")
         StatsRepository.save(applicationContext, payload)
         StatsPayloadParser.parse(payload)?.stats?.let { stats ->
-            Thread {
-                TileImageCache.syncFromStats(applicationContext, stats)
+            TileImageCache.syncFromStatsAsync(applicationContext, stats) {
                 TileService.getUpdater(applicationContext).requestUpdate(MainTileService::class.java)
-            }.start()
+            }
         }
         TileService.getUpdater(applicationContext).requestUpdate(MainTileService::class.java)
     }
