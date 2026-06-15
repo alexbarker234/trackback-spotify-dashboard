@@ -21,6 +21,7 @@ class TrackbackWearSyncModule : Module() {
             }.asPutDataRequest().setUrgent()
 
             Tasks.await(Wearable.getDataClient(context).putDataItem(request))
+            null
         }
     }
 

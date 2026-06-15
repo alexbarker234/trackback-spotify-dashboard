@@ -6,6 +6,10 @@ plugins {
 group = "com.alexbarker234.trackback"
 version = "1.0.0"
 
+expoModule {
+    canBePublished = false
+}
+
 android {
     namespace = "com.alexbarker234.trackback.wearsync"
     compileSdk = 36

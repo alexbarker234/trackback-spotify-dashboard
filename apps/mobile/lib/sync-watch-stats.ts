@@ -1,8 +1,8 @@
 import { syncStats } from "trackback-wear-sync";
 
+import type { WidgetFourWeekStats } from "./types";
 import { isWidgetAuthenticated } from "./widget-auth";
 import { getWidgetStatsCache } from "./widget-stats-cache";
-import type { WidgetFourWeekStats } from "./types";
 
 export type WatchSyncPayload = {
   authenticated: boolean;
@@ -13,6 +13,7 @@ export type WatchSyncPayload = {
 async function pushWatchPayload(payload: WatchSyncPayload): Promise<void> {
   try {
     await syncStats(JSON.stringify(payload));
+    console.log("Synced stats to watch");
   } catch (error) {
     console.warn("Failed to sync stats to watch", error);
   }
