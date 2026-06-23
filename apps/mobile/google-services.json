@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "637926836091",
+    "project_id": "trackback-c9fe2",
+    "storage_bucket": "trackback-c9fe2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637926836091:android:e6cdadb75858e574965fde",
+        "android_client_info": {
+          "package_name": "com.alexbarker234.trackback"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsYVqr845OblBXBD33otbzmMLWySS-jKE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

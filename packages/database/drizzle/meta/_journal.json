@@ -29,6 +29,13 @@
       "when": 1779279587443,
       "tag": "0003_fancy_thunderball",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782217413549,
+      "tag": "0004_parched_maddog",
+      "breakpoints": true
     }
   ]
 }

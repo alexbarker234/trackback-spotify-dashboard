@@ -1,4 +1,5 @@
 import cron from "node-cron";
+import { sendPushToAllTokens } from "./notifications/sendPush";
 import {
   fetchRecentlyPlayedTracksService,
   populateAlbumArtistData,
@@ -7,6 +8,10 @@ import {
 } from "./services";
 
 console.log("🚀 Starting Trackback service...");
+
+void sendPushToAllTokens({ title: "Test", body: "Test" }).catch((error) => {
+  console.error("Failed to send test push notification:", error);
+});
 
 const useInternalCron = process.env.USE_EXTERNAL_CRON != "true";
 
