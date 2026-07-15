@@ -5,10 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-15.3-black?logo=next.js" alt="Next.js">
-  <img src="https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript" alt="TypeScript">
-  <img src="https://img.shields.io/badge/PostgreSQL-Database-blue?logo=postgresql" alt="PostgreSQL">
-  <img src="https://img.shields.io/badge/PWA-Enabled-purple" alt="PWA">
+  <img src="https://img.shields.io/badge/Next.js-15.5-black?logo=next.js&style=for-the-badge&labelColor=000" alt="Next.js">
+  <img src="https://img.shields.io/badge/PostgreSQL-Database-blue?logo=postgresql&style=for-the-badge&labelColor=000" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/PWA-Enabled-purple?style=for-the-badge&labelColor=000" alt="PWA">
 </p>
 
 A comprehensive Spotify dashboard that visualises and tracks listening history over time.
