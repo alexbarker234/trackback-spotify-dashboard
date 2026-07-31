@@ -19,8 +19,10 @@ import ItemTypeSelector, { ItemType, itemTypeOptions } from "../ItemTypeSelector
 import Loading from "../Loading";
 import CustomDateRangeModal from "../modals/CustomDateRangeModal";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
+import TopItemsExportBubble from "./TopItemsExportBubble";
 import TopItemsExportGrid from "./TopItemsExportGrid";
 import TopItemsExportList from "./TopItemsExportList";
+import TopItemsExportPie from "./TopItemsExportPie";
 
 export type TopItem = {
   id: string;
@@ -239,23 +241,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
             ) : viewType === "list" ? (
               <TopItemsExportList items={data} />
             ) : viewType === "pie" ? (
-              <TopItemsPieChart
-                chartTitle={`${title} Distribution`}
-                items={data}
-                maxItems={12}
-                hideExpandButton
-                disableAnimation
-                chartHeight="h-[1550px]"
-              />
+              <TopItemsExportPie items={data} />
             ) : (
-              <TopItemsBubbleChart
-                chartTitle={`${title} Bubble`}
-                items={data}
-                maxItems={20}
-                hideExpandButton
-                disableAnimation
-                chartHeight="h-[1550px]"
-              />
+              <TopItemsExportBubble items={data} />
             )}
           </div>
         </div>

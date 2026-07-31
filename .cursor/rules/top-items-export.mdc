@@ -23,8 +23,9 @@ Apply this in cards, item cards, and export layouts when adding or editing marku
 
 ## Export layouts
 
-- Use `TopItemsExportGrid` / `TopItemsExportList` for grid/list capture — not the on-screen list/grid.
+- Use dedicated export components (`TopItemsExportGrid` / `List` / `Pie` / `Bubble`) for capture — not on-screen layouts or `ExpandableChartContainer`.
 - Keep grid export images square (`aspect-square`).
 - Limit list export to 10 items; grid export to 12 items (3 columns × 4 rows).
+- Pie/bubble exports should be frameless (no inner card title); let chart + legend fill space.
 - Export typography should stay large enough to read on the 1080×1920 portrait canvas.
 - Reuse `src/components/export` helpers (`useOffscreenExport`, `html2canvas-pro`); do not reintroduce `html2canvas` (oklch unsupported).

@@ -1,9 +1,9 @@
-import { account, count, db, session, user, verification } from "@workspace/database";
 import { expo } from "@better-auth/expo";
+import { account, count, db, session, user, verification } from "@workspace/database";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { nextCookies } from "better-auth/next-js";
 import { createAuthMiddleware } from "better-auth/api";
+import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins";
 
 const trustedOrigins = [
@@ -81,8 +81,8 @@ export const auth = betterAuth({
         session
       };
     }),
-    nextCookies(),
-    expo()
+    expo(),
+    nextCookies()
   ],
   baseURL: process.env.BASE_URL,
   trustedOrigins

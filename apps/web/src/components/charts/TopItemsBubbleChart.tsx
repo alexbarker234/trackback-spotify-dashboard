@@ -10,6 +10,7 @@ import ChartTooltip from "./ChartTooltip";
 import ExpandableChartContainer from "./ExpandableChartContainer";
 import BubbleChart from "./d3/BubbleChart";
 import { BubbleNodeData } from "./d3/BubbleNode";
+import { topItemsChartColors as colors } from "./topItemsChartColors";
 
 interface TopItemsBubbleChartProps {
   items: TopItem[];
@@ -24,14 +25,13 @@ interface TopItemsBubbleChartProps {
   disableAnimation?: boolean;
 }
 
-const colors = ["#a855f7", "#8b5cf6", "#ec4899", "#f472b6", "#ef4444", "#dc2626", "#f97316", "#eab308"];
-function BubbleChartContent({
+export function BubbleChartContent({
   items,
   maxItems = 20,
   disableAnimation = false
 }: {
   items: TopItem[];
-  maxItems: number;
+  maxItems?: number;
   disableAnimation?: boolean;
 }) {
   const [hoveredItem, setHoveredItem] = useState<BubbleNodeData | null>(null);
