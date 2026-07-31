@@ -245,6 +245,7 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
                 items={data}
                 maxItems={12}
                 hideExpandButton
+                disableAnimation
                 chartHeight="h-[1550px]"
               />
             ) : (
@@ -253,6 +254,7 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
                 items={data}
                 maxItems={20}
                 hideExpandButton
+                disableAnimation
                 chartHeight="h-[1550px]"
               />
             )}

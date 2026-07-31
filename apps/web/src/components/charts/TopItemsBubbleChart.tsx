@@ -21,10 +21,19 @@ interface TopItemsBubbleChartProps {
   onExport?: () => void;
   isExporting?: boolean;
   exportDisabled?: boolean;
+  disableAnimation?: boolean;
 }
 
 const colors = ["#a855f7", "#8b5cf6", "#ec4899", "#f472b6", "#ef4444", "#dc2626", "#f97316", "#eab308"];
-function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxItems: number }) {
+function BubbleChartContent({
+  items,
+  maxItems = 20,
+  disableAnimation = false
+}: {
+  items: TopItem[];
+  maxItems: number;
+  disableAnimation?: boolean;
+}) {
   const [hoveredItem, setHoveredItem] = useState<BubbleNodeData | null>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [chartSize, setChartSize] = useState({ width: 400, height: 400 });
@@ -140,6 +149,7 @@ function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxIte
           width={chartSize.width}
           height={chartSize.height}
           onNodeHover={handleNodeHover}
+          animate={!disableAnimation}
         />
       </div>
       {isHovering && hoveredItem && (
@@ -187,7 +197,8 @@ export default function TopItemsBubbleChart({
   chartHeight = "h-[700px] sm:h-[500px]",
   onExport,
   isExporting,
-  exportDisabled
+  exportDisabled,
+  disableAnimation = false
 }: TopItemsBubbleChartProps) {
   return (
     <ExpandableChartContainer
@@ -200,7 +211,7 @@ export default function TopItemsBubbleChart({
       exportDisabled={exportDisabled}
     >
       <div className="relative flex h-full flex-col">
-        <BubbleChartContent items={items} maxItems={maxItems} />
+        <BubbleChartContent items={items} maxItems={maxItems} disableAnimation={disableAnimation} />
         <ChartLegend data={items} colors={colors} />
       </div>
     </ExpandableChartContainer>

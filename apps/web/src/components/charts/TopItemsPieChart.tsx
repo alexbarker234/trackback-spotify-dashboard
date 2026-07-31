@@ -18,6 +18,7 @@ interface TopItemsPieChartProps {
   onExport?: () => void;
   isExporting?: boolean;
   exportDisabled?: boolean;
+  disableAnimation?: boolean;
 }
 
 interface PieData {
@@ -42,7 +43,8 @@ export default function TopItemsPieChart({
   chartHeight = "h-[700px] sm:h-[500px]",
   onExport,
   isExporting,
-  exportDisabled
+  exportDisabled,
+  disableAnimation = false
 }: TopItemsPieChartProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
 
@@ -147,6 +149,7 @@ export default function TopItemsPieChart({
               paddingAngle={2}
               cornerRadius={4}
               className="cursor-pointer"
+              isAnimationActive={!disableAnimation}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
