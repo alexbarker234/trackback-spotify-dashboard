@@ -161,7 +161,7 @@ export default function TopItemsPieChart({
           </PieChart>
         </ResponsiveContainer>
 
-        <ChartLegend data={data} colors={colors} />
+        <ChartLegend data={data} colors={colors} size={disableAnimation ? "export" : "default"} />
       </div>
     </ExpandableChartContainer>
   );

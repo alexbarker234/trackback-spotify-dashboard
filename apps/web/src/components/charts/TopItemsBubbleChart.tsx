@@ -212,7 +212,7 @@ export default function TopItemsBubbleChart({
     >
       <div className="relative flex h-full flex-col">
         <BubbleChartContent items={items} maxItems={maxItems} disableAnimation={disableAnimation} />
-        <ChartLegend data={items} colors={colors} />
+        <ChartLegend data={items} colors={colors} size={disableAnimation ? "export" : "default"} />
       </div>
     </ExpandableChartContainer>
   );
