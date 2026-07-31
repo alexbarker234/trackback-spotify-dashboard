@@ -4,19 +4,28 @@ import { faExpand, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+import ExportShareIconButton from "../export/ExportShareIconButton";
 
 interface ExpandableChartContainerProps {
   title: string;
   children: React.ReactNode;
   className?: string;
   chartHeight?: string;
+  hideExpandButton?: boolean;
+  onExport?: () => void;
+  isExporting?: boolean;
+  exportDisabled?: boolean;
 }
 
 export default function ExpandableChartContainer({
   title,
   children,
   className = "",
-  chartHeight = "h-64"
+  chartHeight = "h-64",
+  hideExpandButton = false,
+  onExport,
+  isExporting = false,
+  exportDisabled = false
 }: ExpandableChartContainerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -69,6 +78,10 @@ export default function ExpandableChartContainer({
                 isFullscreenContent={true}
                 title={title}
                 chartHeight={chartHeight}
+                hideExpandButton={hideExpandButton}
+                onExport={onExport}
+                isExporting={isExporting}
+                exportDisabled={exportDisabled}
                 onFullscreenToggle={() => setIsFullscreen(!isFullscreen)}
               >
                 {children}
@@ -84,6 +97,10 @@ export default function ExpandableChartContainer({
           isFullscreenContent={false}
           title={title}
           chartHeight={chartHeight}
+          hideExpandButton={hideExpandButton}
+          onExport={onExport}
+          isExporting={isExporting}
+          exportDisabled={exportDisabled}
           onFullscreenToggle={() => setIsFullscreen(!isFullscreen)}
         >
           {children}
@@ -92,34 +109,60 @@ export default function ExpandableChartContainer({
     </>
   );
 }
+
 const ChartContent = ({
   isFullscreenContent,
   title,
   children,
   chartHeight,
+  hideExpandButton = false,
+  onExport,
+  isExporting = false,
+  exportDisabled = false,
   onFullscreenToggle
 }: {
   isFullscreenContent: boolean;
   title: string;
   children: React.ReactNode;
   chartHeight: string;
+  hideExpandButton?: boolean;
+  onExport?: () => void;
+  isExporting?: boolean;
+  exportDisabled?: boolean;
   onFullscreenToggle: () => void;
 }) => {
+  const showActions = Boolean(onExport) || !hideExpandButton;
+
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={onFullscreenToggle}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-white/10 p-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed"
-            title={isFullscreenContent ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            <FontAwesomeIcon icon={isFullscreenContent ? faXmark : faExpand} className="h-4 w-4" />
-          </button>
-        </div>
+        {showActions && (
+          <div className="flex gap-2">
+            {onExport && (
+              <ExportShareIconButton
+                onClick={onExport}
+                disabled={exportDisabled}
+                loading={isExporting}
+              />
+            )}
+            {!hideExpandButton && (
+              <button
+                onClick={onFullscreenToggle}
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-white/10 p-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed"
+                title={isFullscreenContent ? "Exit fullscreen" : "Enter fullscreen"}
+              >
+                <FontAwesomeIcon icon={isFullscreenContent ? faXmark : faExpand} className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
-      <div className={`w-full ${isFullscreenContent ? "h-[calc(100vh-8rem)]" : chartHeight}`}>{children}</div>
+      <div
+        className={`w-full ${isFullscreenContent ? "h-[calc(100vh-8rem)] overflow-auto" : chartHeight}`}
+      >
+        {children}
+      </div>
     </>
   );
 };

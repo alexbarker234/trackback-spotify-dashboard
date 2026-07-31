@@ -12,6 +12,12 @@ interface TopItemsPieChartProps {
   items: TopItem[];
   chartTitle: string;
   maxItems?: number;
+  hideExpandButton?: boolean;
+  className?: string;
+  chartHeight?: string;
+  onExport?: () => void;
+  isExporting?: boolean;
+  exportDisabled?: boolean;
 }
 
 interface PieData {
@@ -27,7 +33,17 @@ interface PieData {
 }
 const colors = ["#a855f7", "#8b5cf6", "#ec4899", "#f472b6", "#ef4444", "#dc2626", "#f97316", "#eab308"];
 
-export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: TopItemsPieChartProps) {
+export default function TopItemsPieChart({
+  items,
+  chartTitle,
+  maxItems = 20,
+  hideExpandButton = false,
+  className,
+  chartHeight = "h-[700px] sm:h-[500px]",
+  onExport,
+  isExporting,
+  exportDisabled
+}: TopItemsPieChartProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
 
   const topItems = items.slice(0, maxItems);
@@ -105,7 +121,15 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
   };
 
   return (
-    <ExpandableChartContainer title={chartTitle} chartHeight="h-[700px] sm:h-[500px]">
+    <ExpandableChartContainer
+      title={chartTitle}
+      chartHeight={chartHeight}
+      hideExpandButton={hideExpandButton}
+      className={className}
+      onExport={onExport}
+      isExporting={isExporting}
+      exportDisabled={exportDisabled}
+    >
       <div className="relative flex h-full flex-col">
         <ResponsiveContainer width="100%" height="100%" className="flex-1">
           <PieChart>

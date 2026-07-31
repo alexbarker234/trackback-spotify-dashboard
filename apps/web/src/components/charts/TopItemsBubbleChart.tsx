@@ -15,6 +15,12 @@ interface TopItemsBubbleChartProps {
   items: TopItem[];
   chartTitle: string;
   maxItems?: number;
+  hideExpandButton?: boolean;
+  className?: string;
+  chartHeight?: string;
+  onExport?: () => void;
+  isExporting?: boolean;
+  exportDisabled?: boolean;
 }
 
 const colors = ["#a855f7", "#8b5cf6", "#ec4899", "#f472b6", "#ef4444", "#dc2626", "#f97316", "#eab308"];
@@ -172,9 +178,27 @@ function BubbleChartContent({ items, maxItems = 20 }: { items: TopItem[]; maxIte
   );
 }
 
-export default function TopItemsBubbleChart({ items, chartTitle, maxItems = 20 }: TopItemsBubbleChartProps) {
+export default function TopItemsBubbleChart({
+  items,
+  chartTitle,
+  maxItems = 20,
+  hideExpandButton = false,
+  className,
+  chartHeight = "h-[700px] sm:h-[500px]",
+  onExport,
+  isExporting,
+  exportDisabled
+}: TopItemsBubbleChartProps) {
   return (
-    <ExpandableChartContainer title={chartTitle} chartHeight="h-[700px] sm:h-[500px]">
+    <ExpandableChartContainer
+      title={chartTitle}
+      chartHeight={chartHeight}
+      hideExpandButton={hideExpandButton}
+      className={className}
+      onExport={onExport}
+      isExporting={isExporting}
+      exportDisabled={exportDisabled}
+    >
       <div className="relative flex h-full flex-col">
         <BubbleChartContent items={items} maxItems={maxItems} />
         <ChartLegend data={items} colors={colors} />
