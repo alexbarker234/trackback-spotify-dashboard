@@ -3,7 +3,6 @@
 import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
 import { usePageTitle } from "@/lib/contexts/PageTitleContext";
-import { cn } from "@/lib/utils/cn";
 import { formatDate, formatDateShort, formatDuration } from "@/lib/utils/timeUtils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -20,8 +19,8 @@ import ItemTypeSelector, { ItemType, itemTypeOptions } from "../ItemTypeSelector
 import Loading from "../Loading";
 import CustomDateRangeModal from "../modals/CustomDateRangeModal";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
-
-const EXPORT_GRID_LIST_MAX = 10;
+import TopItemsExportGrid from "./TopItemsExportGrid";
+import TopItemsExportList from "./TopItemsExportList";
 
 export type TopItem = {
   id: string;
@@ -236,9 +235,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
           </div>
           <div className="min-h-0 flex-1">
             {viewType === "grid" ? (
-              <TopItemsGrid items={data} maxItems={EXPORT_GRID_LIST_MAX} className="grid-cols-2 gap-5" />
+              <TopItemsExportGrid items={data} />
             ) : viewType === "list" ? (
-              <TopItemsList items={data} maxItems={EXPORT_GRID_LIST_MAX} className="gap-4" />
+              <TopItemsExportList items={data} />
             ) : viewType === "pie" ? (
               <TopItemsPieChart
                 chartTitle={`${title} Distribution`}
@@ -265,17 +264,9 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
   );
 }
 
-const TopItemsList = ({
-  items,
-  maxItems,
-  className
-}: {
-  items: TopItem[];
-  maxItems: number;
-  className?: string;
-}) => {
+const TopItemsList = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
+    <div className="flex flex-col gap-3">
       {items.slice(0, maxItems).map((item, index) => (
         <CompactRankListCard
           key={item.id}
@@ -292,17 +283,9 @@ const TopItemsList = ({
   );
 };
 
-const TopItemsGrid = ({
-  items,
-  maxItems,
-  className
-}: {
-  items: TopItem[];
-  maxItems: number;
-  className?: string;
-}) => {
+const TopItemsGrid = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
   return (
-    <div className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5", className)}>
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
       {items.slice(0, maxItems).map((item, index) => (
         <StreamItemCard
           key={item.id}

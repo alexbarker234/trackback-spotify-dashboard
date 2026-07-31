@@ -1,0 +1,30 @@
+---
+description: Top items export layouts and JSX section comment conventions for the web app
+globs: apps/web/src/components/top/**/*.tsx,apps/web/src/components/export/**/*.{ts,tsx},apps/web/src/components/cards/**/*.tsx,apps/web/src/components/itemCards/**/*.tsx
+alwaysApply: false
+---
+
+# Top items export & section comments
+
+Read `apps/web/AGENTS.md` for the full web agent notes.
+
+## Section comment headers
+
+Label distinct UI regions with short JSX comments (same style as `CompactRankListCard`):
+
+```tsx
+{/* Rank */}
+{/* Image */}
+{/* Content */}
+{/* Stats */}
+```
+
+Apply this in cards, item cards, and export layouts when adding or editing markup.
+
+## Export layouts
+
+- Use `TopItemsExportGrid` / `TopItemsExportList` for grid/list capture — not the on-screen list/grid.
+- Keep grid export images square (`aspect-square`).
+- Limit list export to 10 items; grid export to 12 items (3 columns × 4 rows).
+- Export typography should stay large enough to read on the 1080×1920 portrait canvas.
+- Reuse `src/components/export` helpers (`useOffscreenExport`, `html2canvas-pro`); do not reintroduce `html2canvas` (oklch unsupported).
