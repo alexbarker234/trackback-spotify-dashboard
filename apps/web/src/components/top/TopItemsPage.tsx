@@ -226,7 +226,7 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
         >
           <div className="mb-8 shrink-0">
             <h1 className="text-4xl font-bold">{title}</h1>
-            {periodDisplay ? <p className="mt-2 text-xl text-gray-400">{periodDisplay}</p> : null}
+            {periodDisplay ? <p className="mt-2 text-3xl text-gray-400">{periodDisplay}</p> : null}
           </div>
           <div className="min-h-0 flex-1">
             {viewType === "grid" ? (
