@@ -32,6 +32,7 @@ async function TrackHeader({ trackData }: { trackData: Awaited<ReturnType<typeof
       name={track.name}
       artists={artists}
       subtitle={`Duration: ${formatTime(track.durationMS)}`}
+      spotifyUrl={track.trackId ? `https://open.spotify.com/track/${track.trackId}` : null}
     />
   );
 }
