@@ -239,6 +239,11 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
               <TopItemsExportBubble items={data} />
             )}
           </div>
+          {/* Brand */}
+          <div className="mt-8 flex shrink-0 items-center justify-center gap-3">
+            <img src="/icon-192x192.png" alt="" className="h-12 w-12 rounded-xl" />
+            <span className="text-3xl font-bold">Trackback</span>
+          </div>
         </div>
       )}
     </div>
