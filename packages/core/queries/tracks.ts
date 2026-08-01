@@ -107,7 +107,8 @@ export async function getTrackData(isrc: string) {
         name: track.name,
         isrc: track.isrc,
         durationMS: track.durationMS,
-        imageUrl: album.imageUrl
+        imageUrl: album.imageUrl,
+        trackId: albumTrack.trackId
       })
       .from(track)
       .leftJoin(albumTrack, eq(track.isrc, albumTrack.trackIsrc))

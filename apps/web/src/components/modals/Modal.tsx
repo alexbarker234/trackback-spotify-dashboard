@@ -1,5 +1,6 @@
 "use client";
 
+import { colors } from "@/lib/utils/colors";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "motion/react";
@@ -60,7 +61,8 @@ export default function Modal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className={`relative max-h-[90vh] w-full ${maxWidth} overflow-auto rounded-2xl bg-[#1f193c] p-6`}
+              className={`relative max-h-[90vh] w-full ${maxWidth} overflow-auto rounded-2xl p-6`}
+              style={{ backgroundColor: colors.modal }}
               onClick={(e) => e.stopPropagation()}
             >
               <button

@@ -37,6 +37,7 @@ async function ArtistHeader({
       imageUrl={artist.imageUrl}
       name={artist.name}
       subtitle={`${artistData.tracks.length} tracks • ${artistData.albums.length} albums`}
+      spotifyUrl={`https://open.spotify.com/artist/${artist.id}`}
     />
   );
 }

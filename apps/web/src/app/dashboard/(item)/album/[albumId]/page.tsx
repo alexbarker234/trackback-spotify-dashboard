@@ -34,6 +34,7 @@ async function AlbumHeader({ albumData }: { albumData: Awaited<ReturnType<typeof
       name={album.name}
       artists={artists}
       subtitle={`${albumData.tracks.length} tracks • ${albumData.artists.length} artists`}
+      spotifyUrl={`https://open.spotify.com/album/${album.id}`}
     />
   );
 }

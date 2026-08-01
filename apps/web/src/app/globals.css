@@ -1,7 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --gradient-primary: linear-gradient(to bottom right, #111827, #1f193c, #111827);
+  --color-white: #ffffff;
+  --color-gray-900: #111827;
+  --color-modal: #1f193c;
+  --color-theme: #121327;
+  --color-purple: #a855f7;
+  --color-purple-dark: #9333ea;
+  --color-pink: #ec4899;
+  --color-pink-dark: #db2777;
+  --color-purple-20: rgba(168, 85, 247, 0.2);
+  --color-purple-30: rgba(168, 85, 247, 0.3);
+  --color-purple-50: rgba(168, 85, 247, 0.5);
+  --color-pink-20: rgba(236, 72, 153, 0.2);
+  --gradient-primary: linear-gradient(
+    to bottom right,
+    var(--color-gray-900),
+    var(--color-modal),
+    var(--color-gray-900)
+  );
 }
 
 @theme {
@@ -33,7 +50,7 @@
   appearance: none;
   height: 20px;
   width: 20px;
-  background-color: #fff;
+  background-color: var(--color-white);
   border: none;
   border-radius: 50%;
 }

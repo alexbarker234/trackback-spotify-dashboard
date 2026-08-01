@@ -1,8 +1,9 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "@/components/charts/shared/ChartTooltip";
 import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import { chartAxis, chartGrid, colors } from "@/lib/utils/colors";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface YearlyPercentageData {
   year: string;
@@ -63,16 +64,16 @@ export default function YearlyPercentageChart({ data, itemName }: YearlyPercenta
             bottom: 0
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-          <XAxis dataKey="year" stroke="#9CA3AF" fontSize={12} />
-          <YAxis stroke="#9CA3AF" fontSize={12} domain={[0, 100]} tickFormatter={(value) => `${Math.round(value)}%`} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+          <XAxis dataKey="year" stroke={chartAxis} fontSize={12} />
+          <YAxis stroke={chartAxis} fontSize={12} domain={[0, 100]} tickFormatter={(value) => `${Math.round(value)}%`} />
           <Tooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
             dataKey="otherPercentage"
             stackId="1"
-            stroke="#9ca3af"
-            fill="#9ca3af"
+            stroke={chartAxis}
+            fill={chartAxis}
             fillOpacity={0.6}
             strokeWidth={2}
             name="Other"
@@ -81,8 +82,8 @@ export default function YearlyPercentageChart({ data, itemName }: YearlyPercenta
             type="monotone"
             dataKey="itemPercentage"
             stackId="1"
-            stroke="#ec4899"
-            fill="#ec4899"
+            stroke={colors.pink}
+            fill={colors.pink}
             fillOpacity={0.8}
             strokeWidth={2}
             name={itemName}

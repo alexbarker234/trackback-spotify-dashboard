@@ -1,9 +1,10 @@
 "use client";
 
-import { formatDuration } from "@/lib/utils/timeUtils";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "@/components/charts/shared/ChartTooltip";
 import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import { chartAxis, chartGrid, colors } from "@/lib/utils/colors";
+import { formatDuration } from "@/lib/utils/timeUtils";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface YearlyStreamData {
   year: string;
@@ -63,15 +64,15 @@ export default function YearlyStreamChart({ data }: YearlyStreamChartProps) {
             bottom: 0
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-          <XAxis dataKey="year" tickFormatter={formatYear} stroke="#9CA3AF" fontSize={12} />
-          <YAxis stroke="#9CA3AF" fontSize={12} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+          <XAxis dataKey="year" tickFormatter={formatYear} stroke={chartAxis} fontSize={12} />
+          <YAxis stroke={chartAxis} fontSize={12} />
           <Tooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
             dataKey="streamCount"
-            stroke="#f59e0b"
-            fill="#f59e0b"
+            stroke={colors.amber}
+            fill={colors.amber}
             fillOpacity={0.3}
             strokeWidth={2}
           />

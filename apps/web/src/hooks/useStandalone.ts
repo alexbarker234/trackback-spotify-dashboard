@@ -25,9 +25,7 @@ export function detectStandalone(): boolean {
 
 export const useStandalone = () => {
   const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(() =>
-    typeof window !== "undefined" ? detectStandalone() : false,
-  );
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

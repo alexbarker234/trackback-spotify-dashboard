@@ -7,48 +7,35 @@ import { chartAxis, chartGrid, colors } from "@/lib/utils/colors";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-interface MonthlyStreamData {
-  month: string;
-  monthNumber: number;
+interface DayOfWeekStreamData {
+  dayOfWeek: number;
+  day: string;
   streamCount: number;
   totalDuration: number;
 }
 
-interface MonthlyStreamChartProps {
-  data: MonthlyStreamData[];
+interface DayOfWeekStreamChartProps {
+  data: DayOfWeekStreamData[];
 }
 
-export default function MonthlyStreamChart({ data }: MonthlyStreamChartProps) {
-  // Sort data by month number to ensure proper chronological order
-  const sortedData = [...data].sort((a, b) => a.monthNumber - b.monthNumber);
-
+export default function DayOfWeekStreamChart({ data }: DayOfWeekStreamChartProps) {
   return (
-    <ExpandableChartContainer title="Streams by month">
+    <ExpandableChartContainer title="Streams by day of week">
       <ResizableChartContent>
-        {(isVertical) => <MonthlyStreamChartContent data={sortedData} isVertical={isVertical} />}
+        {(isVertical) => <DayOfWeekStreamChartContent data={data} isVertical={isVertical} />}
       </ResizableChartContent>
     </ExpandableChartContainer>
   );
 }
 
-function MonthlyStreamChartContent({
+function DayOfWeekStreamChartContent({
   data,
   isVertical
 }: {
-  data: MonthlyStreamData[];
+  data: DayOfWeekStreamData[];
   isVertical: boolean;
 }) {
-  const formatShortMonth = (monthStr: string) => {
-    return monthStr.trim().slice(0, 3);
-  };
-
-  const formatMonth = (monthStr: string) => {
-    return monthStr.trim().charAt(0).toUpperCase() + monthStr.trim().slice(1).toLowerCase();
-  };
-
-  const formatDurationFromMS = (ms: number) => {
-    return formatDuration(ms);
-  };
+  const formatShortDay = (day: string) => day.slice(0, 3);
 
   const CustomTooltip = ({
     active,
@@ -56,20 +43,20 @@ function MonthlyStreamChartContent({
     label
   }: {
     active?: boolean;
-    payload?: Array<{ value: number; payload: MonthlyStreamData }>;
+    payload?: Array<{ value: number; payload: DayOfWeekStreamData }>;
     label?: string;
   }) => {
     if (active && payload && payload.length) {
       return (
         <ChartTooltip>
-          <p className="text-sm font-medium text-gray-300">{formatMonth(label)}</p>
+          <p className="text-sm font-medium text-gray-300">{label}</p>
           <p className="text-white">
             <span className="text-gray-400">Streams: </span>
-            {payload[0].value.toLocaleString()}
+            {payload[0]!.value.toLocaleString()}
           </p>
           <p className="text-white">
             <span className="text-gray-400">Duration: </span>
-            {formatDurationFromMS(payload[0].payload.totalDuration)}
+            {formatDuration(payload[0]!.payload.totalDuration)}
           </p>
         </ChartTooltip>
       );
@@ -95,27 +82,22 @@ function MonthlyStreamChartContent({
             <XAxis type="number" stroke={chartAxis} fontSize={12} />
             <YAxis
               type="category"
-              dataKey="month"
-              tickFormatter={formatShortMonth}
+              dataKey="day"
+              tickFormatter={formatShortDay}
               stroke={chartAxis}
               fontSize={12}
             />
           </>
         ) : (
           <>
-            <XAxis
-              dataKey="month"
-              tickFormatter={formatShortMonth}
-              stroke={chartAxis}
-              fontSize={12}
-            />
+            <XAxis dataKey="day" tickFormatter={formatShortDay} stroke={chartAxis} fontSize={12} />
             <YAxis stroke={chartAxis} fontSize={12} />
           </>
         )}
         <Tooltip content={<CustomTooltip />} />
         <Bar
           dataKey="streamCount"
-          fill={colors.purple}
+          fill={colors.sunset}
           radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
         />
       </BarChart>

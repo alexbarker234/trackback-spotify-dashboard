@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { getStandaloneCookieServer } from "@/lib/utils/serverCookies";
 import { headers } from "next/headers";
 import TabsNavigationClient from "./TabsNavigationClient";
 
@@ -9,5 +10,11 @@ export default async function TabsNavigation() {
   if (!session?.user?.id) {
     return null;
   }
+
+  const isStandalone = await getStandaloneCookieServer();
+  if (!isStandalone) {
+    return null;
+  }
+
   return <TabsNavigationClient />;
 }

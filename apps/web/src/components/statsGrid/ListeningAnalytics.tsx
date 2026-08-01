@@ -7,7 +7,13 @@ export interface ListeningAnalyticsData {
   longestSession: LongestSessionData;
 }
 
-export default function ListeningAnalytics({ stats }: { stats: ListeningAnalyticsData }) {
+export default function ListeningAnalytics({
+  stats,
+  linkToStats = false
+}: {
+  stats: ListeningAnalyticsData;
+  linkToStats?: boolean;
+}) {
   const streakInfo =
     stats.longestStreak.streakStartDate && stats.longestStreak.streakEndDate
       ? `${formatDate(new Date(stats.longestStreak.streakStartDate).getTime())} to ${formatDate(new Date(stats.longestStreak.streakEndDate).getTime())}`
@@ -16,6 +22,8 @@ export default function ListeningAnalytics({ stats }: { stats: ListeningAnalytic
   const sessionInfo = stats.longestSession.sessionStartTime
     ? `${stats.longestSession.trackCount} tracks on ${stats.longestSession.sessionStartTime.toLocaleDateString()}`
     : `${stats.longestSession.trackCount} tracks`;
+
+  const statsHref = linkToStats ? "/dashboard/stats?dateRange=lifetime" : undefined;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6">
@@ -27,6 +35,7 @@ export default function ListeningAnalytics({ stats }: { stats: ListeningAnalytic
         gradientTo="to-teal-500/10"
         blurColor="bg-emerald-500/20"
         textColor="text-emerald-400"
+        href={statsHref}
       />
 
       <MetricCard
@@ -37,6 +46,7 @@ export default function ListeningAnalytics({ stats }: { stats: ListeningAnalytic
         gradientTo="to-blue-500/10"
         blurColor="bg-indigo-500/20"
         textColor="text-indigo-400"
+        href={statsHref}
       />
     </div>
   );

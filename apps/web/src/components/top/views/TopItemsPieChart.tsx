@@ -1,13 +1,14 @@
 "use client";
 
-import { formatDuration } from "@/lib/utils/timeUtils";
-import { useState } from "react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { TopItem } from "@/components/top/types";
 import ChartLegend from "@/components/charts/shared/ChartLegend";
 import ChartTooltip from "@/components/charts/shared/ChartTooltip";
 import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
-import { topItemsChartColors as colors } from "../topItemsChartColors";
+import { TopItem } from "@/components/top/types";
+import { colors } from "@/lib/utils/colors";
+import { formatDuration } from "@/lib/utils/timeUtils";
+import { useState } from "react";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { topItemsChartColors } from "../topItemsChartColors";
 
 interface TopItemsPieChartProps {
   items: TopItem[];
@@ -143,7 +144,7 @@ export default function TopItemsPieChart({
               label={false}
               innerRadius="20%"
               outerRadius="100%"
-              fill="#8884d8"
+              fill={colors.chartDefault}
               dataKey="value"
               strokeWidth={0}
               paddingAngle={2}
@@ -154,14 +155,14 @@ export default function TopItemsPieChart({
               onMouseLeave={handleMouseLeave}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                <Cell key={`cell-${index}`} fill={topItemsChartColors[index % topItemsChartColors.length]} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} active={isTooltipVisible} />
           </PieChart>
         </ResponsiveContainer>
 
-        <ChartLegend data={data} colors={colors} size={disableAnimation ? "export" : "default"} />
+        <ChartLegend data={data} colors={topItemsChartColors} size={disableAnimation ? "export" : "default"} />
       </div>
     </ExpandableChartContainer>
   );

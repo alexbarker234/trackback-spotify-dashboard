@@ -1,4 +1,5 @@
 import type { Options as Html2CanvasOptions } from "html2canvas-pro";
+import { colors } from "@/lib/utils/colors";
 
 export const PORTRAIT_EXPORT_SIZE = {
   width: 1080,
@@ -107,7 +108,7 @@ export async function captureElementToPng(
   {
     width,
     height,
-    backgroundColor = "#111827",
+    backgroundColor = colors.gray900,
     settleMs = 600,
     scale = 1,
     useCORS = true,

@@ -1,11 +1,12 @@
 "use client";
 
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 import { cn } from "@/lib/utils/cn";
+import { colors } from "@/lib/utils/colors";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import { useEffect, useRef, useState } from "react";
-import ChartTooltip from "@/components/charts/shared/ChartTooltip";
-import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 
 interface HourlyListenData {
   hour: number;
@@ -174,7 +175,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
                 y={labelY}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fill="white"
+                fill={colors.white}
                 fontSize={chartSize * 0.0375} // 3.75% of chart size
                 fontWeight="500"
               >
@@ -189,7 +190,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
             cy={centerY}
             r={maxRadius}
             fill="none"
-            stroke="rgba(255, 255, 255, 0.2)"
+            stroke={colors.white20}
             strokeWidth="1"
             strokeDasharray="2,2"
           />
@@ -211,7 +212,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
                 y1={tickInnerY}
                 x2={tickOuterX}
                 y2={tickOuterY}
-                stroke="white"
+                stroke={colors.white}
                 strokeWidth={chartSize * 0.003125} // Scale stroke width too
                 opacity="0.3"
               />
@@ -228,7 +229,7 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
               height={barWidth}
               rx={barWidth / 2}
               ry={barWidth / 2}
-              fill="rgba(0, 0, 0, 0.2)"
+              fill={colors.black20}
               transform={`rotate(${bar.angle}, ${bar.startX}, ${bar.startY})`}
             />
           ))}

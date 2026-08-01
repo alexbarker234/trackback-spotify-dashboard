@@ -36,8 +36,8 @@ async function MetricsSection() {
   ]);
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <ListeningMetricsGrid stats={listenStats} />
-      <ListeningAnalytics stats={{ longestStreak, longestSession }} />
+      <ListeningMetricsGrid stats={listenStats} linkToStats />
+      <ListeningAnalytics stats={{ longestStreak, longestSession }} linkToStats />
     </div>
   );
 }

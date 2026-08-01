@@ -1,5 +1,6 @@
 "use client";
 
+import { colors } from "@/lib/utils/colors";
 import { EvolutionItem } from "@workspace/core/queries/evolution";
 import { motion } from "motion/react";
 
@@ -58,15 +59,15 @@ export default function EvolutionChartItem({
         ease: isEntering ? "easeOut" : "easeInOut",
         delay: isEntering ? 0 : Math.abs(targetPosition - currentPosition) * 0.05
       }}
-      className="absolute right-0 left-0 flex items-center gap-4 rounded-lg bg-[#312f49] px-2"
-      style={{ height: `${itemHeight}px`, margin: "6px 0" }}
+      className="absolute right-0 left-0 flex items-center gap-4 rounded-lg px-2"
+      style={{ height: `${itemHeight}px`, margin: "6px 0", backgroundColor: colors.evolutionRow }}
     >
       {/* Rank */}
       <div className="flex w-8 items-center justify-center">
         <motion.span
           key={`rank-${item?.rank}-${currentWeek}`}
-          initial={{ scale: 1.2, color: "#ec4899" }}
-          animate={{ scale: 1, color: "#ffffff" }}
+          initial={{ scale: 1.2, color: colors.pink }}
+          animate={{ scale: 1, color: colors.white }}
           transition={{ duration: 0.3 }}
           className="text-sm font-bold"
         >

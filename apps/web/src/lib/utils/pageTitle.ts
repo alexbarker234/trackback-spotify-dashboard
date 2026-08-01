@@ -29,6 +29,8 @@ export const getPageTitle = (path: string, searchParams: URLSearchParams) => {
       return "On This Day";
     case "/dashboard/history":
       return "Listening History";
+    case "/dashboard/stats":
+      return "Stats";
     default:
       return "Trackback";
   }

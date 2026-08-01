@@ -1,5 +1,7 @@
 "use client";
 
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import { colors } from "@/lib/utils/colors";
 import {
   faChevronLeft,
   faChevronRight,
@@ -10,7 +12,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { EvolutionItem } from "@workspace/core/queries/evolution";
 import { useEffect, useMemo, useRef, useState } from "react";
-import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 import EvolutionChartItem from "./EvolutionChartItem";
 
 const formatWeek = (weekString: string) => {
@@ -62,7 +63,7 @@ function EvolutionChartSlider({
           onChange={(e) => setCurrentWeekIndex(parseInt(e.target.value))}
           className="slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 focus:outline-none"
           style={{
-            background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 ${(currentWeekIndex / (weeks.length - 1)) * 100}%, #374151 100%)`
+            background: `linear-gradient(to right, ${colors.pink} 0%, ${colors.pink} ${(currentWeekIndex / (weeks.length - 1)) * 100}%, ${colors.gray700} ${(currentWeekIndex / (weeks.length - 1)) * 100}%, ${colors.gray700} 100%)`
           }}
         />
         <div className="mt-2 flex justify-between text-xs text-gray-400">

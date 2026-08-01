@@ -1,6 +1,7 @@
 "use client";
 
 import ChartLegend from "@/components/charts/shared/ChartLegend";
+import { colors } from "@/lib/utils/colors";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { topItemsChartColors } from "../topItemsChartColors";
 import { TopItem } from "../types";
@@ -30,7 +31,7 @@ export default function TopItemsExportPie({ items }: { items: TopItem[] }) {
               label={false}
               innerRadius="20%"
               outerRadius="90%"
-              fill="#8884d8"
+              fill={colors.chartDefault}
               dataKey="value"
               strokeWidth={0}
               paddingAngle={2}
