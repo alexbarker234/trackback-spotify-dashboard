@@ -1,6 +1,5 @@
 "use client";
 
-import { useStandalone } from "@/hooks/useStandalone";
 import {
   faChartLine,
   faGrip,
@@ -30,7 +29,6 @@ const tabs: Tab[] = [
 
 export default function TabsNavigation() {
   const pathname = usePathname();
-  const { isStandalone } = useStandalone();
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<{ [key: string]: HTMLAnchorElement | null }>({});
@@ -68,10 +66,6 @@ export default function TabsNavigation() {
     window.addEventListener("resize", updateIndicator);
     return () => window.removeEventListener("resize", updateIndicator);
   }, [pathname, activeTab]);
-
-  if (!isStandalone) {
-    return null;
-  }
 
   return (
     <nav className="fixed right-0 bottom-0 left-0 z-50 border-t border-white/10 bg-black/20 backdrop-blur-md">
