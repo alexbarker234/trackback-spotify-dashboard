@@ -1,4 +1,4 @@
-import ListeningHeatmap from "@/components/charts/ListeningHeatmap";
+import ListeningHeatmap from "@/components/charts/dashboard/ListeningHeatmap";
 
 export default function HeatmapPage() {
   return (

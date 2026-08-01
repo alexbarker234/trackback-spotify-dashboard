@@ -3,15 +3,24 @@
 import * as d3 from "d3";
 import React, { useCallback, useRef } from "react";
 import BubbleNode, { BubbleNodeData } from "./BubbleNode";
+
 export interface BubbleChartProps {
   data: BubbleNodeData[];
   width?: number;
   height?: number;
   onNodeClick?: (node: BubbleNodeData) => void;
   onNodeHover?: (node: BubbleNodeData | null) => void;
+  animate?: boolean;
 }
 
-export default function BubbleChart({ data, width = 600, height = 400, onNodeClick, onNodeHover }: BubbleChartProps) {
+export default function BubbleChart({
+  data,
+  width = 600,
+  height = 400,
+  onNodeClick,
+  onNodeHover,
+  animate = true
+}: BubbleChartProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const fontSizeScale = d3
@@ -40,8 +49,31 @@ export default function BubbleChart({ data, width = 600, height = 400, onNodeCli
   );
 
   return (
-    <div className="relative h-full w-full">
-      <svg ref={svgRef} width={width} height={height} className="h-auto max-w-full font-sans text-xs">
+    <div className="relative" style={{ width, height }}>
+      {!animate &&
+        data.map((node) =>
+          node.imageUrl && node.x !== undefined && node.y !== undefined ? (
+            <img
+              key={`photo-${node.id}`}
+              src={node.imageUrl}
+              alt=""
+              draggable={false}
+              className="pointer-events-none absolute rounded-full object-cover"
+              style={{
+                left: node.x - node.radius,
+                top: node.y - node.radius,
+                width: node.radius * 2,
+                height: node.radius * 2
+              }}
+            />
+          ) : null
+        )}
+      <svg
+        ref={svgRef}
+        width={width}
+        height={height}
+        className={`h-auto max-w-full font-sans text-xs ${!animate ? "relative z-10" : ""}`}
+      >
         <g>
           {data.map((node) => (
             <BubbleNode
@@ -52,6 +84,7 @@ export default function BubbleChart({ data, width = 600, height = 400, onNodeCli
               onClick={handleNodeClick}
               fontSizeScale={fontSizeScale}
               colorScale={colorScale}
+              animate={animate}
             />
           ))}
         </g>

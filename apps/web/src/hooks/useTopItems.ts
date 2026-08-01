@@ -1,7 +1,7 @@
 "use client";
 
 import { ItemType } from "@/components/ItemTypeSelector";
-import { TopItem } from "@/components/top/TopItemsPage";
+import { TopItem } from "@/components/top/types";
 import axios from "axios";
 import { useEffect, useState } from "react";
 

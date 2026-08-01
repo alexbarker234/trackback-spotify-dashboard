@@ -23,6 +23,7 @@ interface BubbleNodeProps {
   onClick?: (event: React.MouseEvent, node: BubbleNodeData) => void;
   fontSizeScale: d3.ScalePower<number, number, never>;
   colorScale: d3.ScaleOrdinal<string, string, never>;
+  animate?: boolean;
 }
 
 export default function BubbleNode({
@@ -31,7 +32,8 @@ export default function BubbleNode({
   onMouseOut,
   onClick,
   fontSizeScale,
-  colorScale
+  colorScale,
+  animate = true
 }: BubbleNodeProps) {
   const nodeRef = useRef<SVGGElement>(null);
 
@@ -48,42 +50,49 @@ export default function BubbleNode({
       onMouseOut={onMouseOut}
       onClick={(e) => onClick?.(e, node)}
     >
-      <animateTransform
-        attributeName="transform"
-        type="scale"
-        values="0;1"
-        dur="0.3s"
-        begin="0s"
-        fill="freeze"
-        additive="sum"
-      />
+      {animate && (
+        <animateTransform
+          attributeName="transform"
+          type="scale"
+          values="0;1"
+          dur="0.3s"
+          begin="0s"
+          fill="freeze"
+          additive="sum"
+        />
+      )}
       {node.imageUrl ? (
-        <>
-          {/* Define clipping path for the image */}
-          <defs>
-            <clipPath id={`clip-${node.id}`}>
-              <circle r={node.radius} cx={0} cy={0} />
-            </clipPath>
-          </defs>
+        animate ? (
+          <>
+            {/* Define clipping path for the image */}
+            <defs>
+              <clipPath id={`clip-${node.id}`}>
+                <circle r={node.radius} cx={0} cy={0} />
+              </clipPath>
+            </defs>
 
-          {/* Image with clipping path */}
-          <image
-            xlinkHref={node.imageUrl}
-            width={node.radius * 2}
-            height={node.radius * 2}
-            x={-node.radius}
-            y={-node.radius}
-            clipPath={`url(#clip-${node.id})`}
-            style={{
-              objectFit: "cover",
-              objectPosition: "center"
-            }}
-            preserveAspectRatio="xMidYMid slice"
-          />
+            {/* Image with clipping path */}
+            <image
+              xlinkHref={node.imageUrl}
+              width={node.radius * 2}
+              height={node.radius * 2}
+              x={-node.radius}
+              y={-node.radius}
+              clipPath={`url(#clip-${node.id})`}
+              style={{
+                objectFit: "cover",
+                objectPosition: "center"
+              }}
+              preserveAspectRatio="xMidYMid slice"
+            />
 
-          {/* Border circle */}
-          <circle r={node.radius} stroke="gray" strokeWidth={1} fill="none" />
-        </>
+            {/* Border circle */}
+            <circle r={node.radius} stroke="gray" strokeWidth={1} fill="none" />
+          </>
+        ) : (
+          // Static/export: HTML <img> overlays live in BubbleChart
+          <circle r={node.radius} stroke="gray" strokeWidth={1} fill="transparent" />
+        )
       ) : (
         <>
           {/* Colored circle for nodes without images */}

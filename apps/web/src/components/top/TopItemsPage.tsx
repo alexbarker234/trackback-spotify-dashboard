@@ -3,30 +3,28 @@
 import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
 import { usePageTitle } from "@/lib/contexts/PageTitleContext";
-import { formatDate, formatDateShort, formatDuration } from "@/lib/utils/timeUtils";
+import { formatDate, formatDateShort } from "@/lib/utils/timeUtils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BackNav from "../BackNav";
-import CompactRankListCard from "../cards/CompactRankListCard";
-import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
-import TopItemsPieChart from "../charts/TopItemsPieChart";
+import ExpandableChartContainer from "../charts/shared/ExpandableChartContainer";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
-import StreamItemCard from "../itemCards/StreamItemCard";
+import { ExportLoadingOverlay, useOffscreenExport } from "../export";
 import ItemTypeSelector, { ItemType, itemTypeOptions } from "../ItemTypeSelector";
 import Loading from "../Loading";
 import CustomDateRangeModal from "../modals/CustomDateRangeModal";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
+import TopItemsExportBubble from "./export/TopItemsExportBubble";
+import TopItemsExportGrid from "./export/TopItemsExportGrid";
+import TopItemsExportList from "./export/TopItemsExportList";
+import TopItemsExportPie from "./export/TopItemsExportPie";
+import TopItemsBubbleChart from "./views/TopItemsBubbleChart";
+import TopItemsGrid from "./views/TopItemsGrid";
+import TopItemsList from "./views/TopItemsList";
+import TopItemsPieChart from "./views/TopItemsPieChart";
 
-export type TopItem = {
-  id: string;
-  name: string;
-  imageUrl: string | null;
-  subtitle?: string;
-  streams: number;
-  durationMs: number;
-  href: string;
-};
+export type { TopItem } from "./types";
 
 export type TopItemsPageProps = {
   isStandalone?: boolean;
@@ -77,29 +75,22 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const title = `Top ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
 
-  const updatePeriod = useCallback(() => {
-    const isLifetime = dateRange === "lifetime";
-    const hasDates = startDate && endDate;
-    const period =
-      !isLifetime && hasDates
-        ? `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`
-        : "";
-    const shortPeriod =
-      !isLifetime && hasDates
-        ? `${formatDateShort(startDate.getTime())} - ${formatDateShort(endDate.getTime())}`
-        : "";
+  const isLifetime = dateRange === "lifetime";
 
-    setTitle(title);
-    setSubheader(shortPeriod);
-    return period;
-  }, [dateRange, startDate, endDate, title, setSubheader, setTitle]);
+  const periodDisplay = useMemo(() => {
+    if (isLifetime || !startDate || !endDate) return "";
+    return `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`;
+  }, [isLifetime, startDate, endDate]);
+
+  const shortPeriod = useMemo(() => {
+    if (isLifetime || !startDate || !endDate) return "";
+    return `${formatDateShort(startDate.getTime())} - ${formatDateShort(endDate.getTime())}`;
+  }, [isLifetime, startDate, endDate]);
 
   useEffect(() => {
-    updatePeriod();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const periodDisplay = useMemo(() => updatePeriod(), [updatePeriod]);
+    setTitle(title);
+    setSubheader(shortPeriod);
+  }, [title, shortPeriod, setTitle, setSubheader]);
 
   const onItemTypeChange = (newItemType: ItemType) => {
     setItemType(newItemType);
@@ -109,6 +100,22 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
     if (dateRange === "custom") {
       setIsCustomModalOpen(true);
     }
+  };
+
+  const canExport = Boolean(data && data.length > 0 && !isLoading && !error);
+  const exportFilename = `${title.toLowerCase().replace(/\s+/g, "-")}-${viewType}.png`;
+
+  const { isExporting, showExportSurface, exportRef, startExport, exportWidth, exportHeight } =
+    useOffscreenExport({
+      filename: exportFilename,
+      shareTitle: title,
+      enabled: canExport
+    });
+
+  const exportProps = {
+    onExport: startExport,
+    isExporting,
+    exportDisabled: !canExport
   };
 
   return (
@@ -168,13 +175,27 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
           </div>
         ) : data && data.length > 0 ? (
           viewType === "grid" ? (
-            <TopItemsGrid items={data} maxItems={maxItems} />
+            <ExpandableChartContainer title={title} chartHeight="h-auto" {...exportProps}>
+              <TopItemsGrid items={data} maxItems={maxItems} />
+            </ExpandableChartContainer>
           ) : viewType === "list" ? (
-            <TopItemsList items={data} maxItems={maxItems} />
+            <ExpandableChartContainer title={title} chartHeight="h-auto" {...exportProps}>
+              <TopItemsList items={data} maxItems={maxItems} />
+            </ExpandableChartContainer>
           ) : viewType === "pie" ? (
-            <TopItemsPieChart chartTitle={`${title} Distribution`} items={data} maxItems={12} />
+            <TopItemsPieChart
+              chartTitle={`${title} Distribution`}
+              items={data}
+              maxItems={12}
+              {...exportProps}
+            />
           ) : (
-            <TopItemsBubbleChart chartTitle={`${title} Bubble`} items={data} maxItems={20} />
+            <TopItemsBubbleChart
+              chartTitle={`${title} Bubble`}
+              items={data}
+              maxItems={20}
+              {...exportProps}
+            />
           )
         ) : (
           <div className="flex h-64 items-center justify-center">
@@ -185,45 +206,38 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
         {/* Custom Date Range Modal */}
         <CustomDateRangeModal isOpen={isCustomModalOpen} onClose={handleCloseModal} />
       </div>
+
+      {isExporting && <ExportLoadingOverlay />}
+
+      {showExportSurface && data && (
+        <div
+          ref={exportRef}
+          aria-hidden
+          className="bg-gradient-primary pointer-events-none fixed top-0 flex flex-col p-12 text-white"
+          style={{ width: exportWidth, height: exportHeight, left: -10000 }}
+        >
+          <div className="mb-8 shrink-0">
+            <h1 className="text-4xl font-bold">{title}</h1>
+            {periodDisplay ? <p className="mt-2 text-3xl text-gray-400">{periodDisplay}</p> : null}
+          </div>
+          <div className="min-h-0 flex-1">
+            {viewType === "grid" ? (
+              <TopItemsExportGrid items={data} />
+            ) : viewType === "list" ? (
+              <TopItemsExportList items={data} />
+            ) : viewType === "pie" ? (
+              <TopItemsExportPie items={data} />
+            ) : (
+              <TopItemsExportBubble items={data} />
+            )}
+          </div>
+          {/* Brand */}
+          <div className="mt-8 flex shrink-0 items-center justify-center gap-3">
+            <img src="/icon-192x192.png" alt="" className="h-12 w-12 rounded-xl" />
+            <span className="text-3xl font-bold">Trackback</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-const TopItemsList = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
-  return (
-    <div className="flex flex-col gap-3">
-      {items.slice(0, maxItems).map((item, index) => (
-        <CompactRankListCard
-          key={item.id}
-          href={item.href}
-          imageUrl={item.imageUrl}
-          name={item.name}
-          subtitle={item.subtitle}
-          rank={index + 1}
-          primaryText={`${item.streams.toLocaleString()} streams`}
-          secondaryText={formatDuration(item.durationMs)}
-        />
-      ))}
-    </div>
-  );
-};
-
-const TopItemsGrid = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-      {items.slice(0, maxItems).map((item, index) => (
-        <StreamItemCard
-          key={item.id}
-          href={item.href}
-          imageUrl={item.imageUrl}
-          number={index + 1}
-          title={item.name}
-          subtitle={item.subtitle}
-          streams={item.streams}
-          durationMs={item.durationMs}
-          className="w-auto"
-        />
-      ))}
-    </div>
-  );
-};

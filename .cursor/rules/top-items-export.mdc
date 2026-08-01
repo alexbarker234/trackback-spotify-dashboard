@@ -1,0 +1,34 @@
+---
+description: Top items export layouts, folder structure, and JSX section comment conventions
+globs: apps/web/src/components/top/**/*.{ts,tsx},apps/web/src/components/export/**/*.{ts,tsx},apps/web/src/components/charts/**/*.{ts,tsx},apps/web/src/components/cards/**/*.tsx,apps/web/src/components/itemCards/**/*.tsx
+alwaysApply: false
+---
+
+# Top items & charts organization
+
+Read `apps/web/AGENTS.md` for the full web agent notes.
+
+## Folders
+
+- `components/export` — capture/share helpers only
+- `components/charts/shared` — expandable container, legend, tooltip, d3
+- `components/charts/dashboard` — dashboard/item charts
+- `components/top/types.ts` — `TopItem`
+- `components/top/views` — on-screen top items UI
+- `components/top/export` — portrait export layouts
+
+## Section comment headers
+
+```tsx
+{/* Rank */}
+{/* Image */}
+{/* Content */}
+{/* Stats */}
+```
+
+## Export layouts
+
+- Use `top/export` components for capture — not on-screen views or `ExpandableChartContainer`.
+- Keep grid export images square; grid = 12 items (3×4), list = 15.
+- Pie/bubble exports are frameless.
+- Use `html2canvas-pro` via `useOffscreenExport` (not `html2canvas`).

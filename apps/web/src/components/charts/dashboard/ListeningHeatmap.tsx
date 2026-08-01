@@ -5,10 +5,10 @@ import { MONTH_NAMES_SHORT } from "@/lib/constants";
 import { chunkArray } from "@/lib/utils/arrayUtils";
 import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import { useRef, useState } from "react";
-import DateNavigationControls from "../DateNavigationControls";
-import Loading from "../Loading";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
+import DateNavigationControls from "@/components/DateNavigationControls";
+import Loading from "@/components/Loading";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 
 const LEGEND_COLORS = [
   "bg-white/10",

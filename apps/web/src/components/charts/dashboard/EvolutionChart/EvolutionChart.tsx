@@ -10,7 +10,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { EvolutionItem } from "@workspace/core/queries/evolution";
 import { useEffect, useMemo, useRef, useState } from "react";
-import ExpandableChartContainer from "../ExpandableChartContainer";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 import EvolutionChartItem from "./EvolutionChartItem";
 
 const formatWeek = (weekString: string) => {

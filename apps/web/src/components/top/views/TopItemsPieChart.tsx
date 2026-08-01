@@ -3,15 +3,23 @@
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { TopItem } from "../top/TopItemsPage";
-import ChartLegend from "./ChartLegend";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
+import { TopItem } from "@/components/top/types";
+import ChartLegend from "@/components/charts/shared/ChartLegend";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import { topItemsChartColors as colors } from "../topItemsChartColors";
 
 interface TopItemsPieChartProps {
   items: TopItem[];
   chartTitle: string;
   maxItems?: number;
+  hideExpandButton?: boolean;
+  className?: string;
+  chartHeight?: string;
+  onExport?: () => void;
+  isExporting?: boolean;
+  exportDisabled?: boolean;
+  disableAnimation?: boolean;
 }
 
 interface PieData {
@@ -25,9 +33,19 @@ interface PieData {
   id: string;
   [key: string]: string | number | null | undefined;
 }
-const colors = ["#a855f7", "#8b5cf6", "#ec4899", "#f472b6", "#ef4444", "#dc2626", "#f97316", "#eab308"];
 
-export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: TopItemsPieChartProps) {
+export default function TopItemsPieChart({
+  items,
+  chartTitle,
+  maxItems = 20,
+  hideExpandButton = false,
+  className,
+  chartHeight = "h-[700px] sm:h-[500px]",
+  onExport,
+  isExporting,
+  exportDisabled,
+  disableAnimation = false
+}: TopItemsPieChartProps) {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
 
   const topItems = items.slice(0, maxItems);
@@ -105,7 +123,15 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
   };
 
   return (
-    <ExpandableChartContainer title={chartTitle} chartHeight="h-[700px] sm:h-[500px]">
+    <ExpandableChartContainer
+      title={chartTitle}
+      chartHeight={chartHeight}
+      hideExpandButton={hideExpandButton}
+      className={className}
+      onExport={onExport}
+      isExporting={isExporting}
+      exportDisabled={exportDisabled}
+    >
       <div className="relative flex h-full flex-col">
         <ResponsiveContainer width="100%" height="100%" className="flex-1">
           <PieChart>
@@ -123,6 +149,7 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
               paddingAngle={2}
               cornerRadius={4}
               className="cursor-pointer"
+              isAnimationActive={!disableAnimation}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
@@ -134,7 +161,7 @@ export default function TopItemsPieChart({ items, chartTitle, maxItems = 20 }: T
           </PieChart>
         </ResponsiveContainer>
 
-        <ChartLegend data={data} colors={colors} />
+        <ChartLegend data={data} colors={colors} size={disableAnimation ? "export" : "default"} />
       </div>
     </ExpandableChartContainer>
   );
