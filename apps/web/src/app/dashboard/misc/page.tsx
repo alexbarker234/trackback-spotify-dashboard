@@ -1,15 +1,9 @@
 import LinkCard from "@/components/cards/LinkCard";
-import { faCalendar, faChartSimple, faGrip, faRankingStar } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faGrip, faRankingStar } from "@fortawesome/free-solid-svg-icons";
 
 export default async function MiscPage() {
   return (
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 p-4 md:grid-cols-2">
-      <LinkCard
-        href="/dashboard/stats"
-        title="Stats"
-        description="Explore your overall listening statistics and charts"
-        icon={faChartSimple}
-      />
       <LinkCard
         href="/dashboard/evolution"
         title="Evolution"
