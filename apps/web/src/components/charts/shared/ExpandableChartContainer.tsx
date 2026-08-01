@@ -1,10 +1,10 @@
 "use client";
 
+import ExportShareIconButton from "@/components/export/ExportShareIconButton";
 import { faExpand, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
-import ExportShareIconButton from "@/components/export/ExportShareIconButton";
 
 interface ExpandableChartContainerProps {
   title: string;
@@ -72,7 +72,7 @@ export default function ExpandableChartContainer({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className={`h-[95vh] w-[95vw] rounded-2xl bg-white/5 p-6 backdrop-blur-sm ${className}`}
+              className={`h-[95vh] w-[95vw] rounded-2xl bg-white/5 p-4 backdrop-blur-sm md:p-6 ${className}`}
             >
               <ChartContent
                 isFullscreenContent={true}
@@ -92,7 +92,10 @@ export default function ExpandableChartContainer({
       </AnimatePresence>
 
       {/* Regular Chart Container */}
-      <motion.div layout className={`rounded-2xl bg-white/5 p-6 backdrop-blur-sm ${className}`}>
+      <motion.div
+        layout
+        className={`rounded-2xl bg-white/5 p-4 backdrop-blur-sm md:p-6 ${className}`}
+      >
         <ChartContent
           isFullscreenContent={false}
           title={title}
@@ -152,7 +155,10 @@ const ChartContent = ({
                 className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-white/10 p-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed"
                 title={isFullscreenContent ? "Exit fullscreen" : "Enter fullscreen"}
               >
-                <FontAwesomeIcon icon={isFullscreenContent ? faXmark : faExpand} className="h-4 w-4" />
+                <FontAwesomeIcon
+                  icon={isFullscreenContent ? faXmark : faExpand}
+                  className="h-4 w-4"
+                />
               </button>
             )}
           </div>

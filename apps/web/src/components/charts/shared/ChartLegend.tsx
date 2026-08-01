@@ -1,6 +1,7 @@
-import { cn } from "@/lib/utils/cn";
-import Link from "next/link";
 import { TopItem } from "@/components/top/types";
+import { cn } from "@/lib/utils/cn";
+import { formatDuration } from "@/lib/utils/timeUtils";
+import Link from "next/link";
 
 type ChartLegendProps = {
   data: TopItem[];
@@ -10,6 +11,7 @@ type ChartLegendProps = {
 
 export default function ChartLegend({ data, colors, size = "default" }: ChartLegendProps) {
   const isExport = size === "export";
+  const totalStreams = data.reduce((sum, item) => sum + Number(item.streams), 0);
 
   return (
     <div
@@ -19,7 +21,6 @@ export default function ChartLegend({ data, colors, size = "default" }: ChartLeg
       )}
     >
       {data.slice(0, 12).map((item, index) => {
-        const totalStreams = data.reduce((sum, item) => sum + Number(item.streams), 0);
         const percentage = ((item.streams / totalStreams) * 100).toFixed(1);
         return (
           <Link
@@ -54,7 +55,9 @@ export default function ChartLegend({ data, colors, size = "default" }: ChartLeg
                 {item.name}
               </div>
               <div className={cn("text-gray-400", isExport ? "text-base" : "text-xs")}>
-                {percentage}%
+                {isExport
+                  ? `${percentage}% · ${Number(item.streams).toLocaleString()} streams · ${formatDuration(item.durationMs)}`
+                  : `${percentage}%`}
               </div>
             </div>
           </Link>
