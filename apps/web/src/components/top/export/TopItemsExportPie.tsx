@@ -1,9 +1,9 @@
 "use client";
 
+import ChartLegend from "@/components/charts/shared/ChartLegend";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import ChartLegend from "../charts/ChartLegend";
-import { topItemsChartColors } from "../charts/topItemsChartColors";
-import { TopItem } from "./TopItemsPage";
+import { topItemsChartColors } from "../topItemsChartColors";
+import { TopItem } from "../types";
 
 const EXPORT_MAX = 12;
 

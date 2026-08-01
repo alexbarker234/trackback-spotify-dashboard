@@ -3,11 +3,11 @@
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { TopItem } from "../top/TopItemsPage";
-import ChartLegend from "./ChartLegend";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
-import { topItemsChartColors as colors } from "./topItemsChartColors";
+import { TopItem } from "@/components/top/types";
+import ChartLegend from "@/components/charts/shared/ChartLegend";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import { topItemsChartColors as colors } from "../topItemsChartColors";
 
 interface TopItemsPieChartProps {
   items: TopItem[];

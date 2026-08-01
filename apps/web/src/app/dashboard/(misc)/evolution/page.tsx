@@ -1,4 +1,4 @@
-import EvolutionChart from "@/components/charts/EvolutionChart/EvolutionChart";
+import EvolutionChart from "@/components/charts/dashboard/EvolutionChart/EvolutionChart";
 import EvolutionStats from "@/components/statsGrid/EvolutionStats";
 import {
   getTopArtistsByNumberOneWeeks,

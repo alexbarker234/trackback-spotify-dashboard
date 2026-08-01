@@ -2,8 +2,8 @@
 
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Area, AreaChart, CartesianGrid, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 
 interface DailyStreamData {
   date: string;

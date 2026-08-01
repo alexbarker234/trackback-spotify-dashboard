@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils/cn";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import { useEffect, useRef, useState } from "react";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 
 interface HourlyListenData {
   hour: number;

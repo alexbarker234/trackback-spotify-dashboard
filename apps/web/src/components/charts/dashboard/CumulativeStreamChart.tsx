@@ -10,8 +10,8 @@ import {
   XAxis,
   YAxis
 } from "recharts";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 
 interface CumulativeStreamData {
   date: string;

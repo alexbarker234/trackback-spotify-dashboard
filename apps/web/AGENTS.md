@@ -13,13 +13,33 @@ When a component renders distinct visual regions (rank, image, content, stats, c
 
 Do this for new and edited UI components in `apps/web`, especially cards and export layouts.
 
+## Component layout
+
+```text
+components/
+  export/                 # reusable capture/share only
+  charts/
+    shared/               # ExpandableChartContainer, legend, tooltip, d3
+    dashboard/            # dashboard/item-page charts
+  top/
+    types.ts              # TopItem
+    TopItemsPage.tsx
+    topItemsChartColors.ts
+    views/                # on-screen grid/list/pie/bubble
+    export/               # portrait offscreen layouts
+```
+
+- Keep `TopItem` in `top/types.ts` — do not define it on the page.
+- Top Items interactive views live in `top/views/`; export layouts in `top/export/`.
+- Do not put Top Items–only UI in `charts/dashboard/`.
+
 ## Top items export
 
-- Offscreen export lives under `src/components/export/` (`useOffscreenExport`, `html2canvas-pro`, loading overlay, share/download helpers).
+- Offscreen capture plumbing: `src/components/export/` (`useOffscreenExport`, `html2canvas-pro`).
 - Portrait canvas is 1080×1920 (`PORTRAIT_EXPORT_SIZE`).
-- Grid/list/pie/bubble exports use dedicated components (`TopItemsExportGrid`, `TopItemsExportList`, `TopItemsExportPie`, `TopItemsExportBubble`) — do not reuse on-screen chart chrome (`ExpandableChartContainer`) for capture.
-- Pie/bubble export layouts are frameless (no inner card title); chart + legend fill the canvas below the page header.
-- Grid export images must stay **square** (`aspect-square`), sized to fit each cell.
-- Cap list export at 10 items; grid export at 12 items (3×4).
-- For pie/bubble export, disable entrance animations; bubble photos use HTML `<img>` when `animate` is false (export) and SVG `<image>` when `animate` is true.
-- Prefer larger typography on export surfaces so text stays readable on the portrait image.
+- Use `top/export/*` for capture — never `ExpandableChartContainer` chrome.
+- Pie/bubble export layouts are frameless; chart + legend fill space below the page header.
+- Grid export images must stay **square** (`aspect-square`).
+- Cap list export at 15 items; grid export at 12 items (3×4).
+- Disable pie/bubble entrance animations on export; bubble photos use HTML `<img>` when `animate` is false.
+- Prefer larger typography on export surfaces.

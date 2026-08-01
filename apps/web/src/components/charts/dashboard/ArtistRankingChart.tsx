@@ -2,9 +2,9 @@
 
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
-import ResizableChartContent from "./ResizableChartContent";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import ResizableChartContent from "@/components/charts/shared/ResizableChartContent";
 
 interface ArtistRankingData {
   artistId: string;

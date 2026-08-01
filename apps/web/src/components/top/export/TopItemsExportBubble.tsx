@@ -1,9 +1,9 @@
 "use client";
 
-import ChartLegend from "../charts/ChartLegend";
-import { BubbleChartContent } from "../charts/TopItemsBubbleChart";
-import { topItemsChartColors } from "../charts/topItemsChartColors";
-import { TopItem } from "./TopItemsPage";
+import ChartLegend from "@/components/charts/shared/ChartLegend";
+import { BubbleChartContent } from "../views/TopItemsBubbleChart";
+import { topItemsChartColors } from "../topItemsChartColors";
+import { TopItem } from "../types";
 
 const EXPORT_MAX = 20;
 

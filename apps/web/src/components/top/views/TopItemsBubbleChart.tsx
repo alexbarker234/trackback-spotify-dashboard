@@ -4,13 +4,13 @@ import { formatDuration } from "@/lib/utils/timeUtils";
 import { clampInBounds } from "@/lib/utils/tooltipUtils";
 import * as d3 from "d3";
 import { useEffect, useRef, useState } from "react";
-import { TopItem } from "../top/TopItemsPage";
-import ChartLegend from "./ChartLegend";
-import ChartTooltip from "./ChartTooltip";
-import ExpandableChartContainer from "./ExpandableChartContainer";
-import BubbleChart from "./d3/BubbleChart";
-import { BubbleNodeData } from "./d3/BubbleNode";
-import { topItemsChartColors as colors } from "./topItemsChartColors";
+import { TopItem } from "@/components/top/types";
+import ChartLegend from "@/components/charts/shared/ChartLegend";
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import BubbleChart from "@/components/charts/shared/d3/BubbleChart";
+import { BubbleNodeData } from "@/components/charts/shared/d3/BubbleNode";
+import { topItemsChartColors as colors } from "../topItemsChartColors";
 
 interface TopItemsBubbleChartProps {
   items: TopItem[];

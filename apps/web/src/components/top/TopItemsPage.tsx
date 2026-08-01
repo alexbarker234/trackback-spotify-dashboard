@@ -3,36 +3,28 @@
 import { DateRange, useDateRange } from "@/hooks/useDateRange";
 import { useTopItems } from "@/hooks/useTopItems";
 import { usePageTitle } from "@/lib/contexts/PageTitleContext";
-import { formatDate, formatDateShort, formatDuration } from "@/lib/utils/timeUtils";
+import { formatDate, formatDateShort } from "@/lib/utils/timeUtils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BackNav from "../BackNav";
-import CompactRankListCard from "../cards/CompactRankListCard";
-import ExpandableChartContainer from "../charts/ExpandableChartContainer";
-import TopItemsBubbleChart from "../charts/TopItemsBubbleChart";
-import TopItemsPieChart from "../charts/TopItemsPieChart";
+import ExpandableChartContainer from "../charts/shared/ExpandableChartContainer";
 import DateNavigationControls from "../DateNavigationControls";
 import DateRangeSelector from "../DateRangeSelector";
 import { ExportLoadingOverlay, useOffscreenExport } from "../export";
-import StreamItemCard from "../itemCards/StreamItemCard";
 import ItemTypeSelector, { ItemType, itemTypeOptions } from "../ItemTypeSelector";
 import Loading from "../Loading";
 import CustomDateRangeModal from "../modals/CustomDateRangeModal";
 import ViewSelector, { ViewType, viewTypeOptions } from "../ViewSelector";
-import TopItemsExportBubble from "./TopItemsExportBubble";
-import TopItemsExportGrid from "./TopItemsExportGrid";
-import TopItemsExportList from "./TopItemsExportList";
-import TopItemsExportPie from "./TopItemsExportPie";
+import TopItemsExportBubble from "./export/TopItemsExportBubble";
+import TopItemsExportGrid from "./export/TopItemsExportGrid";
+import TopItemsExportList from "./export/TopItemsExportList";
+import TopItemsExportPie from "./export/TopItemsExportPie";
+import TopItemsBubbleChart from "./views/TopItemsBubbleChart";
+import TopItemsGrid from "./views/TopItemsGrid";
+import TopItemsList from "./views/TopItemsList";
+import TopItemsPieChart from "./views/TopItemsPieChart";
 
-export type TopItem = {
-  id: string;
-  name: string;
-  imageUrl: string | null;
-  subtitle?: string;
-  streams: number;
-  durationMs: number;
-  href: string;
-};
+export type { TopItem } from "./types";
 
 export type TopItemsPageProps = {
   isStandalone?: boolean;
@@ -249,42 +241,3 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
     </div>
   );
 }
-
-const TopItemsList = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
-  return (
-    <div className="flex flex-col gap-3">
-      {items.slice(0, maxItems).map((item, index) => (
-        <CompactRankListCard
-          key={item.id}
-          href={item.href}
-          imageUrl={item.imageUrl}
-          name={item.name}
-          subtitle={item.subtitle}
-          rank={index + 1}
-          primaryText={`${item.streams.toLocaleString()} streams`}
-          secondaryText={formatDuration(item.durationMs)}
-        />
-      ))}
-    </div>
-  );
-};
-
-const TopItemsGrid = ({ items, maxItems }: { items: TopItem[]; maxItems: number }) => {
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-      {items.slice(0, maxItems).map((item, index) => (
-        <StreamItemCard
-          key={item.id}
-          href={item.href}
-          imageUrl={item.imageUrl}
-          number={index + 1}
-          title={item.name}
-          subtitle={item.subtitle}
-          streams={item.streams}
-          durationMs={item.durationMs}
-          className="w-auto"
-        />
-      ))}
-    </div>
-  );
-};

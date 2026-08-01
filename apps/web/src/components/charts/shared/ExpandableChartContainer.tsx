@@ -4,7 +4,7 @@ import { faExpand, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
-import ExportShareIconButton from "../export/ExportShareIconButton";
+import ExportShareIconButton from "@/components/export/ExportShareIconButton";
 
 interface ExpandableChartContainerProps {
   title: string;

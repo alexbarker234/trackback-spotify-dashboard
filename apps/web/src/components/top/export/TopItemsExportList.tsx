@@ -1,5 +1,5 @@
 import { formatDuration } from "@/lib/utils/timeUtils";
-import { TopItem } from "./TopItemsPage";
+import { TopItem } from "../types";
 
 const EXPORT_MAX = 15;
 

@@ -1,16 +1,23 @@
 ---
-description: Top items export layouts and JSX section comment conventions for the web app
-globs: apps/web/src/components/top/**/*.tsx,apps/web/src/components/export/**/*.{ts,tsx},apps/web/src/components/cards/**/*.tsx,apps/web/src/components/itemCards/**/*.tsx
+description: Top items export layouts, folder structure, and JSX section comment conventions
+globs: apps/web/src/components/top/**/*.{ts,tsx},apps/web/src/components/export/**/*.{ts,tsx},apps/web/src/components/charts/**/*.{ts,tsx},apps/web/src/components/cards/**/*.tsx,apps/web/src/components/itemCards/**/*.tsx
 alwaysApply: false
 ---
 
-# Top items export & section comments
+# Top items & charts organization
 
 Read `apps/web/AGENTS.md` for the full web agent notes.
 
-## Section comment headers
+## Folders
 
-Label distinct UI regions with short JSX comments (same style as `CompactRankListCard`):
+- `components/export` — capture/share helpers only
+- `components/charts/shared` — expandable container, legend, tooltip, d3
+- `components/charts/dashboard` — dashboard/item charts
+- `components/top/types.ts` — `TopItem`
+- `components/top/views` — on-screen top items UI
+- `components/top/export` — portrait export layouts
+
+## Section comment headers
 
 ```tsx
 {/* Rank */}
@@ -19,13 +26,9 @@ Label distinct UI regions with short JSX comments (same style as `CompactRankLis
 {/* Stats */}
 ```
 
-Apply this in cards, item cards, and export layouts when adding or editing markup.
-
 ## Export layouts
 
-- Use dedicated export components (`TopItemsExportGrid` / `List` / `Pie` / `Bubble`) for capture — not on-screen layouts or `ExpandableChartContainer`.
-- Keep grid export images square (`aspect-square`).
-- Limit list export to 10 items; grid export to 12 items (3 columns × 4 rows).
-- Pie/bubble exports should be frameless (no inner card title); let chart + legend fill space.
-- Export typography should stay large enough to read on the 1080×1920 portrait canvas.
-- Reuse `src/components/export` helpers (`useOffscreenExport`, `html2canvas-pro`); do not reintroduce `html2canvas` (oklch unsupported).
+- Use `top/export` components for capture — not on-screen views or `ExpandableChartContainer`.
+- Keep grid export images square; grid = 12 items (3×4), list = 15.
+- Pie/bubble exports are frameless.
+- Use `html2canvas-pro` via `useOffscreenExport` (not `html2canvas`).

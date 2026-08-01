@@ -1,7 +1,7 @@
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { faMusic } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { TopItem } from "./TopItemsPage";
+import { TopItem } from "../types";
 
 const EXPORT_MAX = 12;
 

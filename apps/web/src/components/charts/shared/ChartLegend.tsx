@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
-import { TopItem } from "../top/TopItemsPage";
+import { TopItem } from "@/components/top/types";
 
 type ChartLegendProps = {
   data: TopItem[];
