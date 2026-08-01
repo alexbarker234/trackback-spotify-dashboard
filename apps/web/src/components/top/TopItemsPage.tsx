@@ -83,29 +83,22 @@ export default function TopItemsPage({ isStandalone = false }: TopItemsPageProps
 
   const title = `Top ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
 
-  const updatePeriod = useCallback(() => {
-    const isLifetime = dateRange === "lifetime";
-    const hasDates = startDate && endDate;
-    const period =
-      !isLifetime && hasDates
-        ? `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`
-        : "";
-    const shortPeriod =
-      !isLifetime && hasDates
-        ? `${formatDateShort(startDate.getTime())} - ${formatDateShort(endDate.getTime())}`
-        : "";
+  const isLifetime = dateRange === "lifetime";
 
-    setTitle(title);
-    setSubheader(shortPeriod);
-    return period;
-  }, [dateRange, startDate, endDate, title, setSubheader, setTitle]);
+  const periodDisplay = useMemo(() => {
+    if (isLifetime || !startDate || !endDate) return "";
+    return `from ${formatDate(startDate.getTime())} to ${formatDate(endDate.getTime())}`;
+  }, [isLifetime, startDate, endDate]);
+
+  const shortPeriod = useMemo(() => {
+    if (isLifetime || !startDate || !endDate) return "";
+    return `${formatDateShort(startDate.getTime())} - ${formatDateShort(endDate.getTime())}`;
+  }, [isLifetime, startDate, endDate]);
 
   useEffect(() => {
-    updatePeriod();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const periodDisplay = useMemo(() => updatePeriod(), [updatePeriod]);
+    setTitle(title);
+    setSubheader(shortPeriod);
+  }, [title, shortPeriod, setTitle, setSubheader]);
 
   const onItemTypeChange = (newItemType: ItemType) => {
     setItemType(newItemType);
