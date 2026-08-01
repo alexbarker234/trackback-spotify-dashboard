@@ -3,6 +3,7 @@
 import { useStandalone } from "@/hooks/useStandalone";
 import {
   faChartLine,
+  faGrip,
   faHome,
   faMagnifyingGlass,
   faRankingStar,
@@ -22,7 +23,8 @@ interface Tab {
 const tabs: Tab[] = [
   { name: "Home", path: "/dashboard", icon: faHome },
   { name: "Top", path: "/dashboard/top", icon: faRankingStar },
-  { name: "Other", path: "/dashboard/misc", icon: faChartLine },
+  { name: "Stats", path: "/dashboard/stats", icon: faChartLine },
+  { name: "Other", path: "/dashboard/misc", icon: faGrip },
   { name: "Search", path: "/dashboard/search", icon: faMagnifyingGlass }
 ];
 
@@ -74,7 +76,7 @@ export default function TabsNavigation() {
   return (
     <nav className="fixed right-0 bottom-0 left-0 z-50 border-t border-white/10 bg-black/20 backdrop-blur-md">
       <div className="relative mx-auto max-w-7xl">
-        <div ref={containerRef} className="relative grid grid-cols-4">
+        <div ref={containerRef} className="relative grid grid-cols-5">
           {/* Sliding indicator */}
           <div
             className="absolute top-1/2 h-[85%] -translate-y-1/2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-300 ease-out"
