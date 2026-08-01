@@ -251,7 +251,7 @@ export async function getDailyStreamData(options: GetDailyStreamDataOptions = {}
 }
 
 export async function getCumulativeStreamData(options: GetDailyStreamDataOptions = {}) {
-  const { artistId, albumId, trackIsrc, days = -1 } = options;
+  const { artistId, albumId, trackIsrc, days = -1, startDate, endDate } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
@@ -263,11 +263,17 @@ export async function getCumulativeStreamData(options: GetDailyStreamDataOptions
       whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
     }
 
-    // Only add date filter if days is not -1 (get all data)
-    if (days !== -1) {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+    // Handle date filtering - priority: startDate/endDate > days > all data
+    if (startDate) {
       whereConditions.push(gte(listen.playedAt, startDate));
+    } else if (days !== -1) {
+      const calculatedStartDate = new Date();
+      calculatedStartDate.setDate(calculatedStartDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, calculatedStartDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
     }
 
     // WARNING streamCount and totalDuration are returned as strings!
@@ -313,7 +319,7 @@ export async function getCumulativeStreamData(options: GetDailyStreamDataOptions
 }
 
 export async function getMonthlyStreamData(options: GetDailyStreamDataOptions = {}) {
-  const { artistId, albumId, trackIsrc, days = -1 } = options;
+  const { artistId, albumId, trackIsrc, days = -1, startDate, endDate } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
@@ -325,11 +331,17 @@ export async function getMonthlyStreamData(options: GetDailyStreamDataOptions = 
       whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
     }
 
-    // Only add date filter if days is not -1 (get all data)
-    if (days !== -1) {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+    // Handle date filtering - priority: startDate/endDate > days > all data
+    if (startDate) {
       whereConditions.push(gte(listen.playedAt, startDate));
+    } else if (days !== -1) {
+      const calculatedStartDate = new Date();
+      calculatedStartDate.setDate(calculatedStartDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, calculatedStartDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
     }
 
     const monthlyStreams = await db
@@ -364,7 +376,7 @@ export async function getMonthlyStreamData(options: GetDailyStreamDataOptions = 
 }
 
 export async function getYearlyStreamData(options: GetDailyStreamDataOptions = {}) {
-  const { artistId, albumId, trackIsrc, days = -1 } = options;
+  const { artistId, albumId, trackIsrc, days = -1, startDate, endDate } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
@@ -376,11 +388,17 @@ export async function getYearlyStreamData(options: GetDailyStreamDataOptions = {
       whereConditions.push(eq(albumTrack.trackIsrc, trackIsrc));
     }
 
-    // Only add date filter if days is not -1 (get all data)
-    if (days !== -1) {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+    // Handle date filtering - priority: startDate/endDate > days > all data
+    if (startDate) {
       whereConditions.push(gte(listen.playedAt, startDate));
+    } else if (days !== -1) {
+      const calculatedStartDate = new Date();
+      calculatedStartDate.setDate(calculatedStartDate.getDate() - days);
+      whereConditions.push(gte(listen.playedAt, calculatedStartDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
     }
 
     const yearlyStreams = await db
@@ -941,6 +959,125 @@ export async function getHourlyListenData(options: GetHourlyListenDataOptions = 
     return completeHourlyData;
   } catch (error) {
     console.error("Error fetching hourly listen data:", error);
+    return [];
+  }
+}
+
+export type PeriodListenStats = {
+  totalListens: number;
+  totalDuration: number;
+  uniqueTracks: number;
+  uniqueArtists: number;
+  uniqueAlbums: number;
+};
+
+type GetPeriodListenStatsOptions = {
+  startDate?: Date;
+  endDate?: Date;
+};
+
+export async function getPeriodListenStats(
+  options: GetPeriodListenStatsOptions = {}
+): Promise<PeriodListenStats> {
+  const { startDate, endDate } = options;
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+
+    if (startDate) {
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
+    }
+
+    const [row] = await db
+      .select({
+        totalListens: sql<number>`count(distinct ${listen.id})`.as("totalListens"),
+        totalDuration: sql<number>`coalesce(sum(${listen.durationMS}), 0)`.as("totalDuration"),
+        uniqueTracks: sql<number>`count(distinct ${track.isrc})`.as("uniqueTracks"),
+        uniqueArtists: sql<number>`count(distinct ${trackArtist.artistId})`.as("uniqueArtists"),
+        uniqueAlbums: sql<number>`count(distinct ${albumTrack.albumId})`.as("uniqueAlbums")
+      })
+      .from(listen)
+      .leftJoin(albumTrack, eq(listen.trackId, albumTrack.trackId))
+      .leftJoin(track, eq(albumTrack.trackIsrc, track.isrc))
+      .leftJoin(trackArtist, eq(trackArtist.trackIsrc, track.isrc))
+      .where(and(...whereConditions));
+
+    return {
+      totalListens: Number(row?.totalListens ?? 0),
+      totalDuration: Number(row?.totalDuration ?? 0),
+      uniqueTracks: Number(row?.uniqueTracks ?? 0),
+      uniqueArtists: Number(row?.uniqueArtists ?? 0),
+      uniqueAlbums: Number(row?.uniqueAlbums ?? 0)
+    };
+  } catch (error) {
+    console.error("Error fetching period listen stats:", error);
+    return {
+      totalListens: 0,
+      totalDuration: 0,
+      uniqueTracks: 0,
+      uniqueArtists: 0,
+      uniqueAlbums: 0
+    };
+  }
+}
+
+type GetDayOfWeekStreamDataOptions = {
+  startDate?: Date;
+  endDate?: Date;
+};
+
+export async function getDayOfWeekStreamData(options: GetDayOfWeekStreamDataOptions = {}) {
+  const { startDate, endDate } = options;
+
+  try {
+    const whereConditions = [gte(listen.durationMS, 30000)];
+
+    if (startDate) {
+      whereConditions.push(gte(listen.playedAt, startDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(sql`${listen.playedAt} <= ${endDate}`);
+    }
+
+    // PostgreSQL: 0 = Sunday … 6 = Saturday
+    const dayOfWeekStreams = await db
+      .select({
+        dayOfWeek: sql<number>`extract(dow from ${listen.playedAt})`.as("dayOfWeek"),
+        streamCount: sql<number>`count(distinct ${listen.id})`.as("streamCount"),
+        totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
+      })
+      .from(listen)
+      .where(and(...whereConditions))
+      .groupBy(sql`extract(dow from ${listen.playedAt})`)
+      .orderBy(sql`extract(dow from ${listen.playedAt})`);
+
+    const dayData = dayOfWeekStreams.map((item) => ({
+      dayOfWeek: Number(item.dayOfWeek),
+      streamCount: Number(item.streamCount),
+      totalDuration: Number(item.totalDuration)
+    }));
+
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    // Order Monday → Sunday for chart display
+    const mondayFirstOrder = [1, 2, 3, 4, 5, 6, 0];
+
+    return mondayFirstOrder.map((dow) => {
+      const existing = dayData.find((item) => item.dayOfWeek === dow);
+      return {
+        dayOfWeek: dow,
+        day: dayNames[dow]!,
+        streamCount: existing?.streamCount ?? 0,
+        totalDuration: existing?.totalDuration ?? 0
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching day of week stream data:", error);
     return [];
   }
 }
