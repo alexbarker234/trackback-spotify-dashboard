@@ -1,7 +1,7 @@
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { TopItem } from "./TopItemsPage";
 
-const EXPORT_MAX = 10;
+const EXPORT_MAX = 15;
 
 export default function TopItemsExportList({ items }: { items: TopItem[] }) {
   return (
@@ -12,12 +12,12 @@ export default function TopItemsExportList({ items }: { items: TopItem[] }) {
           className="flex min-h-0 flex-1 items-center gap-6 rounded-2xl bg-white/5 px-6 py-4"
         >
           {/* Rank */}
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white/10 text-3xl font-bold text-gray-400">
+          <div className="flex aspect-square h-full shrink-0 items-center justify-center rounded-full bg-white/10 text-3xl font-bold text-gray-400">
             {index + 1}
           </div>
 
           {/* Image */}
-          <div className="h-32 w-32 shrink-0">
+          <div className="aspect-square h-full shrink-0">
             {item.imageUrl ? (
               <img
                 src={item.imageUrl}
@@ -41,7 +41,7 @@ export default function TopItemsExportList({ items }: { items: TopItem[] }) {
 
           {/* Stats */}
           <div className="shrink-0 text-right">
-            <div className="text-2xl font-medium text-white">
+            <div className="text-3xl font-medium text-white">
               {item.streams.toLocaleString()} streams
             </div>
             <div className="mt-1 text-2xl text-gray-400">{formatDuration(item.durationMs)}</div>
