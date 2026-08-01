@@ -1,8 +1,9 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "@/components/charts/shared/ChartTooltip";
 import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import { chartAxis, chartGrid, colors } from "@/lib/utils/colors";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface DailyUniqueRateData {
   date: string;
@@ -195,16 +196,16 @@ export default function DailyUniqueRateChart({ data, groupBy = "day" }: DailyUni
             bottom: 0
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-          <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" fontSize={12} />
-          <YAxis stroke="#9CA3AF" fontSize={12} domain={[0, 100]} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+          <XAxis dataKey="date" tickFormatter={formatDate} stroke={chartAxis} fontSize={12} />
+          <YAxis stroke={chartAxis} fontSize={12} domain={[0, 100]} />
           <Tooltip content={<CustomTooltip />} />
-          <Line type="monotone" dataKey="trackUniqueRate" stroke="#10b981" dot={false} strokeWidth={2} />
-          <Line type="monotone" dataKey="artistUniqueRate" stroke="#3b82f6" dot={false} strokeWidth={2} />
+          <Line type="monotone" dataKey="trackUniqueRate" stroke={colors.emerald} dot={false} strokeWidth={2} />
+          <Line type="monotone" dataKey="artistUniqueRate" stroke={colors.blue} dot={false} strokeWidth={2} />
           <Line
             type="monotone"
             dataKey="movingAvgTrackRate"
-            stroke="#eab308"
+            stroke={colors.yellow}
             dot={false}
             connectNulls={false}
             strokeWidth={2}
@@ -213,7 +214,7 @@ export default function DailyUniqueRateChart({ data, groupBy = "day" }: DailyUni
           <Line
             type="monotone"
             dataKey="movingAvgArtistRate"
-            stroke="#f97316"
+            stroke={colors.orange}
             dot={false}
             connectNulls={false}
             strokeWidth={2}

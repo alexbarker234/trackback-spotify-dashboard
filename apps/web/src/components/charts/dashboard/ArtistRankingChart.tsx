@@ -1,10 +1,11 @@
 "use client";
 
-import { formatDuration } from "@/lib/utils/timeUtils";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartTooltip from "@/components/charts/shared/ChartTooltip";
 import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 import ResizableChartContent from "@/components/charts/shared/ResizableChartContent";
+import { chartAxis, chartGrid, colors } from "@/lib/utils/colors";
+import { formatDuration } from "@/lib/utils/timeUtils";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface ArtistRankingData {
   artistId: string;
@@ -96,14 +97,14 @@ function ArtistRankingChartContent({
           bottom: isVertical ? 0 : 30
         }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+        <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
         {isVertical ? (
           <>
-            <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
+            <XAxis type="number" stroke={chartAxis} fontSize={12} />
             <YAxis
               type="category"
               dataKey="displayName"
-              stroke="#9CA3AF"
+              stroke={chartAxis}
               fontSize={12}
               width={120}
             />
@@ -112,13 +113,13 @@ function ArtistRankingChartContent({
           <>
             <XAxis
               dataKey="displayName"
-              stroke="#9CA3AF"
+              stroke={chartAxis}
               fontSize={12}
               angle={-45}
               textAnchor="end"
               height={60}
             />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
+            <YAxis stroke={chartAxis} fontSize={12} />
           </>
         )}
         <Tooltip content={<CustomTooltip />} />
@@ -129,8 +130,8 @@ function ArtistRankingChartContent({
         />
         <defs>
           <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ec4899" stopOpacity={1} />
-            <stop offset="100%" stopColor="#a855f7" stopOpacity={1} />
+            <stop offset="0%" stopColor={colors.pink} stopOpacity={1} />
+            <stop offset="100%" stopColor={colors.purple} stopOpacity={1} />
           </linearGradient>
         </defs>
       </BarChart>

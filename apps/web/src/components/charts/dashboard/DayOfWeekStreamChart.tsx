@@ -3,6 +3,7 @@
 import ChartTooltip from "@/components/charts/shared/ChartTooltip";
 import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 import ResizableChartContent from "@/components/charts/shared/ResizableChartContent";
+import { chartAxis, chartGrid, colors } from "@/lib/utils/colors";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -75,28 +76,28 @@ function DayOfWeekStreamChartContent({
           bottom: 0
         }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+        <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
         {isVertical ? (
           <>
-            <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
+            <XAxis type="number" stroke={chartAxis} fontSize={12} />
             <YAxis
               type="category"
               dataKey="day"
               tickFormatter={formatShortDay}
-              stroke="#9CA3AF"
+              stroke={chartAxis}
               fontSize={12}
             />
           </>
         ) : (
           <>
-            <XAxis dataKey="day" tickFormatter={formatShortDay} stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
+            <XAxis dataKey="day" tickFormatter={formatShortDay} stroke={chartAxis} fontSize={12} />
+            <YAxis stroke={chartAxis} fontSize={12} />
           </>
         )}
         <Tooltip content={<CustomTooltip />} />
         <Bar
           dataKey="streamCount"
-          fill="#eb7a2d"
+          fill={colors.sunset}
           radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
         />
       </BarChart>

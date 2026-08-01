@@ -1,5 +1,8 @@
 "use client";
 
+import ChartTooltip from "@/components/charts/shared/ChartTooltip";
+import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
+import { chartAxis, chartGrid, colors } from "@/lib/utils/colors";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import {
   Area,
@@ -10,8 +13,6 @@ import {
   XAxis,
   YAxis
 } from "recharts";
-import ChartTooltip from "@/components/charts/shared/ChartTooltip";
-import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 
 interface CumulativeStreamData {
   date: string;
@@ -115,15 +116,15 @@ export default function CumulativeStreamChart({ data }: CumulativeStreamChartPro
             bottom: 0
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-          <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9CA3AF" fontSize={12} />
-          <YAxis stroke="#9CA3AF" fontSize={12} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+          <XAxis dataKey="date" tickFormatter={formatDate} stroke={chartAxis} fontSize={12} />
+          <YAxis stroke={chartAxis} fontSize={12} />
           <Tooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
             dataKey="cumulativeStreams"
-            stroke="#ec4899"
-            fill="#ec4899"
+            stroke={colors.pink}
+            fill={colors.pink}
             fillOpacity={0.3}
             strokeWidth={2}
           />

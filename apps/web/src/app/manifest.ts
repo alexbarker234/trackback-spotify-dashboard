@@ -1,3 +1,4 @@
+import { colors } from "@/lib/utils/colors";
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -7,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "A personal spotify listening dashboard",
     start_url: "/",
     display: "standalone",
-    background_color: "#121327",
-    theme_color: "#121327",
+    background_color: colors.theme,
+    theme_color: colors.theme,
     icons: [
       {
         src: "/icon-192x192.png",

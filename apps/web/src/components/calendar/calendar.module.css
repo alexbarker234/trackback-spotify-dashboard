@@ -115,33 +115,33 @@
 
 /* Active/Selected Day Styles */
 .calendarContainer :global(.react-calendar__tile--active) {
-  background: linear-gradient(to right, #ec4899, #a855f7) !important;
+  background: linear-gradient(to right, var(--color-pink), var(--color-purple)) !important;
   color: white !important;
   font-weight: 600;
 }
 
 .calendarContainer :global(.react-calendar__tile--active:hover) {
-  background: linear-gradient(to right, #db2777, #9333ea) !important;
+  background: linear-gradient(to right, var(--color-pink-dark), var(--color-purple-dark)) !important;
 }
 
 .calendarContainer :global(.react-calendar__tile--range) {
-  background: rgba(236, 72, 153, 0.2) !important;
+  background: var(--color-pink-20) !important;
 }
 
 .calendarContainer :global(.react-calendar__tile--rangeStart),
 .calendarContainer :global(.react-calendar__tile--rangeEnd) {
-  background: linear-gradient(to right, #ec4899, #a855f7) !important;
+  background: linear-gradient(to right, var(--color-pink), var(--color-purple)) !important;
   color: white !important;
 }
 
 /* Today Style */
 .calendarContainer :global(.react-calendar__tile--now) {
-  background-color: rgba(168, 85, 247, 0.2) !important;
-  border: 1px solid rgba(168, 85, 247, 0.5);
+  background-color: var(--color-purple-20) !important;
+  border: 1px solid var(--color-purple-50);
 }
 
 .calendarContainer :global(.react-calendar__tile--now:hover) {
-  background-color: rgba(168, 85, 247, 0.3) !important;
+  background-color: var(--color-purple-30) !important;
 }
 
 /* Year View Styles */
