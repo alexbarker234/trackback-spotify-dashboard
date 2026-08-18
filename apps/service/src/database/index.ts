@@ -12,11 +12,11 @@ import {
   eq,
   inArray,
   isNull,
-  lt,
-  or,
   Listen,
   listen,
   ListenInsert,
+  lt,
+  or,
   SQL,
   sql,
   track,
@@ -25,6 +25,15 @@ import {
   TrackInsert
 } from "@workspace/database";
 import { SpotifyAlbum, SpotifyTrack } from "../types/spotify";
+
+function releaseYearFromSpotifyDate(releaseDate?: string): number | null {
+  if (!releaseDate) return null;
+  const match = releaseDate.match(/^\d{4}/);
+  if (!match) return null;
+  const year = Number(match[0]);
+  if (!Number.isFinite(year) || year < 1000 || year > 9999) return null;
+  return year;
+}
 
 interface TrackListenData {
   trackData: SpotifyTrack;
@@ -78,7 +87,8 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
         uniqueAlbums.set(trackData.album.id, {
           id: trackData.album.id,
           name: trackData.album.name,
-          imageUrl: trackData.album.images[0]?.url || null
+          imageUrl: trackData.album.images[0]?.url || null,
+          releaseYear: releaseYearFromSpotifyDate(trackData.album.release_date)
         });
         uniqueAlbumTracks.add(`${trackData.album.id}-${trackData.id}`);
         for (const artistData of trackData.artists) {
@@ -155,7 +165,15 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
     }
 
     if (albumsToInsert.length > 0) {
-      await db.insert(album).values(albumsToInsert).onConflictDoNothing();
+      await db
+        .insert(album)
+        .values(albumsToInsert)
+        .onConflictDoUpdate({
+          target: album.id,
+          set: {
+            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`
+          }
+        });
     }
 
     if (trackArtistsToInsert.length > 0) {
@@ -338,7 +356,8 @@ export async function saveAlbumsWithArtistsToDatabase(
         albumsToInsert.push({
           id: spotifyAlbum.id,
           name: spotifyAlbum.name,
-          imageUrl: spotifyAlbum.images[0]?.url || null
+          imageUrl: spotifyAlbum.images[0]?.url || null,
+          releaseYear: releaseYearFromSpotifyDate(spotifyAlbum.release_date)
         });
         uniqueAlbums.add(spotifyAlbum.id);
       }
@@ -365,7 +384,15 @@ export async function saveAlbumsWithArtistsToDatabase(
     }
 
     if (albumsToInsert.length > 0) {
-      await db.insert(album).values(albumsToInsert).onConflictDoNothing();
+      await db
+        .insert(album)
+        .values(albumsToInsert)
+        .onConflictDoUpdate({
+          target: album.id,
+          set: {
+            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`
+          }
+        });
     }
 
     if (artistsToInsert.length > 0) {
@@ -438,7 +465,8 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
           albumsToInsert.push({
             id: spotifyTrack.album.id,
             name: spotifyTrack.album.name,
-            imageUrl: spotifyTrack.album.images[0]?.url || null
+            imageUrl: spotifyTrack.album.images[0]?.url || null,
+            releaseYear: releaseYearFromSpotifyDate(spotifyTrack.album.release_date)
           });
           uniqueAlbums.add(spotifyTrack.album.id);
         }
@@ -484,7 +512,15 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
     }
 
     if (albumsToInsert.length > 0) {
-      await db.insert(album).values(albumsToInsert).onConflictDoNothing();
+      await db
+        .insert(album)
+        .values(albumsToInsert)
+        .onConflictDoUpdate({
+          target: album.id,
+          set: {
+            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`
+          }
+        });
     }
 
     if (trackArtistsToInsert.length > 0) {

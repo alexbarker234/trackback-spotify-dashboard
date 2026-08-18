@@ -2,7 +2,16 @@ import { formatDuration } from "@/lib/utils/timeUtils";
 import { TopTrack } from "@/types";
 import Link from "next/link";
 
-export default function TrackCard({ track, rank }: { track: TopTrack; rank: number }) {
+export default function TrackCard({
+  track,
+  rank,
+  rankLabel
+}: {
+  track: TopTrack;
+  rank?: number;
+  // Optional override for the big left label (e.g. show a year instead of "#rank").
+  rankLabel?: string;
+}) {
   return (
     <Link
       href={`/dashboard/track/${track.trackIsrc}`}
@@ -10,7 +19,9 @@ export default function TrackCard({ track, rank }: { track: TopTrack; rank: numb
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="w-16 text-2xl font-bold text-gray-400">#{rank}</span>
+          <span className="w-16 text-2xl font-bold text-gray-400">
+            {rankLabel ? rankLabel : `#${rank ?? 0}`}
+          </span>
           <div className="flex items-center gap-4">
             {track.imageUrl && (
               <img

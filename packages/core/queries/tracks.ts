@@ -142,6 +142,111 @@ export async function getTrackData(isrc: string) {
   }
 }
 
+export type MostListenedTrackByReleaseYear = {
+  year: string;
+  trackName: string;
+  trackIsrc: string;
+  listenCount: number;
+  totalDuration: number;
+  imageUrl: string | null;
+  artists: {
+    artistName: string;
+    artistId: string;
+  }[];
+};
+
+/**
+ * For each album release year, returns the most listened track.
+ * "Most listened" uses listen count (distinct listen rows), then total duration as a tie breaker.
+ */
+export async function getMostListenedTracksByReleaseYear(): Promise<MostListenedTrackByReleaseYear[]> {
+  try {
+    // Note: we derive release year from album.release_year via album_track mapping.
+    // If a track appears on multiple albums, this query uses the MIN() release_year per track.
+    const query = `
+      WITH track_release AS (
+        SELECT
+          at.track_isrc,
+          MIN(a.release_year) as release_year,
+          MIN(a.image_url) as image_url
+        FROM album_track at
+        JOIN album a ON at.album_id = a.id
+        WHERE a.release_year IS NOT NULL
+        GROUP BY at.track_isrc
+      ),
+      streams AS (
+        SELECT
+          tr.release_year::text as year,
+          t.isrc as track_isrc,
+          t.name as track_name,
+          tr.image_url as image_url,
+          COUNT(DISTINCT l.id) as listen_count,
+          SUM(l.duration_ms) as total_duration
+        FROM listen l
+        JOIN album_track at ON l.track_id = at.track_id
+        JOIN track t ON at.track_isrc = t.isrc
+        JOIN track_release tr ON tr.track_isrc = t.isrc
+        WHERE l.duration_ms >= 30000
+        GROUP BY tr.release_year::text, t.isrc, t.name, tr.image_url
+      ),
+      ranked AS (
+        SELECT
+          s.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY s.year
+            ORDER BY s.listen_count DESC, s.total_duration DESC
+          ) as rn
+        FROM streams s
+      )
+      SELECT
+        year,
+        track_isrc,
+        track_name,
+        image_url,
+        listen_count,
+        total_duration
+      FROM ranked
+      WHERE rn = 1
+      ORDER BY year;
+    `;
+
+    const result = await db.execute(sql.raw(query));
+
+    const rows = result.rows as Array<Record<string, unknown>>;
+    if (rows.length === 0) return [];
+
+    const yearByIsrc = new Map<string, string>();
+    const topTracksBase: BaseTopTrack[] = rows.map((r) => {
+      const year = String(r.year);
+      const trackIsrc = String(r.track_isrc);
+      yearByIsrc.set(trackIsrc, year);
+
+      return {
+        trackName: String(r.track_name),
+        trackIsrc,
+        listenCount: Number(r.listen_count),
+        totalDuration: Number(r.total_duration),
+        imageUrl: (r.image_url as string | null) ?? null
+      };
+    });
+
+    const populated = await populateArtists(topTracksBase);
+
+    return populated.map((t) => ({
+      year: yearByIsrc.get(t.trackIsrc) || "",
+      trackName: t.trackName,
+      trackIsrc: t.trackIsrc,
+      listenCount: t.listenCount,
+      totalDuration: t.totalDuration,
+      imageUrl: t.imageUrl,
+      artists: t.artists
+    }));
+  } catch (error) {
+    console.error("Error fetching most listened tracks by release year:", error);
+    return [];
+  }
+}
+
 async function populateArtists(topTracks: BaseTopTrack[]): Promise<TopTrack[]> {
   // Get all artists for each track
   const trackIsrcs = topTracks.map((t) => t.trackIsrc);

@@ -427,6 +427,66 @@ export async function getYearlyStreamData(options: GetDailyStreamDataOptions = {
   }
 }
 
+export type YearlyReleaseYearStreamData = {
+  year: string;
+  streamCount: number;
+  totalDuration: number;
+};
+
+/**
+ * Streams/duration grouped by the *release year of the track's (album)*
+ * rather than the year the listen happened.
+ *
+ * Notes:
+ * - Release year is derived from `album.release_year` via `album_track`.
+ * - A track can appear on multiple albums; to avoid double counting listens,
+ *   we derive a single release year per `track_id` using MIN(release_year).
+ */
+export async function getYearlyReleaseYearStreamData(): Promise<YearlyReleaseYearStreamData[]> {
+  try {
+    const query = `
+      WITH track_id_map AS (
+        SELECT DISTINCT at.track_id, at.track_isrc
+        FROM album_track at
+      ),
+      track_release AS (
+        SELECT
+          tim.track_id,
+          MIN(a.release_year) AS release_year
+        FROM track_id_map tim
+        JOIN album_track at2 ON at2.track_id = tim.track_id
+        JOIN album a ON a.id = at2.album_id
+        WHERE a.release_year IS NOT NULL
+        GROUP BY tim.track_id
+      ),
+      streams AS (
+        SELECT
+          tr.release_year::text AS year,
+          COUNT(DISTINCT l.id) AS stream_count,
+          SUM(l.duration_ms) AS total_duration
+        FROM listen l
+        JOIN track_release tr ON tr.track_id = l.track_id
+        WHERE l.duration_ms >= 30000
+        GROUP BY tr.release_year::text
+      )
+      SELECT year, stream_count, total_duration
+      FROM streams
+      ORDER BY year;
+    `;
+
+    const result = await db.execute(sql.raw(query));
+    const rows = result.rows as Array<Record<string, unknown>>;
+    return rows.map((r) => ({
+      year: String(r.year),
+      streamCount: Number(r.stream_count),
+      totalDuration: Number(r.total_duration)
+    }));
+  } catch (error) {
+    console.error("Error fetching yearly release-year stream data:", error);
+    return [];
+  }
+}
+
 type GetYearlyPercentageDataOptions = {
   artistId?: string;
   albumId?: string;

@@ -12,6 +12,8 @@ export interface SpotifyTrack {
   album?: {
     id: string;
     name: string;
+    release_date?: string;
+    release_date_precision?: string;
     images: Array<{
       url: string;
     }>;
@@ -24,6 +26,8 @@ export interface SpotifyAlbum {
   images: Array<{
     url: string;
   }>;
+  release_date?: string;
+  release_date_precision?: string;
   artists: Array<{
     id: string;
     name: string;
