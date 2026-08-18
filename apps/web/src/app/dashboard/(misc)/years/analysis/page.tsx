@@ -1,6 +1,6 @@
+import YearSharePieChart from "@/components/charts/dashboard/YearSharePieChart";
 import YearlyStreamChart from "@/components/charts/dashboard/YearlyStreamChart";
 import MetricCard from "@/components/statsGrid/MetricCard";
-import { formatDuration } from "@/lib/utils/timeUtils";
 import {
   getMostListenedTracksByReleaseYear,
   getYearlyReleaseYearStreamData
@@ -87,30 +87,7 @@ export default async function ReleaseYearsAnalysisPage() {
 
             <div className="flex flex-col gap-6">
               <YearlyStreamChart data={yearlyReleaseYearStreamData} />
-
-              <div className="rounded-2xl bg-white/5 p-4 backdrop-blur-sm md:p-6">
-                <h2 className="mb-4 text-2xl font-bold text-white">Top years by share</h2>
-                <div className="space-y-3">
-                  {yearsByShare.map((y) => {
-                    const topTrack = mostListenedByYear.find((t) => t.year === y.year);
-                    return (
-                      <div key={y.year} className="flex flex-col gap-1 rounded-xl bg-black/20 p-4">
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="text-white">{y.year}</div>
-                          <div className="text-gray-300">
-                            {y.sharePct.toFixed(1)}% • {y.streamCount.toLocaleString()} streams
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          {topTrack
-                            ? `Top track: ${topTrack.trackName} (${formatDuration(topTrack.totalDuration)})`
-                            : "Top track unavailable"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <YearSharePieChart data={yearsByShare} topTracksByYear={mostListenedByYear} />
             </div>
           </>
         )}
