@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import {
   fetchRecentlyPlayedTracksService,
+  backfillAlbumReleaseYearsService,
   populateAlbumArtistData,
   populateAlbumTrackService,
   refetchArtistData
@@ -20,6 +21,13 @@ if (useInternalCron) {
       refetchArtistData()
     ]);
   });
+
+  // Backfill album release years (used by release-year analytics pages).
+  cron.schedule("0 */6 * * *", () => {
+    backfillAlbumReleaseYearsService({ limit: 50 }).catch((e) => {
+      console.error("Album release year backfill failed:", e);
+    });
+  });
 } else {
   console.log("🕑 Using external cron service...");
 }
@@ -28,7 +36,8 @@ Promise.all([
   fetchRecentlyPlayedTracksService(),
   populateAlbumTrackService(),
   populateAlbumArtistData(),
-  refetchArtistData()
+  refetchArtistData(),
+  backfillAlbumReleaseYearsService({ limit: 50 })
 ]).then(() => {
   if (!useInternalCron) {
     console.log("✅ Fetching complete. Exiting.");

@@ -1,5 +1,5 @@
 import LinkCard from "@/components/cards/LinkCard";
-import { faCalendar, faGrip, faRankingStar } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faChartLine, faGrip, faRankingStar } from "@fortawesome/free-solid-svg-icons";
 
 export default async function MiscPage() {
   return (
@@ -21,6 +21,18 @@ export default async function MiscPage() {
         title="On This Day"
         description="Discover what you were listening to on this date in previous years"
         icon={faCalendar}
+      />
+      <LinkCard
+        href="/dashboard/years/list"
+        title="Most listened by year"
+        description="Your top track for each album release year"
+        icon={faRankingStar}
+      />
+      <LinkCard
+        href="/dashboard/years/analysis"
+        title="Release year analysis"
+        description="Charts and numbers for how you listen across years"
+        icon={faChartLine}
       />
     </div>
   );

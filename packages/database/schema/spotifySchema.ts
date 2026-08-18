@@ -19,7 +19,9 @@ export const trackArtist = pgTable(
 export const album = pgTable("album", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  imageUrl: text("image_url")
+  imageUrl: text("image_url"),
+  // Release year extracted from Spotify album `release_date` (best-effort, can be null).
+  releaseYear: integer("release_year")
 });
 
 export const albumArtist = pgTable(
