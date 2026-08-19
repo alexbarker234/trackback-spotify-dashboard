@@ -1,11 +1,12 @@
 import TrackCard from "@/components/cards/TrackCard";
-import ExpandableList from "@/components/ExpandableList";
+import Loading from "@/components/Loading";
 import { cn } from "@/lib/utils/cn";
 import { faArrowLeft, faArrowRight, IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getTopTracksByReleaseYear } from "@workspace/core";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,28 @@ function YearNavigation({ year, maxYear }: { year: number; maxYear: number }) {
   );
 }
 
+async function YearTracksSection({ year }: { year: number }) {
+  const tracks = await getTopTracksByReleaseYear(year, 100);
+  const totalListens = tracks.reduce((sum, track) => sum + Number(track.listenCount), 0);
+
+  if (tracks.length === 0) {
+    return <div className="text-gray-400">No tracks found for {year}.</div>;
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <p className="text-sm text-gray-400">
+        {tracks.length.toLocaleString()} tracks • {totalListens.toLocaleString()} streams
+      </p>
+      <div className="space-y-2">
+        {tracks.map((track, index) => (
+          <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function ReleaseYearPage({
   params
 }: {
@@ -89,9 +112,6 @@ export default async function ReleaseYearPage({
   const currentYear = new Date().getFullYear();
   const year = parseYear(yearParam, currentYear);
   if (year === null) notFound();
-
-  const tracks = await getTopTracksByReleaseYear(year, 100);
-  const totalListens = tracks.reduce((sum, track) => sum + Number(track.listenCount), 0);
 
   return (
     <div className="flex-1 px-2 py-4 lg:px-8">
@@ -120,20 +140,16 @@ export default async function ReleaseYearPage({
           </div>
         </div>
 
-        {tracks.length === 0 ? (
-          <div className="text-gray-400">No tracks found for {year}.</div>
-        ) : (
-          <div className="flex flex-col gap-6">
-            <p className="text-sm text-gray-400">
-              {tracks.length.toLocaleString()} tracks • {totalListens.toLocaleString()} streams
-            </p>
-            <ExpandableList containerClassName="space-y-2" initialCount={15}>
-              {tracks.map((track, index) => (
-                <TrackCard key={track.trackIsrc} track={track} rank={index + 1} />
-              ))}
-            </ExpandableList>
-          </div>
-        )}
+        <Suspense
+          key={year}
+          fallback={
+            <div className="flex h-64 items-center justify-center">
+              <Loading />
+            </div>
+          }
+        >
+          <YearTracksSection year={year} />
+        </Suspense>
       </div>
     </div>
   );
