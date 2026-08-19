@@ -8,7 +8,10 @@ export const dynamic = "force-dynamic";
 
 function NoTopTrackForYear({ year }: { year: number }) {
   return (
-    <div className="block rounded-2xl bg-white/5 p-4 backdrop-blur-sm">
+    <Link
+      href={`/dashboard/years/${year}`}
+      className="block rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
+    >
       <div className="flex items-center gap-4">
         <span className="w-16 text-2xl font-bold text-gray-400">{year}</span>
         <div>
@@ -16,7 +19,7 @@ function NoTopTrackForYear({ year }: { year: number }) {
           <p className="text-sm text-gray-400">You didn&apos;t listen to tracks released in {year}.</p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -29,7 +32,7 @@ export default async function ReleaseYearsMostListenedPage() {
         <h1 className="mb-6 text-4xl font-bold text-white">Most listened by release year</h1>
         <div className="mb-6 flex flex-col gap-3">
           <p className="text-sm text-gray-400">
-            For each album release year, this shows your most-played track (grouped by the album’s Spotify release date).
+            For each release year, this shows your most-played track.
             If you didn’t listen to anything from a given year, that year is shown with no top track.
           </p>
           <Link
@@ -86,8 +89,7 @@ export default async function ReleaseYearsMostListenedPage() {
                       key={row.trackIsrc}
                       track={row}
                       rankLabel={String(year)}
-                      // Rank isn't shown when rankLabel is provided; keep a stable value anyway.
-                      rank={0}
+                      href={`/dashboard/years/${year}`}
                     />
                   );
                   return acc;

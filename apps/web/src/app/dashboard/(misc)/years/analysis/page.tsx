@@ -1,5 +1,5 @@
 import YearSharePieChart from "@/components/charts/dashboard/YearSharePieChart";
-import YearlyStreamChart from "@/components/charts/dashboard/YearlyStreamChart";
+import YearlyStreamBarChart from "@/components/charts/dashboard/YearlyStreamBarChart";
 import MetricCard from "@/components/statsGrid/MetricCard";
 import {
   getMostListenedTracksByReleaseYear,
@@ -42,7 +42,7 @@ export default async function ReleaseYearsAnalysisPage() {
         <h1 className="mb-6 text-4xl font-bold text-white">Release year analysis</h1>
         <div className="mb-6 flex flex-col gap-3">
           <p className="text-sm text-gray-400">
-            These charts group your listening by the track&apos;s release year (from the album&apos;s Spotify release date).
+            These charts group your listening by the track&apos;s release year.
           </p>
           <Link
             href="/dashboard/years/list"
@@ -65,6 +65,7 @@ export default async function ReleaseYearsAnalysisPage() {
                     ? `#1: ${topTrackByStreams.trackName}`
                     : "—"
                 }
+                href={topYearByStreams.year ? `/dashboard/years/${topYearByStreams.year}` : undefined}
                 gradientFrom="from-amber-500/10"
                 gradientTo="to-orange-500/10"
                 blurColor="bg-amber-500/20"
@@ -78,6 +79,7 @@ export default async function ReleaseYearsAnalysisPage() {
                     ? `#1: ${topTrackByDuration.trackName}`
                     : "—"
                 }
+                href={topYearByDuration.year ? `/dashboard/years/${topYearByDuration.year}` : undefined}
                 gradientFrom="from-red-500/10"
                 gradientTo="to-pink-500/10"
                 blurColor="bg-red-500/20"
@@ -86,7 +88,7 @@ export default async function ReleaseYearsAnalysisPage() {
             </div>
 
             <div className="flex flex-col gap-6">
-              <YearlyStreamChart data={yearlyReleaseYearStreamData} />
+              <YearlyStreamBarChart data={yearlyReleaseYearStreamData} title="Streams by release year" />
               <YearSharePieChart data={yearsByShare} topTracksByYear={mostListenedByYear} />
             </div>
           </>
