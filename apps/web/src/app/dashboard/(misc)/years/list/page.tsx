@@ -32,7 +32,7 @@ export default async function ReleaseYearsMostListenedPage() {
         <h1 className="mb-6 text-4xl font-bold text-white">Most listened by release year</h1>
         <div className="mb-6 flex flex-col gap-3">
           <p className="text-sm text-gray-400">
-            For each album release year, this shows your most-played track (grouped by the album’s Spotify release date).
+            For each release year, this shows your most-played track.
             If you didn’t listen to anything from a given year, that year is shown with no top track.
           </p>
           <Link

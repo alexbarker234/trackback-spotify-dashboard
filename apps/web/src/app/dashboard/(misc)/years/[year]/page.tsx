@@ -119,7 +119,7 @@ export default async function ReleaseYearPage({
         <h1 className="mb-6 text-4xl font-bold text-white">Top tracks released in {year}</h1>
         <div className="mb-6 flex flex-col gap-3">
           <p className="text-sm text-gray-400">
-            Your most-played tracks released in {year}, based on the album&apos;s Spotify release date.
+            Your most-played tracks released in {year}.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-2">

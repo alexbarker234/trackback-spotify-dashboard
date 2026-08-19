@@ -42,7 +42,7 @@ export default async function ReleaseYearsAnalysisPage() {
         <h1 className="mb-6 text-4xl font-bold text-white">Release year analysis</h1>
         <div className="mb-6 flex flex-col gap-3">
           <p className="text-sm text-gray-400">
-            These charts group your listening by the track&apos;s release year (from the album&apos;s Spotify release date).
+            These charts group your listening by the track&apos;s release year.
           </p>
           <Link
             href="/dashboard/years/list"
