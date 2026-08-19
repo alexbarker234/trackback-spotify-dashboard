@@ -65,6 +65,7 @@ export default async function ReleaseYearsAnalysisPage() {
                     ? `#1: ${topTrackByStreams.trackName}`
                     : "—"
                 }
+                href={topYearByStreams.year ? `/dashboard/years/${topYearByStreams.year}` : undefined}
                 gradientFrom="from-amber-500/10"
                 gradientTo="to-orange-500/10"
                 blurColor="bg-amber-500/20"
@@ -78,6 +79,7 @@ export default async function ReleaseYearsAnalysisPage() {
                     ? `#1: ${topTrackByDuration.trackName}`
                     : "—"
                 }
+                href={topYearByDuration.year ? `/dashboard/years/${topYearByDuration.year}` : undefined}
                 gradientFrom="from-red-500/10"
                 gradientTo="to-pink-500/10"
                 blurColor="bg-red-500/20"

@@ -4,6 +4,7 @@ import ChartTooltip from "@/components/charts/shared/ChartTooltip";
 import ExpandableChartContainer from "@/components/charts/shared/ExpandableChartContainer";
 import { topItemsChartColors } from "@/lib/utils/colors";
 import { formatDuration } from "@/lib/utils/timeUtils";
+import Link from "next/link";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 type YearShareData = {
@@ -102,7 +103,11 @@ export default function YearSharePieChart({ data, topTracksByYear }: YearSharePi
           {data.map((item) => {
             const topTrack = topTracksByYear.find((t) => t.year === item.year);
             return (
-              <div key={item.year} className="flex flex-col gap-1 rounded-xl bg-black/20 p-4">
+              <Link
+                key={item.year}
+                href={`/dashboard/years/${item.year}`}
+                className="flex flex-col gap-1 rounded-xl bg-black/20 p-4 transition-colors hover:bg-black/30"
+              >
                 <div className="flex items-center justify-between gap-4">
                   <div className="text-white">{item.year}</div>
                   <div className="text-gray-300">
@@ -114,7 +119,7 @@ export default function YearSharePieChart({ data, topTracksByYear }: YearSharePi
                     ? `Top track: ${topTrack.trackName} (${formatDuration(topTrack.totalDuration)})`
                     : "Top track unavailable"}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

@@ -5,16 +5,18 @@ import Link from "next/link";
 export default function TrackCard({
   track,
   rank,
-  rankLabel
+  rankLabel,
+  href
 }: {
   track: TopTrack;
   rank?: number;
   // Optional override for the big left label (e.g. show a year instead of "#rank").
   rankLabel?: string;
+  href?: string;
 }) {
   return (
     <Link
-      href={`/dashboard/track/${track.trackIsrc}`}
+      href={href ?? `/dashboard/track/${track.trackIsrc}`}
       className="block rounded-2xl bg-white/5 p-4 backdrop-blur-sm transition-all hover:bg-white/10"
     >
       <div className="flex items-center justify-between">

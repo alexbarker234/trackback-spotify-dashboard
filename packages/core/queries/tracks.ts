@@ -247,6 +247,60 @@ export async function getMostListenedTracksByReleaseYear(): Promise<MostListened
   }
 }
 
+/**
+ * Top tracks whose associated album release year matches `year`.
+ * If a track appears on multiple albums, MIN(release_year) is used.
+ */
+export async function getTopTracksByReleaseYear(
+  year: number,
+  limit: number = 100
+): Promise<TopTrack[]> {
+  try {
+    const result = await db.execute(sql`
+      WITH track_release AS (
+        SELECT
+          at.track_isrc,
+          MIN(a.release_year) as release_year,
+          MIN(a.image_url) as image_url
+        FROM album_track at
+        JOIN album a ON at.album_id = a.id
+        WHERE a.release_year IS NOT NULL
+        GROUP BY at.track_isrc
+      )
+      SELECT
+        t.isrc as track_isrc,
+        t.name as track_name,
+        tr.image_url as image_url,
+        COUNT(DISTINCT l.id) as listen_count,
+        SUM(l.duration_ms) as total_duration
+      FROM listen l
+      JOIN album_track at ON l.track_id = at.track_id
+      JOIN track t ON at.track_isrc = t.isrc
+      JOIN track_release tr ON tr.track_isrc = t.isrc
+      WHERE l.duration_ms >= 30000
+        AND tr.release_year = ${year}
+      GROUP BY t.isrc, t.name, tr.image_url
+      ORDER BY listen_count DESC, total_duration DESC
+      LIMIT ${limit}
+    `);
+    const rows = result.rows as Array<Record<string, unknown>>;
+    if (rows.length === 0) return [];
+
+    const topTracksBase: BaseTopTrack[] = rows.map((r) => ({
+      trackName: String(r.track_name),
+      trackIsrc: String(r.track_isrc),
+      listenCount: Number(r.listen_count),
+      totalDuration: Number(r.total_duration),
+      imageUrl: (r.image_url as string | null) ?? null
+    }));
+
+    return populateArtists(topTracksBase);
+  } catch (error) {
+    console.error("Error fetching top tracks by release year:", error);
+    return [];
+  }
+}
+
 async function populateArtists(topTracks: BaseTopTrack[]): Promise<TopTrack[]> {
   // Get all artists for each track
   const trackIsrcs = topTracks.map((t) => t.trackIsrc);
