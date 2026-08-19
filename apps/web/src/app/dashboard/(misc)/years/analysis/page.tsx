@@ -1,5 +1,5 @@
 import YearSharePieChart from "@/components/charts/dashboard/YearSharePieChart";
-import YearlyStreamChart from "@/components/charts/dashboard/YearlyStreamChart";
+import YearlyStreamBarChart from "@/components/charts/dashboard/YearlyStreamBarChart";
 import MetricCard from "@/components/statsGrid/MetricCard";
 import {
   getMostListenedTracksByReleaseYear,
@@ -86,7 +86,7 @@ export default async function ReleaseYearsAnalysisPage() {
             </div>
 
             <div className="flex flex-col gap-6">
-              <YearlyStreamChart data={yearlyReleaseYearStreamData} />
+              <YearlyStreamBarChart data={yearlyReleaseYearStreamData} title="Streams by release year" />
               <YearSharePieChart data={yearsByShare} topTracksByYear={mostListenedByYear} />
             </div>
           </>
