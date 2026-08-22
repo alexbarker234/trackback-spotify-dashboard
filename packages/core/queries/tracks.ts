@@ -318,6 +318,9 @@ type GetTopTracksByPeakDayListensOptions = {
   endDate?: Date;
   limit?: number;
   tzOffsetMinutes?: number;
+  artistId?: string;
+  albumId?: string;
+  trackIsrc?: string;
 };
 
 function toDateString(value: unknown): string {
@@ -333,7 +336,8 @@ function toDateString(value: unknown): string {
 export async function getTopTracksByPeakDayListens(
   options: GetTopTracksByPeakDayListensOptions = {}
 ): Promise<PeakDayTrack[]> {
-  const { startDate, endDate, limit = 20, tzOffsetMinutes = 0 } = options;
+  const { startDate, endDate, limit = 20, tzOffsetMinutes = 0, artistId, albumId, trackIsrc } =
+    options;
 
   try {
     const result = await db.execute(sql`
@@ -351,6 +355,12 @@ export async function getTopTracksByPeakDayListens(
         WHERE l.duration_ms >= 30000
           ${startDate ? sql`AND l.played_at >= ${startDate}` : sql``}
           ${endDate ? sql`AND l.played_at <= ${endDate}` : sql``}
+          ${artistId ? sql`AND EXISTS (
+            SELECT 1 FROM track_artist ta
+            WHERE ta.track_isrc = t.isrc AND ta.artist_id = ${artistId}
+          )` : sql``}
+          ${albumId ? sql`AND at.album_id = ${albumId}` : sql``}
+          ${trackIsrc ? sql`AND t.isrc = ${trackIsrc}` : sql``}
         GROUP BY 1, 2, 4
       ),
       best_day AS (

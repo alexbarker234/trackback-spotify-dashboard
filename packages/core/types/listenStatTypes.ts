@@ -9,6 +9,8 @@ export interface BaseListenStats {
   weekDuration: number;
   firstListen: Date | null;
   lastListen: Date | null;
+  peakDayListenCount: number;
+  peakDayDate: string | null;
 }
 
 export interface TrackListenStats extends BaseListenStats {

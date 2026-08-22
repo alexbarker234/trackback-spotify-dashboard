@@ -741,6 +741,22 @@ async function calculateBaseStats(
   const firstListen = listens.length > 0 ? listens[listens.length - 1]!.playedAt : null;
   const lastListen = listens.length > 0 ? listens[0]!.playedAt : null;
 
+  let peakDayListenCount = 0;
+  let peakDayDate: string | null = null;
+  if (listens.length > 0) {
+    const byDay = new Map<string, number>();
+    for (const l of listens) {
+      const key = l.playedAt.toISOString().slice(0, 10);
+      byDay.set(key, (byDay.get(key) ?? 0) + 1);
+    }
+    for (const [date, count] of byDay) {
+      if (count > peakDayListenCount) {
+        peakDayListenCount = count;
+        peakDayDate = date;
+      }
+    }
+  }
+
   const avgDuration = totalListens > 0 ? totalDuration / totalListens : 0;
 
   return {
@@ -754,7 +770,9 @@ async function calculateBaseStats(
       weekListens,
       weekDuration,
       firstListen,
-      lastListen
+      lastListen,
+      peakDayListenCount,
+      peakDayDate
     },
     avgDuration
   };
@@ -786,7 +804,9 @@ export async function getBasicListenStats(): Promise<BaseListenStats> {
       weekListens: 0,
       weekDuration: 0,
       firstListen: null,
-      lastListen: null
+      lastListen: null,
+      peakDayListenCount: 0,
+      peakDayDate: null
     };
   }
 }
@@ -833,6 +853,8 @@ export async function getTrackListenStats(trackIsrc: string): Promise<TrackListe
       weekDuration: 0,
       firstListen: null,
       lastListen: null,
+      peakDayListenCount: 0,
+      peakDayDate: null,
       avgDuration: 0,
       completionRate: 0
     };
@@ -893,6 +915,8 @@ export async function getArtistListenStats(artistId: string): Promise<ArtistList
       weekDuration: 0,
       firstListen: null,
       lastListen: null,
+      peakDayListenCount: 0,
+      peakDayDate: null,
       avgDuration: 0,
       uniqueTracks: 0,
       uniqueAlbums: 0,
@@ -954,6 +978,8 @@ export async function getAlbumListenStats(albumId: string): Promise<AlbumListenS
       weekDuration: 0,
       firstListen: null,
       lastListen: null,
+      peakDayListenCount: 0,
+      peakDayDate: null,
       avgDuration: 0,
       completionRate: 0,
       uniqueTracks: 0,

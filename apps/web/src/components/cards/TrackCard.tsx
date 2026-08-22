@@ -23,9 +23,11 @@ export default function TrackCard({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="w-16 text-2xl font-bold text-gray-400">
-            {rankLabel ? rankLabel : `#${rank ?? 0}`}
-          </span>
+          {(rankLabel || rank != null) && (
+            <span className="w-16 text-2xl font-bold text-gray-400">
+              {rankLabel ? rankLabel : `#${rank}`}
+            </span>
+          )}
           <div className="flex items-center gap-4">
             {track.imageUrl && (
               <img
