@@ -7,6 +7,7 @@ import HourlyListensRadialChart from "@/components/charts/dashboard/HourlyListen
 import ListeningHeatmap from "@/components/charts/dashboard/ListeningHeatmap";
 import YearlyPercentageChart from "@/components/charts/dashboard/YearlyPercentageChart";
 import ExpandableList from "@/components/ExpandableList";
+import FirstSongSection from "@/components/itemPage/FirstSongSection";
 import ItemHeader from "@/components/itemPage/ItemHeader";
 import ItemPageSkeleton from "@/components/itemPage/ItemPageSkeleton";
 import Loading from "@/components/Loading";
@@ -146,6 +147,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistI
       {/* Statistics Grid */}
       <Suspense fallback={<Loading />}>
         <StatsSection artistId={artistId} />
+      </Suspense>
+
+      {/* First Song */}
+      <Suspense fallback={<Loading />}>
+        <FirstSongSection artistId={artistId} />
       </Suspense>
 
       {/* Charts */}

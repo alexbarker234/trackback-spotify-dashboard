@@ -18,22 +18,27 @@ type RecentListen = {
 type DayGroup = { date: string; items: RecentListen[] };
 type DayApiResponse = { days: DayGroup[]; nextCursor: string | null };
 
+export type ListenSortOrder = "asc" | "desc";
+
 async function fetchRecentListensByDays({
   cursor,
   days = 7,
   artistId,
   albumId,
-  trackIsrc
+  trackIsrc,
+  sort = "desc"
 }: {
   cursor?: string | null;
   days?: number;
   artistId?: string;
   albumId?: string;
   trackIsrc?: string;
+  sort?: ListenSortOrder;
 }) {
   const params = new URLSearchParams();
   params.set("days", String(days));
   params.set("tzOffsetMinutes", String(new Date().getTimezoneOffset() * -1));
+  params.set("sort", sort);
   if (artistId) params.set("artistId", artistId);
   if (albumId) params.set("albumId", albumId);
   if (trackIsrc) params.set("trackIsrc", trackIsrc);
@@ -50,7 +55,7 @@ async function fetchRecentListensByDays({
 
 export function useRecentListensInfinite(
   daysPerPage = 7,
-  filters?: { artistId?: string; albumId?: string; trackIsrc?: string }
+  filters?: { artistId?: string; albumId?: string; trackIsrc?: string; sort?: ListenSortOrder }
 ) {
   return useInfiniteQuery<DayApiResponse, Error>({
     queryKey: [
@@ -58,7 +63,8 @@ export function useRecentListensInfinite(
       daysPerPage,
       filters?.artistId,
       filters?.albumId,
-      filters?.trackIsrc
+      filters?.trackIsrc,
+      filters?.sort
     ],
     queryFn: ({ pageParam }) =>
       fetchRecentListensByDays({

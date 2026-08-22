@@ -3,6 +3,7 @@ import {
   albumTrack,
   and,
   artist,
+  asc,
   db,
   desc,
   eq,
@@ -19,15 +20,18 @@ import {
   TrackListenStats
 } from "../types/listenStatTypes";
 
+type ListenSortOrder = "asc" | "desc";
+
 type GetRecentListensOptions = {
   artistId?: string;
   albumId?: string;
   trackIsrc?: string;
   limit?: number;
+  order?: ListenSortOrder;
 };
 
 export async function getRecentListens(options: GetRecentListensOptions = {}) {
-  const { artistId, albumId, trackIsrc, limit = 10 } = options;
+  const { artistId, albumId, trackIsrc, limit = 10, order = "desc" } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
@@ -72,7 +76,7 @@ export async function getRecentListens(options: GetRecentListensOptions = {}) {
         album.name,
         album.imageUrl
       )
-      .orderBy(desc(listen.playedAt))
+      .orderBy(order === "asc" ? asc(listen.playedAt) : desc(listen.playedAt))
       .limit(limit);
 
     return recentListens;
@@ -88,10 +92,11 @@ type GetPaginatedListensOptions = {
   trackIsrc?: string;
   limit?: number;
   cursor?: string | null; // ISO date string for playedAt
+  order?: ListenSortOrder;
 };
 
 export async function getPaginatedListens(options: GetPaginatedListensOptions = {}) {
-  const { artistId, albumId, trackIsrc, limit = 50, cursor } = options;
+  const { artistId, albumId, trackIsrc, limit = 50, cursor, order = "desc" } = options;
 
   console.log(cursor);
 
@@ -107,9 +112,12 @@ export async function getPaginatedListens(options: GetPaginatedListensOptions = 
     }
 
     if (cursor) {
-      // Use playedAt strictly less than cursor for keyset pagination
       const cursorDate = new Date(cursor);
-      whereConditions.push(sql`${listen.playedAt} < ${cursorDate}`);
+      if (order === "asc") {
+        whereConditions.push(sql`${listen.playedAt} >= ${cursorDate}`);
+      } else {
+        whereConditions.push(sql`${listen.playedAt} < ${cursorDate}`);
+      }
     }
 
     const items = await db
@@ -143,7 +151,7 @@ export async function getPaginatedListens(options: GetPaginatedListensOptions = 
         album.name,
         album.imageUrl
       )
-      .orderBy(desc(listen.playedAt))
+      .orderBy(order === "asc" ? asc(listen.playedAt) : desc(listen.playedAt))
       .limit(limit);
 
     const nextCursor =
