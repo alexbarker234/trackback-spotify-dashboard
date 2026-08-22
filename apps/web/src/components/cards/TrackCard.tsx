@@ -6,13 +6,15 @@ export default function TrackCard({
   track,
   rank,
   rankLabel,
-  href
+  href,
+  statsText
 }: {
   track: TopTrack;
   rank?: number;
   // Optional override for the big left label (e.g. show a year instead of "#rank").
   rankLabel?: string;
   href?: string;
+  statsText?: string;
 }) {
   return (
     <Link
@@ -36,7 +38,7 @@ export default function TrackCard({
               <p className="text-white">{track.trackName}</p>
               <p className="text-gray-300">{track.artists.map((artist) => artist.artistName).join(" • ")}</p>
               <p className="text-sm text-gray-400">
-                {track.listenCount} listens • {formatDuration(track.totalDuration)}
+                {statsText ?? `${track.listenCount} listens • ${formatDuration(track.totalDuration)}`}
               </p>
             </div>
           </div>

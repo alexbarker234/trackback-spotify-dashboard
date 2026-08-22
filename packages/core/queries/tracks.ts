@@ -301,6 +301,107 @@ export async function getTopTracksByReleaseYear(
   }
 }
 
+export type PeakDayTrack = {
+  trackName: string;
+  trackIsrc: string;
+  peakListenCount: number;
+  peakDate: string;
+  imageUrl: string | null;
+  artists: {
+    artistName: string;
+    artistId: string;
+  }[];
+};
+
+type GetTopTracksByPeakDayListensOptions = {
+  startDate?: Date;
+  endDate?: Date;
+  limit?: number;
+  tzOffsetMinutes?: number;
+};
+
+function toDateString(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  return String(value).slice(0, 10);
+}
+
+/**
+ * Tracks ranked by their highest listen count on a single local calendar day.
+ */
+export async function getTopTracksByPeakDayListens(
+  options: GetTopTracksByPeakDayListensOptions = {}
+): Promise<PeakDayTrack[]> {
+  const { startDate, endDate, limit = 20, tzOffsetMinutes = 0 } = options;
+
+  try {
+    const result = await db.execute(sql`
+      WITH daily AS (
+        SELECT
+          t.isrc as track_isrc,
+          t.name as track_name,
+          MIN(a.image_url) as image_url,
+          date(l.played_at + (${tzOffsetMinutes}::int * interval '1 minute')) as listen_date,
+          COUNT(DISTINCT l.id) as listen_count
+        FROM listen l
+        JOIN album_track at ON l.track_id = at.track_id
+        JOIN track t ON at.track_isrc = t.isrc
+        LEFT JOIN album a ON at.album_id = a.id
+        WHERE l.duration_ms >= 30000
+          ${startDate ? sql`AND l.played_at >= ${startDate}` : sql``}
+          ${endDate ? sql`AND l.played_at <= ${endDate}` : sql``}
+        GROUP BY 1, 2, 4
+      ),
+      best_day AS (
+        SELECT
+          daily.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY track_isrc
+            ORDER BY listen_count DESC, listen_date DESC
+          ) as rn
+        FROM daily
+      )
+      SELECT track_isrc, track_name, image_url, listen_date, listen_count
+      FROM best_day
+      WHERE rn = 1
+      ORDER BY listen_count DESC, listen_date DESC
+      LIMIT ${limit}
+    `);
+
+    const rows = result.rows as Array<Record<string, unknown>>;
+    if (rows.length === 0) return [];
+
+    const peakDateByIsrc = new Map<string, string>();
+    const topTracksBase: BaseTopTrack[] = rows.map((r) => {
+      const trackIsrc = String(r.track_isrc);
+      peakDateByIsrc.set(trackIsrc, toDateString(r.listen_date));
+
+      return {
+        trackName: String(r.track_name),
+        trackIsrc,
+        listenCount: Number(r.listen_count),
+        totalDuration: 0,
+        imageUrl: (r.image_url as string | null) ?? null
+      };
+    });
+
+    const populated = await populateArtists(topTracksBase);
+
+    return populated.map((track) => ({
+      trackName: track.trackName,
+      trackIsrc: track.trackIsrc,
+      peakListenCount: track.listenCount,
+      peakDate: peakDateByIsrc.get(track.trackIsrc) || "",
+      imageUrl: track.imageUrl,
+      artists: track.artists
+    }));
+  } catch (error) {
+    console.error("Error fetching top tracks by peak day listens:", error);
+    return [];
+  }
+}
+
 async function populateArtists(topTracks: BaseTopTrack[]): Promise<TopTrack[]> {
   // Get all artists for each track
   const trackIsrcs = topTracks.map((t) => t.trackIsrc);
