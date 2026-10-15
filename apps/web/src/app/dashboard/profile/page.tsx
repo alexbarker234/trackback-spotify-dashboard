@@ -1,7 +1,7 @@
 import Button from "@/components/Button";
 import LogoutButton from "@/components/LogoutButton";
 import { auth } from "@/lib/auth";
-import { faUpload, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faGears, faUpload, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Metadata } from "next";
 import { headers } from "next/headers";
@@ -41,6 +41,8 @@ export default async function ProfilePage() {
       {/* Action Buttons */}
       <div className="space-y-4">
         <Button href="/dashboard/import" label="Import Data" icon={faUpload} variant="primary" className="w-full" />
+
+        <Button href="/dashboard/admin" label="Admin" icon={faGears} variant="secondary" className="w-full" />
 
         <LogoutButton />
       </div>

@@ -17,6 +17,8 @@ export const getPageTitle = (path: string, searchParams: URLSearchParams) => {
       return "Trackback";
     case "/dashboard/profile":
       return "Profile";
+    case "/dashboard/admin":
+      return "Background Jobs";
     case "/dashboard/search":
       return "Search";
     case "/dashboard/misc":
