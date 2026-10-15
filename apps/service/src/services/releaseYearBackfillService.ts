@@ -1,4 +1,4 @@
-import { album, db, inArray, sql } from "@workspace/database";
+import { album, asc, db, inArray, sql } from "@workspace/database";
 import { fetchMultipleAlbums, getServerAccessToken } from "./spotify";
 
 function releaseYearFromSpotifyDate(releaseDate?: string): number | null {
@@ -19,22 +19,25 @@ export async function backfillAlbumReleaseYearsService(options?: {
   limit?: number;
   // Update chunk size when generating CASE SQL
   updateChunkSize?: number;
-}): Promise<void> {
+}): Promise<"continue" | "complete"> {
   const limit = options?.limit ?? 50;
   const updateChunkSize = options?.updateChunkSize ?? 50;
 
   try {
-    const accessToken = await getServerAccessToken();
-    if (!accessToken) return;
-
     const nullReleaseAlbums = await db.query.album.findMany({
       where: (a, { isNull: drizzleIsNull }) => drizzleIsNull(a.releaseYear),
+      orderBy: [asc(album.id)],
       limit
     });
 
     if (nullReleaseAlbums.length === 0) {
       console.log("No album release years to backfill");
-      return;
+      return "complete";
+    }
+
+    const accessToken = await getServerAccessToken();
+    if (!accessToken) {
+      throw new Error("No server access token available for release year backfill");
     }
 
     const albumIds = nullReleaseAlbums.map((a) => a.id);
@@ -51,8 +54,7 @@ export async function backfillAlbumReleaseYearsService(options?: {
       .filter((v): v is { id: string; releaseYear: number } => v !== null);
 
     if (updates.length === 0) {
-      console.log("No usable release years returned from Spotify");
-      return;
+      throw new Error("No usable release years returned from Spotify");
     }
 
     // Bulk update using CASE expression (faster than one UPDATE per album).
@@ -76,8 +78,10 @@ export async function backfillAlbumReleaseYearsService(options?: {
     }
 
     console.log(`Backfilled ${updates.length} album release years`);
+    return "continue";
   } catch (error) {
     console.error("Error backfilling album release years:", error);
+    throw error;
   }
 }
 

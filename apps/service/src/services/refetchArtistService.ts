@@ -8,17 +8,16 @@ const MAX_ARTISTS_PER_CYCLE = 30;
  */
 export async function refetchArtistData(): Promise<void> {
   try {
-    const accessToken = await getServerAccessToken();
-    if (!accessToken) {
-      console.log("No server access token available for artist refetch");
-      return;
-    }
-
     const artists = await getArtistsNeedingRefetch(MAX_ARTISTS_PER_CYCLE);
 
     if (artists.length === 0) {
       console.log("No artists need Spotify data refetch");
       return;
+    }
+
+    const accessToken = await getServerAccessToken();
+    if (!accessToken) {
+      throw new Error("No server access token available for artist refetch");
     }
 
     console.log(`Refetching Spotify data for ${artists.length} artists`);
@@ -38,5 +37,6 @@ export async function refetchArtistData(): Promise<void> {
     }
   } catch (error) {
     console.error("Error refetching artist data:", error);
+    throw error;
   }
 }

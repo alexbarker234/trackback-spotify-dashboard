@@ -304,20 +304,22 @@ export async function getTrackWithRelations(trackId: string) {
 /**
  * Gets listens that don't have corresponding albumTrack entries
  */
-export async function getListensWithoutAlbumTrack(): Promise<Listen[]> {
+export async function getListensWithoutAlbumTrack(limit: number): Promise<Listen[]> {
   return db.query.listen.findMany({
     where: (listen, { notExists }) =>
-      notExists(db.select().from(albumTrack).where(eq(albumTrack.trackId, listen.trackId)))
+      notExists(db.select().from(albumTrack).where(eq(albumTrack.trackId, listen.trackId))),
+    limit
   });
 }
 
 /**
  * Gets albums that don't have corresponding albumArtist entries
  */
-export async function getAlbumsWithoutAlbumArtist() {
+export async function getAlbumsWithoutAlbumArtist(limit: number) {
   return db.query.album.findMany({
     where: (album, { notExists }) =>
-      notExists(db.select().from(albumArtist).where(eq(albumArtist.albumId, album.id)))
+      notExists(db.select().from(albumArtist).where(eq(albumArtist.albumId, album.id))),
+    limit
   });
 }
 
