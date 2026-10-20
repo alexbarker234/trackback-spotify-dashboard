@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import {
   faChevronDown,
   faFileImport,
+  faGears,
   faMagnifyingGlass,
   faSignOutAlt,
   IconDefinition
@@ -45,7 +46,8 @@ function ProfileMenuItem({ href, onClick, icon, label }: MenuItemProps) {
 export default function UserProfile({ userInfo }: { userInfo: { username: string; avatarURL: string } }) {
   const menuItems: MenuItemProps[] = [
     { href: "/dashboard/search", icon: faMagnifyingGlass, label: "Search" },
-    { href: "/dashboard/import", icon: faFileImport, label: "Import" }
+    { href: "/dashboard/import", icon: faFileImport, label: "Import" },
+    { href: "/dashboard/admin", icon: faGears, label: "Admin" }
     //{ href: "/settings", icon: FaCog, label: "Settings" }
   ];
   if (process.env.NODE_ENV === "development") {

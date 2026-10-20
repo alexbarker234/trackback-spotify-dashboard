@@ -6,6 +6,8 @@ import {
 } from "../database";
 
 import { getSpotifyUser, getUserAccessToken } from "@/database/user";
+import { ENRICHMENT_JOB_ID } from "@/scheduler/ids";
+import { requestJob } from "@/scheduler/jobState";
 import { fetchMultipleArtists, fetchRecentlyPlayedTracks } from "./spotify";
 
 /**
@@ -77,66 +79,50 @@ async function updateArtistData(accessToken: string): Promise<void> {
  * Fetches and saves recently played tracks for all users
  */
 export async function fetchRecentlyPlayedTracksService(): Promise<void> {
-  try {
-    console.log(`[${new Date().toISOString()}] 🎵 Fetching recently played tracks...`);
+  console.log(`[${new Date().toISOString()}] 🎵 Fetching recently played tracks...`);
 
-    // Get all users with Spotify accounts
-    const spotifyUser = await getSpotifyUser();
+  const spotifyUser = await getSpotifyUser();
 
-    if (!spotifyUser) {
-      console.log("No Spotify user found in database");
-      return;
-    }
-
-    const accessToken = await getUserAccessToken(spotifyUser.userId);
-
-    if (!accessToken) {
-      console.log(`No valid access token`);
-      return;
-    }
-
-    try {
-      // Fetch recently played tracks
-      const recentlyPlayed = await fetchRecentlyPlayedTracks(accessToken);
-
-      console.log(
-        `Found ${recentlyPlayed.items.length} recent tracks for user ${spotifyUser.userId}`
-      );
-
-      // Prepare all tracks for bulk save
-      const allTracksData = recentlyPlayed.items.map((item) => ({
-        trackData: item.track,
-        playedAt: new Date(item.played_at)
-      }));
-
-      // Check for existing listens to avoid duplicates
-      const playedAtDates = allTracksData.map((track) => track.playedAt);
-      const existingPlayedAtSet = await getExistingListensByPlayedAt(playedAtDates);
-
-      // Filter out tracks that are already saved
-      const newTracksData = allTracksData.filter(
-        (track) => !existingPlayedAtSet.has(track.playedAt.toISOString())
-      );
-
-      console.log(
-        `Filtered out ${allTracksData.length - newTracksData.length} duplicate tracks, ${newTracksData.length} new tracks to save`
-      );
-
-      // Save only new tracks in bulk
-      if (newTracksData.length > 0) {
-        await saveListens(newTracksData);
-      } else {
-        console.log("No new tracks to save");
-      }
-
-      // Update artist data
-      await updateArtistData(accessToken);
-    } catch (error) {
-      console.error(`Error fetching tracks for user ${spotifyUser.userId}:`, error);
-    }
-
-    console.log(`[${new Date().toISOString()}] ✅ Successfully processed recently played tracks`);
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] ❌ Error fetching recently played tracks:`, error);
+  if (!spotifyUser) {
+    console.log("No Spotify user found in database");
+    return;
   }
+
+  const accessToken = await getUserAccessToken(spotifyUser.userId);
+
+  if (!accessToken) {
+    console.log(`No valid access token`);
+    return;
+  }
+
+  const recentlyPlayed = await fetchRecentlyPlayedTracks(accessToken);
+
+  console.log(`Found ${recentlyPlayed.items.length} recent tracks for user ${spotifyUser.userId}`);
+
+  const allTracksData = recentlyPlayed.items.map((item) => ({
+    trackData: item.track,
+    playedAt: new Date(item.played_at)
+  }));
+
+  const playedAtDates = allTracksData.map((track) => track.playedAt);
+  const existingPlayedAtSet = await getExistingListensByPlayedAt(playedAtDates);
+
+  const newTracksData = allTracksData.filter(
+    (track) => !existingPlayedAtSet.has(track.playedAt.toISOString())
+  );
+
+  console.log(
+    `Filtered out ${allTracksData.length - newTracksData.length} duplicate tracks, ${newTracksData.length} new tracks to save`
+  );
+
+  if (newTracksData.length > 0) {
+    await saveListens(newTracksData);
+    await requestJob(ENRICHMENT_JOB_ID);
+  } else {
+    console.log("No new tracks to save");
+  }
+
+  await updateArtistData(accessToken);
+
+  console.log(`[${new Date().toISOString()}] ✅ Successfully processed recently played tracks`);
 }

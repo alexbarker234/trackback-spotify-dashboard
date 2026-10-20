@@ -2,26 +2,27 @@ import { getListensWithoutAlbumTrack, saveBatchTrackDataToDatabase } from "@/dat
 import { Listen } from "@workspace/database";
 import { fetchMultipleTracks, getServerAccessToken } from "./spotify";
 
-export async function populateAlbumTrackService(): Promise<void> {
+const LISTEN_LIMIT = 50;
+
+export async function populateAlbumTrackService(): Promise<{ more: boolean }> {
   try {
     console.log(
       `[${new Date().toISOString()}] 🔍 Finding listens that don't have albumTrack entries...`
     );
 
-    // Get all listens that don't have corresponding albumTrack entries
-    const listensWithoutAlbumTrack = await getListensWithoutAlbumTrack();
+    const listensWithoutAlbumTrack = await getListensWithoutAlbumTrack(LISTEN_LIMIT);
+    const more = listensWithoutAlbumTrack.length === LISTEN_LIMIT;
 
     if (listensWithoutAlbumTrack.length === 0) {
       console.log("No listens need albumTrack entries");
-      return;
+      return { more: false };
     }
 
     console.log(`Found ${listensWithoutAlbumTrack.length} listens without albumTrack entries`);
 
     const accessToken = await getServerAccessToken();
     if (!accessToken) {
-      console.log("No server access token available");
-      return;
+      throw new Error("No server access token available");
     }
 
     // Group listens by track ID to minimize API calls
@@ -38,6 +39,7 @@ export async function populateAlbumTrackService(): Promise<void> {
     // Process tracks in batches of 50 (Spotify API limit)
     const trackIds = Array.from(listensByTrackId.keys());
     const batchSize = 50;
+    let batchFailed = false;
 
     for (let i = 0; i < trackIds.length; i += batchSize) {
       const batch = trackIds.slice(i, i + batchSize);
@@ -54,15 +56,18 @@ export async function populateAlbumTrackService(): Promise<void> {
         // Save all track, artist, and album data to database in bulk
         await saveBatchTrackDataToDatabase(spotifyTracks);
       } catch (error) {
+        batchFailed = true;
         console.error(`Error processing batch starting at index ${i}:`, error);
-        // Continue with next batch
       }
     }
 
     console.log(
       `[${new Date().toISOString()}] ✅ Successfully processed ${trackIds.length} tracks, saved track/artist/album data`
     );
+
+    return { more: more && !batchFailed };
   } catch (error) {
     console.error(`[${new Date().toISOString()}] ❌ Error populating imported listens:`, error);
+    throw error;
   }
 }
