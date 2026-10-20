@@ -1,0 +1,1 @@
+ALTER TABLE "album" ADD COLUMN "catalog_unavailable" boolean DEFAULT false NOT NULL;

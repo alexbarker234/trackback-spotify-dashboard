@@ -43,6 +43,13 @@
       "when": 1792034187608,
       "tag": "0005_uneven_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792481999294,
+      "tag": "0006_catalog_unavailable",
+      "breakpoints": true
     }
   ]
 }

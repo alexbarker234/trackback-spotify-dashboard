@@ -1,6 +1,7 @@
 "use client";
 
 import { useNowPlaying } from "@/hooks/useNowPlaying";
+import { catalogName } from "@/lib/utils/catalogName";
 import Image from "next/image";
 import Link from "next/link";
 import Loading from "./Loading";
@@ -51,7 +52,7 @@ export default function NowPlaying() {
           <div className="relative h-16 w-16 flex-shrink-0">
             <Image
               src={item.album.images[0].url}
-              alt={`${item.album.name} album cover`}
+              alt={`${catalogName(item.album.name)} album cover`}
               fill
               className="rounded-lg object-cover"
             />
@@ -59,9 +60,9 @@ export default function NowPlaying() {
         )}
 
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-semibold text-zinc-100">{item.name}</h3>
+          <h3 className="truncate text-lg font-semibold text-zinc-100">{catalogName(item.name)}</h3>
           <p className="truncate text-zinc-400">{item.artists.map((artist) => artist.name).join(", ")}</p>
-          <p className="truncate text-sm text-zinc-500">{item.album.name}</p>
+          <p className="truncate text-sm text-zinc-500">{catalogName(item.album.name)}</p>
         </div>
 
         <div className="flex items-center space-x-2 text-zinc-400">

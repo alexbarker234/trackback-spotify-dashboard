@@ -1,4 +1,5 @@
-import { album, asc, db, inArray, sql } from "@workspace/database";
+import { isCatalogUnavailable } from "@/database";
+import { album, and, asc, db, eq, inArray, sql } from "@workspace/database";
 import { fetchMultipleAlbums, getServerAccessToken } from "./spotify";
 
 function releaseYearFromSpotifyDate(releaseDate?: string): number | null {
@@ -25,7 +26,8 @@ export async function backfillAlbumReleaseYearsService(options?: {
 
   try {
     const nullReleaseAlbums = await db.query.album.findMany({
-      where: (a, { isNull: drizzleIsNull }) => drizzleIsNull(a.releaseYear),
+      where: (a, { isNull: drizzleIsNull }) =>
+        and(drizzleIsNull(a.releaseYear), eq(a.catalogUnavailable, false)),
       orderBy: [asc(album.id)],
       limit
     });
@@ -46,15 +48,32 @@ export async function backfillAlbumReleaseYearsService(options?: {
       (a): a is NonNullable<typeof a> => a !== null
     );
 
+    const unavailableIds: string[] = [];
     const updates = spotifyAlbums
       .map((a) => {
+        if (isCatalogUnavailable(a.name, a.release_date)) {
+          unavailableIds.push(a.id);
+          return null;
+        }
         const releaseYear = releaseYearFromSpotifyDate(a.release_date);
         return releaseYear ? { id: a.id, releaseYear } : null;
       })
       .filter((v): v is { id: string; releaseYear: number } => v !== null);
 
-    if (updates.length === 0) {
+    if (unavailableIds.length > 0) {
+      await db
+        .update(album)
+        .set({ catalogUnavailable: true })
+        .where(inArray(album.id, unavailableIds));
+      console.log(`Marked ${unavailableIds.length} albums as catalog unavailable`);
+    }
+
+    if (updates.length === 0 && unavailableIds.length === 0) {
       throw new Error("No usable release years returned from Spotify");
+    }
+
+    if (updates.length === 0) {
+      return "continue";
     }
 
     // Bulk update using CASE expression (faster than one UPDATE per album).

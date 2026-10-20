@@ -1,3 +1,4 @@
+import { catalogName } from "@/lib/utils/catalogName";
 import Link from "next/link";
 
 interface CompactRankListCardProps {
@@ -34,7 +35,7 @@ export default function CompactRankListCard({
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={name}
+            alt={catalogName(name)}
             className="h-full w-full rounded-lg object-cover shadow-lg"
           />
         ) : (
@@ -46,7 +47,7 @@ export default function CompactRankListCard({
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <h3 className="truncate font-medium text-white">{name}</h3>
+        <h3 className="truncate font-medium text-white">{catalogName(name)}</h3>
         {subtitle && <p className="truncate text-sm text-gray-400">{subtitle}</p>}
       </div>
 

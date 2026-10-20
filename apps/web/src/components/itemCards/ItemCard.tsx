@@ -1,3 +1,4 @@
+import { catalogName } from "@/lib/utils/catalogName";
 import { cn } from "@/lib/utils/cn";
 import { faMusic } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,7 +24,7 @@ export default function ItemCard({ href, imageUrl, title, subtitle, content, num
       )}
     >
       {imageUrl ? (
-        <img src={imageUrl} alt={title} className="aspect-square w-full rounded-lg object-cover shadow-lg" />
+        <img src={imageUrl} alt={catalogName(title)} className="aspect-square w-full rounded-lg object-cover shadow-lg" />
       ) : (
         <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-white/5">
           <FontAwesomeIcon icon={faMusic} className="text-4xl text-gray-400" />
@@ -33,7 +34,7 @@ export default function ItemCard({ href, imageUrl, title, subtitle, content, num
         <p className="line-clamp-2 font-medium text-white">
           {number !== undefined && <span className="font-bold text-gray-400">#{number}</span>}
           {number !== undefined && " "}
-          {title}
+          {catalogName(title)}
         </p>
         <p className="line-clamp-1 text-sm text-gray-400">{subtitle}</p>
         {content !== undefined && <p className="text-xs text-gray-500">{content}</p>}

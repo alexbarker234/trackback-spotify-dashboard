@@ -1,3 +1,4 @@
+import { catalogName } from "@/lib/utils/catalogName";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { TopAlbum } from "@/types";
 import Link from "next/link";
@@ -13,13 +14,13 @@ export default function AlbumCard({ album, rank }: { album: TopAlbum; rank: numb
         {album.albumImageUrl && (
           <img
             src={album.albumImageUrl}
-            alt={`${album.albumName} album cover`}
+            alt={`${catalogName(album.albumName)} album cover`}
             className="h-16 w-16 rounded-lg object-cover shadow-lg"
           />
         )}
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h4 className="line-clamp-2 font-medium text-white">{album.albumName}</h4>
+            <h4 className="line-clamp-2 font-medium text-white">{catalogName(album.albumName)}</h4>
           </div>
           <p className="text-sm text-gray-400">
             {album.listenCount} listens • {formatDuration(album.totalDuration)}

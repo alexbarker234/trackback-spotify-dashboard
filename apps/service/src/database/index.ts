@@ -35,6 +35,11 @@ function releaseYearFromSpotifyDate(releaseDate?: string): number | null {
   return year;
 }
 
+export function isCatalogUnavailable(name: string, releaseDate?: string): boolean {
+  if (name.trim() === "") return true;
+  return releaseDate?.startsWith("0000") === true;
+}
+
 interface TrackListenData {
   trackData: SpotifyTrack;
   playedAt: Date;
@@ -88,7 +93,11 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
           id: trackData.album.id,
           name: trackData.album.name,
           imageUrl: trackData.album.images[0]?.url || null,
-          releaseYear: releaseYearFromSpotifyDate(trackData.album.release_date)
+          releaseYear: releaseYearFromSpotifyDate(trackData.album.release_date),
+          catalogUnavailable: isCatalogUnavailable(
+            trackData.album.name,
+            trackData.album.release_date
+          )
         });
         uniqueAlbumTracks.add(`${trackData.album.id}-${trackData.id}`);
         for (const artistData of trackData.artists) {
@@ -171,7 +180,8 @@ export async function saveListens(tracksData: TrackListenData[]): Promise<void> 
         .onConflictDoUpdate({
           target: album.id,
           set: {
-            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`
+            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`,
+            catalogUnavailable: sql`EXCLUDED.catalog_unavailable`
           }
         });
     }
@@ -359,7 +369,8 @@ export async function saveAlbumsWithArtistsToDatabase(
           id: spotifyAlbum.id,
           name: spotifyAlbum.name,
           imageUrl: spotifyAlbum.images[0]?.url || null,
-          releaseYear: releaseYearFromSpotifyDate(spotifyAlbum.release_date)
+          releaseYear: releaseYearFromSpotifyDate(spotifyAlbum.release_date),
+          catalogUnavailable: isCatalogUnavailable(spotifyAlbum.name, spotifyAlbum.release_date)
         });
         uniqueAlbums.add(spotifyAlbum.id);
       }
@@ -392,7 +403,8 @@ export async function saveAlbumsWithArtistsToDatabase(
         .onConflictDoUpdate({
           target: album.id,
           set: {
-            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`
+            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`,
+            catalogUnavailable: sql`EXCLUDED.catalog_unavailable`
           }
         });
     }
@@ -468,7 +480,11 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
             id: spotifyTrack.album.id,
             name: spotifyTrack.album.name,
             imageUrl: spotifyTrack.album.images[0]?.url || null,
-            releaseYear: releaseYearFromSpotifyDate(spotifyTrack.album.release_date)
+            releaseYear: releaseYearFromSpotifyDate(spotifyTrack.album.release_date),
+            catalogUnavailable: isCatalogUnavailable(
+              spotifyTrack.album.name,
+              spotifyTrack.album.release_date
+            )
           });
           uniqueAlbums.add(spotifyTrack.album.id);
         }
@@ -520,7 +536,8 @@ export async function saveBatchTrackDataToDatabase(spotifyTracks: SpotifyTrack[]
         .onConflictDoUpdate({
           target: album.id,
           set: {
-            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`
+            releaseYear: sql<number>`coalesce(EXCLUDED.release_year, ${album.releaseYear})`,
+            catalogUnavailable: sql`EXCLUDED.catalog_unavailable`
           }
         });
     }

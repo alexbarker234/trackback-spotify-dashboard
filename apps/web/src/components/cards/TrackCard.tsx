@@ -1,3 +1,4 @@
+import { catalogName } from "@/lib/utils/catalogName";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { TopTrack } from "@/types";
 import Link from "next/link";
@@ -32,12 +33,12 @@ export default function TrackCard({
             {track.imageUrl && (
               <img
                 src={track.imageUrl}
-                alt={`${track.trackName} album cover`}
+                alt={`${catalogName(track.trackName)} album cover`}
                 className="h-16 w-16 rounded-lg object-cover shadow-lg"
               />
             )}
             <div>
-              <p className="text-white">{track.trackName}</p>
+              <p className="text-white">{catalogName(track.trackName)}</p>
               <p className="text-gray-300">{track.artists.map((artist) => artist.artistName).join(" • ")}</p>
               <p className="text-sm text-gray-400">
                 {statsText ?? `${track.listenCount} listens • ${formatDuration(track.totalDuration)}`}
