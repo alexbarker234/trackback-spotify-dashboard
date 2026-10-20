@@ -1,4 +1,4 @@
-import { and, db, eq, isNotNull, isNull, jobState, or, sql } from "@workspace/database";
+import { and, db, eq, isNotNull, isNull, jobState, notInArray, or, sql } from "@workspace/database";
 import { randomUUID } from "crypto";
 
 const LEASE = sql`interval '10 minutes'`;
@@ -16,6 +16,8 @@ export async function ensureJobRows(jobIds: string[]): Promise<void> {
       }))
     )
     .onConflictDoNothing({ target: jobState.jobId });
+
+  await db.delete(jobState).where(notInArray(jobState.jobId, jobIds));
 }
 
 /**

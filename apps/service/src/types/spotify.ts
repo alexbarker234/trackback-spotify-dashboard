@@ -53,6 +53,7 @@ export interface SpotifyArtistResponse {
 
 export interface SpotifyAlbumsResponse {
   albums: Array<SpotifyAlbum | null>;
+  notFoundIds: string[];
 }
 
 export interface SpotifyTokenResponse {

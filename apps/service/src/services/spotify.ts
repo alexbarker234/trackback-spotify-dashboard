@@ -127,6 +127,16 @@ export async function refreshAccessToken(
   }
 }
 
+class SpotifyApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "SpotifyApiError";
+    this.status = status;
+  }
+}
+
 /**
  * Makes an authenticated request to the Spotify API
  */
@@ -141,14 +151,19 @@ export async function spotifyApiRequest<T>(endpoint: string, accessToken: string
 
     if (!response.ok) {
       if (response.status === 401) {
-        throw new Error("Unauthorized - token may be expired");
+        throw new SpotifyApiError(401, "Unauthorized - token may be expired");
       }
-      throw new Error(`Spotify API error: ${response.status} ${response.statusText}`);
+      throw new SpotifyApiError(
+        response.status,
+        `Spotify API error: ${response.status} ${response.statusText}`
+      );
     }
 
     return await response.json();
   } catch (error) {
-    console.error(`Spotify API request failed for ${SPOTIFY_CONFIG.API_BASE}${endpoint}:`, error);
+    if (!(error instanceof SpotifyApiError && error.status === 404)) {
+      console.error(`Spotify API request failed for ${SPOTIFY_CONFIG.API_BASE}${endpoint}:`, error);
+    }
     throw error;
   }
 }
@@ -233,15 +248,37 @@ export async function fetchMultipleArtists(
 }
 
 /**
- * Fetches multiple albums using per-album requests in small batches
+ * Fetches multiple albums using per-album requests in small batches.
+ * Ids Spotify reports as missing are returned separately so callers can drop them from the queue.
  */
 export async function fetchMultipleAlbums(
   albumIds: string[],
   accessToken: string
 ): Promise<SpotifyAlbumsResponse> {
-  const albums = await fetchInParallelBatches(albumIds, 5, (albumId) =>
-    spotifyApiRequest<SpotifyAlbum>(`/albums/${albumId}`, accessToken)
-  );
+  const albums: SpotifyAlbum[] = [];
+  const notFoundIds: string[] = [];
+  const batchSize = 5;
 
-  return { albums };
+  for (let i = 0; i < albumIds.length; i += batchSize) {
+    const batch = albumIds.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(
+      batch.map((albumId) => spotifyApiRequest<SpotifyAlbum>(`/albums/${albumId}`, accessToken))
+    );
+
+    batchResults.forEach((result, index) => {
+      const albumId = batch[index];
+      if (!albumId) return;
+
+      if (result.status === "fulfilled") {
+        albums.push(result.value);
+        return;
+      }
+
+      if (result.reason instanceof SpotifyApiError && result.reason.status === 404) {
+        notFoundIds.push(albumId);
+      }
+    });
+  }
+
+  return { albums, notFoundIds };
 }

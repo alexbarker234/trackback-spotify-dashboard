@@ -8,12 +8,11 @@ export const metadata: Metadata = {
   title: "Background Jobs"
 };
 
-const JOB_ORDER = ["recently-played", "enrichment", "release-year-backfill"];
+const JOB_ORDER = ["recently-played", "enrichment"];
 
 const JOB_LABELS: Record<string, string> = {
   "recently-played": "Recently played",
-  enrichment: "Enrichment",
-  "release-year-backfill": "Release year backfill"
+  enrichment: "Enrichment"
 };
 
 function toIso(date: Date | null): string | null {

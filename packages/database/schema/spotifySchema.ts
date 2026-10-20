@@ -22,7 +22,8 @@ export const album = pgTable("album", {
   imageUrl: text("image_url"),
   // Release year extracted from Spotify album `release_date` (best-effort, can be null).
   releaseYear: integer("release_year"),
-  // Spotify still returns the row, but the catalog entry has no real name or release date.
+  // No usable catalog entry: empty name, placeholder date, a full album fetch
+  // with no release year, or Spotify returned 404 for the id.
   catalogUnavailable: boolean("catalog_unavailable").default(false).notNull()
 });
 

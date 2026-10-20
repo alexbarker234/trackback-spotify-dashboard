@@ -1,18 +1,22 @@
-import { getAlbumsWithoutAlbumArtist, saveAlbumsWithArtistsToDatabase } from "@/database";
+import {
+  getAlbumsNeedingEnrichment,
+  markAlbumsCatalogUnavailable,
+  saveAlbumsWithArtistsToDatabase
+} from "@/database";
 import { fetchMultipleAlbums, getServerAccessToken } from "./spotify";
 
 const ALBUM_LIMIT = 20;
 
 /**
- * Populates missing album-artist relationships using Spotify album data
+ * Fills missing album-artist links and release years from Spotify album data.
  */
 export async function populateAlbumArtistData(): Promise<{ more: boolean }> {
   try {
-    const albums = await getAlbumsWithoutAlbumArtist(ALBUM_LIMIT);
+    const albums = await getAlbumsNeedingEnrichment(ALBUM_LIMIT);
     const more = albums.length === ALBUM_LIMIT;
 
     if (albums.length === 0) {
-      console.log("No albums need album-artist relationships");
+      console.log("No albums need artist links or release years");
       return { more: false };
     }
 
@@ -21,9 +25,9 @@ export async function populateAlbumArtistData(): Promise<{ more: boolean }> {
       throw new Error("No server access token available");
     }
 
-    console.log(`Found ${albums.length} albums missing album-artist entries`);
+    console.log(`Found ${albums.length} albums needing artist links or release years`);
 
-    const batchSize = 20; // Spotify API limit for albums endpoint
+    const batchSize = 20;
     const albumIds = albums.map((album) => album.id);
     let batchFailed = false;
 
@@ -42,7 +46,14 @@ export async function populateAlbumArtistData(): Promise<{ more: boolean }> {
 
         if (spotifyAlbums.length > 0) {
           await saveAlbumsWithArtistsToDatabase(spotifyAlbums);
-          console.log(`Saved album-artist relationships for ${spotifyAlbums.length} albums`);
+          console.log(`Saved album artists and release years for ${spotifyAlbums.length} albums`);
+        }
+
+        if (spotifyAlbumsResponse.notFoundIds.length > 0) {
+          await markAlbumsCatalogUnavailable(spotifyAlbumsResponse.notFoundIds);
+          console.log(
+            `Marked ${spotifyAlbumsResponse.notFoundIds.length} albums as catalog unavailable`
+          );
         }
 
         if (i + batchSize < albumIds.length) {
@@ -54,7 +65,7 @@ export async function populateAlbumArtistData(): Promise<{ more: boolean }> {
       }
     }
 
-    console.log("Successfully populated album-artist relationships");
+    console.log("Successfully enriched albums");
     return { more: more && !batchFailed };
   } catch (error) {
     console.error("Error populating album-artist data:", error);

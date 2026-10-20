@@ -323,14 +323,28 @@ export async function getListensWithoutAlbumTrack(limit: number): Promise<Listen
 }
 
 /**
- * Gets albums that don't have corresponding albumArtist entries
+ * Albums that still need a full Spotify album fetch: missing album-artist rows,
+ * or a null release year on a catalog entry we have not given up on.
  */
-export async function getAlbumsWithoutAlbumArtist(limit: number) {
+export async function getAlbumsNeedingEnrichment(limit: number) {
   return db.query.album.findMany({
-    where: (album, { notExists }) =>
-      notExists(db.select().from(albumArtist).where(eq(albumArtist.albumId, album.id))),
+    where: (album, { and, eq, isNull, notExists, or }) =>
+      and(
+        eq(album.catalogUnavailable, false),
+        or(
+          notExists(db.select().from(albumArtist).where(eq(albumArtist.albumId, album.id))),
+          isNull(album.releaseYear)
+        )
+      ),
+    orderBy: [asc(album.id)],
     limit
   });
+}
+
+export async function markAlbumsCatalogUnavailable(albumIds: string[]): Promise<void> {
+  if (albumIds.length === 0) return;
+
+  await db.update(album).set({ catalogUnavailable: true }).where(inArray(album.id, albumIds));
 }
 
 /**
@@ -365,12 +379,16 @@ export async function saveAlbumsWithArtistsToDatabase(
 
     for (const spotifyAlbum of spotifyAlbums) {
       if (!uniqueAlbums.has(spotifyAlbum.id)) {
+        const releaseYear = releaseYearFromSpotifyDate(spotifyAlbum.release_date);
         albumsToInsert.push({
           id: spotifyAlbum.id,
           name: spotifyAlbum.name,
           imageUrl: spotifyAlbum.images[0]?.url || null,
-          releaseYear: releaseYearFromSpotifyDate(spotifyAlbum.release_date),
-          catalogUnavailable: isCatalogUnavailable(spotifyAlbum.name, spotifyAlbum.release_date)
+          releaseYear,
+          // A full album fetch with no year will not gain one on retry.
+          catalogUnavailable:
+            isCatalogUnavailable(spotifyAlbum.name, spotifyAlbum.release_date) ||
+            releaseYear === null
         });
         uniqueAlbums.add(spotifyAlbum.id);
       }

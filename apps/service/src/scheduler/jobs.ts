@@ -1,9 +1,8 @@
 import { populateAlbumArtistData } from "@/services/albumArtistService";
 import { populateAlbumTrackService } from "@/services/albumTrackService";
 import { refetchArtistData } from "@/services/refetchArtistService";
-import { backfillAlbumReleaseYearsService } from "@/services/releaseYearBackfillService";
 import { fetchRecentlyPlayedTracksService } from "@/services/spotifyService";
-import { ENRICHMENT_JOB_ID, RECENTLY_PLAYED_JOB_ID, RELEASE_YEAR_BACKFILL_JOB_ID } from "./ids";
+import { ENRICHMENT_JOB_ID, RECENTLY_PLAYED_JOB_ID } from "./ids";
 import { requestJob } from "./jobState";
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -32,6 +31,7 @@ async function runEnrichment(): Promise<void> {
   const albums = await populateAlbumArtistData();
   await refetchArtistData();
 
+  // A full track or album page means more of that backlog remains, including null release years.
   if (tracks.more || albums.more) {
     await requestJob(ENRICHMENT_JOB_ID);
   }
@@ -47,10 +47,5 @@ export const jobs: Job[] = [
     id: ENRICHMENT_JOB_ID,
     everyMs: THIRTY_MINUTES_MS,
     run: runEnrichment
-  },
-  {
-    id: RELEASE_YEAR_BACKFILL_JOB_ID,
-    once: true,
-    run: () => backfillAlbumReleaseYearsService({ limit: 50 })
   }
 ];
