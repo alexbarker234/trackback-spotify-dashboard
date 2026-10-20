@@ -9,7 +9,7 @@ import NowPlaying from "@/components/NowPlaying";
 import ListeningAnalytics from "@/components/statsGrid/ListeningAnalytics";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
 import { auth } from "@/lib/auth";
-import { faCalendar } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faCalendarWeek } from "@fortawesome/free-solid-svg-icons";
 import { getTopAlbums } from "@workspace/core/queries/albums";
 import {
   getLongestListeningSession,
@@ -217,6 +217,12 @@ export default async function Home() {
           title="On This Day"
           description="Discover what you were listening to on this date in previous years"
           icon={faCalendar}
+        />
+        <LinkCard
+          href="/dashboard/recap"
+          title="Weekly recap"
+          description="Monday to Sunday listening, ready each Monday morning"
+          icon={faCalendarWeek}
         />
 
         {/* Top Tracks Section */}

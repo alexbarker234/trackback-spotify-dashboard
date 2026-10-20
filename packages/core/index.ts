@@ -1,4 +1,5 @@
 export * from "./queries/albums";
+export * from "./queries/recap";
 export * from "./queries/analytics";
 export * from "./queries/artists";
 export * from "./queries/listens";

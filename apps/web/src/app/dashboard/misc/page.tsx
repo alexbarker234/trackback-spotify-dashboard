@@ -1,5 +1,12 @@
 import LinkCard from "@/components/cards/LinkCard";
-import { faCalendar, faChartLine, faFire, faGrip, faRankingStar } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCalendar,
+  faCalendarWeek,
+  faChartLine,
+  faFire,
+  faGrip,
+  faRankingStar
+} from "@fortawesome/free-solid-svg-icons";
 
 export default async function MiscPage() {
   return (
@@ -21,6 +28,12 @@ export default async function MiscPage() {
         title="On This Day"
         description="Discover what you were listening to on this date in previous years"
         icon={faCalendar}
+      />
+      <LinkCard
+        href="/dashboard/recap"
+        title="Weekly recap"
+        description="Monday to Sunday listening, ready each Monday morning"
+        icon={faCalendarWeek}
       />
       <LinkCard
         href="/dashboard/years/list"

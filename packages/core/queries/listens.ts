@@ -1122,10 +1122,23 @@ export async function getPeriodListenStats(
 type GetDayOfWeekStreamDataOptions = {
   startDate?: Date;
   endDate?: Date;
+  /** Minutes to add to a UTC timestamp to get the listener's local time. */
+  tzOffsetMinutes?: number;
 };
 
+function dayOfWeekExtract(tzOffsetMinutes: number) {
+  const offset = Math.trunc(tzOffsetMinutes);
+  if (!offset) {
+    return sql<number>`extract(dow from ${listen.playedAt})`;
+  }
+
+  // Literal offset so SELECT and GROUP BY stay the same expression. A bound
+  // parameter would be numbered twice and Postgres would reject the query.
+  return sql<number>`extract(dow from (${listen.playedAt} + (${sql.raw(String(offset))} * interval '1 minute')))`;
+}
+
 export async function getDayOfWeekStreamData(options: GetDayOfWeekStreamDataOptions = {}) {
-  const { startDate, endDate } = options;
+  const { startDate, endDate, tzOffsetMinutes = 0 } = options;
 
   try {
     const whereConditions = [gte(listen.durationMS, 30000)];
@@ -1141,14 +1154,14 @@ export async function getDayOfWeekStreamData(options: GetDayOfWeekStreamDataOpti
     // PostgreSQL: 0 = Sunday … 6 = Saturday
     const dayOfWeekStreams = await db
       .select({
-        dayOfWeek: sql<number>`extract(dow from ${listen.playedAt})`.as("dayOfWeek"),
+        dayOfWeek: dayOfWeekExtract(tzOffsetMinutes).as("dayOfWeek"),
         streamCount: sql<number>`count(distinct ${listen.id})`.as("streamCount"),
         totalDuration: sql<number>`sum(${listen.durationMS})`.as("totalDuration")
       })
       .from(listen)
       .where(and(...whereConditions))
-      .groupBy(sql`extract(dow from ${listen.playedAt})`)
-      .orderBy(sql`extract(dow from ${listen.playedAt})`);
+      .groupBy(dayOfWeekExtract(tzOffsetMinutes))
+      .orderBy(dayOfWeekExtract(tzOffsetMinutes));
 
     const dayData = dayOfWeekStreams.map((item) => ({
       dayOfWeek: Number(item.dayOfWeek),

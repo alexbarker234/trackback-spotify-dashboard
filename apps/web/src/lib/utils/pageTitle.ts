@@ -35,6 +35,8 @@ export const getPageTitle = (path: string, searchParams: URLSearchParams) => {
       return "Stats";
     case "/dashboard/peak-days":
       return "Most in one day";
+    case "/dashboard/recap":
+      return "Weekly recap";
     default:
       return "Trackback";
   }

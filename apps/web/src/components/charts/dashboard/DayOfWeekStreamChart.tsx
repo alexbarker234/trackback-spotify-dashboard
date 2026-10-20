@@ -16,11 +16,17 @@ interface DayOfWeekStreamData {
 
 interface DayOfWeekStreamChartProps {
   data: DayOfWeekStreamData[];
+  title?: string;
+  chartHeight?: string;
 }
 
-export default function DayOfWeekStreamChart({ data }: DayOfWeekStreamChartProps) {
+export default function DayOfWeekStreamChart({
+  data,
+  title = "Streams by day of week",
+  chartHeight
+}: DayOfWeekStreamChartProps) {
   return (
-    <ExpandableChartContainer title="Streams by day of week">
+    <ExpandableChartContainer title={title} chartHeight={chartHeight}>
       <ResizableChartContent>
         {(isVertical) => <DayOfWeekStreamChartContent data={data} isVertical={isVertical} />}
       </ResizableChartContent>

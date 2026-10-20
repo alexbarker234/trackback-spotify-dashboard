@@ -16,6 +16,8 @@ interface HourlyListenData {
 
 interface HourlyListensRadialChartProps {
   data: HourlyListenData[];
+  title?: string;
+  chartHeight?: string;
 }
 
 // Separate component for the chart content to ensure each instance has its own sizing
@@ -275,8 +277,12 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
           >
             <ChartTooltip>
               <p className="text-sm font-medium text-gray-300">
-                {hoveredData.hour === 0 ? 12 : hoveredData.hour > 12 ? hoveredData.hour - 12 : hoveredData.hour}:00{" "}
-                {hoveredData.hour < 12 ? "AM" : "PM"}
+                {hoveredData.hour === 0
+                  ? 12
+                  : hoveredData.hour > 12
+                    ? hoveredData.hour - 12
+                    : hoveredData.hour}
+                :00 {hoveredData.hour < 12 ? "AM" : "PM"}
               </p>
               <p className="text-white">
                 <span className="text-gray-400">Listens: </span>
@@ -294,7 +300,11 @@ function RadialChartContent({ data }: { data: HourlyListenData[] }) {
   );
 }
 
-export default function HourlyListensRadialChart({ data }: HourlyListensRadialChartProps) {
+export default function HourlyListensRadialChart({
+  data,
+  title = "Hourly Listening Pattern",
+  chartHeight = "h-96"
+}: HourlyListensRadialChartProps) {
   // Convert UTC hourly data to local timezone
   const convertToLocalTimezone = (inputData: HourlyListenData[]): HourlyListenData[] => {
     // Get timezone offset in hours (negative for UTC+, positive for UTC-)
@@ -333,7 +343,7 @@ export default function HourlyListensRadialChart({ data }: HourlyListensRadialCh
 
   const completeData = convertToLocalTimezone(createCompleteHourlyData(data));
   return (
-    <ExpandableChartContainer title="Hourly Listening Pattern" chartHeight="h-96">
+    <ExpandableChartContainer title={title} chartHeight={chartHeight}>
       <RadialChartContent data={completeData} />
     </ExpandableChartContainer>
   );
