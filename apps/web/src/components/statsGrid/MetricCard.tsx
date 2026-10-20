@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 
 interface MetricCardProps {
@@ -9,6 +10,7 @@ interface MetricCardProps {
   blurColor: string;
   textColor: string;
   href?: string;
+  compact?: boolean;
 }
 
 export default function MetricCard({
@@ -19,13 +21,16 @@ export default function MetricCard({
   gradientTo,
   blurColor,
   textColor,
-  href
+  href,
+  compact = false
 }: MetricCardProps) {
   const content = (
     <>
       <div className={`absolute -top-4 -right-4 h-24 w-24 rounded-full ${blurColor} blur-2xl`}></div>
       <div className="relative">
-        <h3 className="mb-2 text-sm font-medium text-gray-400">{title}</h3>
+        <h3 className={cn("text-sm font-medium text-gray-400", compact ? "mb-1 sm:mb-2" : "mb-2")}>
+          {title}
+        </h3>
         <p className={`xs:text-3xl text-2xl font-bold ${textColor}`}>
           {typeof mainText === "number" ? mainText.toLocaleString() : mainText}
         </p>
@@ -34,7 +39,12 @@ export default function MetricCard({
     </>
   );
 
-  const className = `group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradientFrom} ${gradientTo} p-6 backdrop-blur-sm transition-all`;
+  const className = cn(
+    "group relative overflow-hidden rounded-2xl bg-gradient-to-br p-6 backdrop-blur-sm transition-all",
+    gradientFrom,
+    gradientTo,
+    compact && "p-2.5 sm:p-6"
+  );
 
   if (href) {
     return (

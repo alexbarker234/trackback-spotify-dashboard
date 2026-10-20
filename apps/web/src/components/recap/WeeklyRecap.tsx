@@ -262,7 +262,7 @@ function RecapContent({
   return (
     <div className="flex flex-col gap-8">
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-4 lg:gap-6">
         <MetricCard
           title="Minutes"
           mainText={data.minutes}
@@ -272,6 +272,7 @@ function RecapContent({
           blurColor="bg-pink-500/20"
           textColor="text-pink-400"
           href={statsHref}
+          compact
         />
         <MetricCard
           title="Artists"
@@ -282,6 +283,7 @@ function RecapContent({
           blurColor="bg-yellow-500/20"
           textColor="text-yellow-400"
           href={statsHref}
+          compact
         />
         <MetricCard
           title="Tracks"
@@ -292,6 +294,7 @@ function RecapContent({
           blurColor="bg-purple-500/20"
           textColor="text-purple-400"
           href={statsHref}
+          compact
         />
       </div>
 
