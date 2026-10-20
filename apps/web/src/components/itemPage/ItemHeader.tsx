@@ -1,10 +1,11 @@
+import ItemCoverArt from "@/components/ItemCoverArt";
 import { catalogName } from "@/lib/utils/catalogName";
 import { faSpotify } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 
 interface ItemHeaderProps {
-  imageUrl: string;
+  imageUrl: string | null;
   name: string;
   artists?: { id: string; name: string }[];
   subtitle: string;
@@ -21,7 +22,7 @@ export default function ItemHeader({
   return (
     <div className="flex gap-4">
       {/* Image */}
-      <img src={imageUrl} className="h-32 w-32 flex-shrink-0 rounded-lg object-cover" />
+      <ItemCoverArt imageUrl={imageUrl} name={name} className="h-32 w-32 flex-shrink-0 rounded-lg" />
       {/* Content */}
       <div className="flex flex-col gap-1">
         <h1 className="text-4xl font-bold text-zinc-100">{catalogName(name)}</h1>

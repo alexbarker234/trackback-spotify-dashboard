@@ -1,3 +1,4 @@
+import ItemCoverArt from "@/components/ItemCoverArt";
 import { catalogName } from "@/lib/utils/catalogName";
 import Link from "next/link";
 
@@ -32,12 +33,8 @@ export default function CompactRankListCard({
 
       {/* Image */}
       <div className="h-12 w-12 shrink-0">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={catalogName(name)}
-            className="h-full w-full rounded-lg object-cover shadow-lg"
-          />
+        {imageUrl || !name?.trim() ? (
+          <ItemCoverArt imageUrl={imageUrl} name={name} className="h-full w-full rounded-lg shadow-lg" />
         ) : (
           <div className="flex h-full w-full items-center justify-center rounded-lg bg-white/5">
             <span className="text-lg text-gray-400">🎵</span>

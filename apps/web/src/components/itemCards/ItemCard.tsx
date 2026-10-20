@@ -1,3 +1,4 @@
+import ItemCoverArt from "@/components/ItemCoverArt";
 import { catalogName } from "@/lib/utils/catalogName";
 import { cn } from "@/lib/utils/cn";
 import { faMusic } from "@fortawesome/free-solid-svg-icons";
@@ -23,8 +24,12 @@ export default function ItemCard({ href, imageUrl, title, subtitle, content, num
         className
       )}
     >
-      {imageUrl ? (
-        <img src={imageUrl} alt={catalogName(title)} className="aspect-square w-full rounded-lg object-cover shadow-lg" />
+      {imageUrl || !title?.trim() ? (
+        <ItemCoverArt
+          imageUrl={imageUrl}
+          name={title}
+          className="aspect-square w-full rounded-lg shadow-lg"
+        />
       ) : (
         <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-white/5">
           <FontAwesomeIcon icon={faMusic} className="text-4xl text-gray-400" />

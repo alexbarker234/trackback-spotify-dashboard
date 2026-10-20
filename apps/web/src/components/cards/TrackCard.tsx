@@ -1,3 +1,4 @@
+import ItemCoverArt from "@/components/ItemCoverArt";
 import { catalogName } from "@/lib/utils/catalogName";
 import { formatDuration } from "@/lib/utils/timeUtils";
 import { TopTrack } from "@/types";
@@ -30,13 +31,13 @@ export default function TrackCard({
             </span>
           )}
           <div className="flex items-center gap-4">
-            {track.imageUrl && (
-              <img
-                src={track.imageUrl}
-                alt={`${catalogName(track.trackName)} album cover`}
-                className="h-16 w-16 rounded-lg object-cover shadow-lg"
-              />
-            )}
+            {/* Image */}
+            <ItemCoverArt
+              imageUrl={track.imageUrl}
+              name={track.trackName}
+              className="h-16 w-16 rounded-lg shadow-lg"
+            />
+            {/* Content */}
             <div>
               <p className="text-white">{catalogName(track.trackName)}</p>
               <p className="text-gray-300">{track.artists.map((artist) => artist.artistName).join(" • ")}</p>

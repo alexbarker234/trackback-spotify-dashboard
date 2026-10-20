@@ -1,6 +1,7 @@
 "use client";
 
 import { useNowPlaying } from "@/hooks/useNowPlaying";
+import ItemCoverArt from "@/components/ItemCoverArt";
 import { catalogName } from "@/lib/utils/catalogName";
 import Image from "next/image";
 import Link from "next/link";
@@ -48,7 +49,7 @@ export default function NowPlaying() {
         href={`/dashboard/track/${trackIsrc}`}
         className="flex items-center space-x-4 rounded-lg p-1 transition-colors hover:bg-white/5 sm:px-2"
       >
-        {item.album.images[0] && (
+        {item.album.images[0] ? (
           <div className="relative h-16 w-16 flex-shrink-0">
             <Image
               src={item.album.images[0].url}
@@ -57,6 +58,11 @@ export default function NowPlaying() {
               className="rounded-lg object-cover"
             />
           </div>
+        ) : (
+          <ItemCoverArt
+            name={item.name || item.album.name}
+            className="h-16 w-16 flex-shrink-0 rounded-lg"
+          />
         )}
 
         <div className="min-w-0 flex-1">
