@@ -48,7 +48,7 @@ Install these before building or running the Android app.
 ### Repo layout
 
 - `apps/mobile/` — Expo app
-- `build/` — release APK output from the build script (gitignored)
+- `build/` — release APK and app bundle from the build script (gitignored)
 - `scripts/build-android-apk.mjs` — cross-platform release build
 
 ---
@@ -71,7 +71,7 @@ cd apps/mobile && pnpm run android
 
 ## Release APK
 
-The API URL is **baked in at build time** via `EXPO_PUBLIC_API_URL`. Pass it on the command line; the APK is copied to `build/` at the repo root. The build script runs `./gradlew assembleRelease` only — no Expo dev server, emulator, or device install.
+The API URL is **baked in at build time** via `EXPO_PUBLIC_API_URL`. Pass it on the command line; the APK and app bundle are copied to `build/` at the repo root. The build script runs `./gradlew assembleRelease bundleRelease` only — no Expo dev server, emulator, or device install.
 
 ### Build command
 
@@ -87,11 +87,12 @@ Equivalent:
 node scripts/build-android-apk.mjs https://trackback.lexalot.dev
 ```
 
-Each run deletes `apps/mobile/android`, runs `expo prebuild --platform android`, writes `android/local.properties` from `ANDROID_HOME` (or the default SDK path), then `./gradlew assembleRelease`. Stop any running `expo run:android` / Gradle build first if prebuild fails to remove `android/`.
+Each run deletes `apps/mobile/android`, runs `expo prebuild --platform android`, writes `android/local.properties` from `ANDROID_HOME` (or the default SDK path), then `./gradlew assembleRelease bundleRelease`. Stop any running `expo run:android` / Gradle build first if prebuild fails to remove `android/`.
 
 Output:
 
-`build/trackback.apk`
+- `build/trackback.apk` — sideload install
+- `build/trackback.aab` — upload this to Play Console
 
 ### Server checklist (production URL)
 

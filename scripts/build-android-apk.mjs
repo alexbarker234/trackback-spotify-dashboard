@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build a release Android APK and copy it to <repo>/build/.
+ * Build a release Android APK and app bundle, then copy both to <repo>/build/.
  *
  * Usage:
  *   node scripts/build-android-apk.mjs <api-url>
@@ -20,6 +20,7 @@ const ANDROID_DIR = join(MOBILE_DIR, "android");
 const BUILD_DIR = join(ROOT, "build");
 const GRADLEW = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
 const APK_DEST = join(BUILD_DIR, "trackback.apk");
+const AAB_DEST = join(BUILD_DIR, "trackback.aab");
 const APK_SOURCE = join(
   MOBILE_DIR,
   "android",
@@ -30,10 +31,20 @@ const APK_SOURCE = join(
   "release",
   "app-release.apk"
 );
+const AAB_SOURCE = join(
+  MOBILE_DIR,
+  "android",
+  "app",
+  "build",
+  "outputs",
+  "bundle",
+  "release",
+  "app-release.aab"
+);
 
 function printUsage() {
   console.log(`
-Build Trackback Android release APK
+Build Trackback Android release APK and app bundle
 
 Usage:
   node scripts/build-android-apk.mjs <api-url>
@@ -266,7 +277,7 @@ function main() {
   console.log(`\nAPI URL: ${apiUrl}`);
   console.log(`Android SDK: ${androidSdk}`);
   console.log(`JAVA_HOME: ${javaHome}`);
-  console.log(`Output:  ${APK_DEST}\n`);
+  console.log(`Output:\n  ${APK_DEST}\n  ${AAB_DEST}\n`);
 
   cleanAndroidProject();
 
@@ -280,22 +291,27 @@ function main() {
   console.log("Stopping Gradle daemons (pick up JAVA_HOME)…");
   stopGradleDaemons(buildEnv);
 
-  console.log("Building release APK (Gradle only, no emulator)…\n");
-  run(GRADLEW, ["assembleRelease"], {
+  console.log("Building release APK and app bundle (Gradle only, no emulator)…\n");
+  run(GRADLEW, ["assembleRelease", "bundleRelease"], {
     cwd: ANDROID_DIR,
     env: buildEnv
   });
 
-  if (!existsSync(APK_SOURCE)) {
-    console.error(`\nAPK not found at:\n  ${APK_SOURCE}`);
+  copyArtifact(APK_SOURCE, APK_DEST, "APK");
+  copyArtifact(AAB_SOURCE, AAB_DEST, "App bundle");
+
+  console.log(`\nDone. Copied to:\n  ${APK_DEST}\n  ${AAB_DEST}\n`);
+}
+
+function copyArtifact(source, dest, label) {
+  if (!existsSync(source)) {
+    console.error(`\n${label} not found at:\n  ${source}`);
     console.error("Check the Gradle output above for errors.");
     process.exit(1);
   }
 
   mkdirSync(BUILD_DIR, { recursive: true });
-  copyFileSync(APK_SOURCE, APK_DEST);
-
-  console.log(`\nDone. APK copied to:\n  ${APK_DEST}\n`);
+  copyFileSync(source, dest);
 }
 
 main();
