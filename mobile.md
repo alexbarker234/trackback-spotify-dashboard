@@ -104,7 +104,19 @@ For `https://trackback.lexalot.dev` (or whatever URL you pass):
 
 ### Signing
 
-The first local release build may create or prompt for a debug/keystore setup. For Play Store distribution, configure a release keystore in `apps/mobile/android` (Gradle `signingConfigs`) or use [EAS Build](https://docs.expo.dev/build/introduction/).
+Expo prebuild signs the release build with the debug keystore. Play Console rejects that upload. The build script replaces it with the upload key in `apps/mobile/credentials.json` after each prebuild, because `android/` is regenerated every run.
+
+Create the key once, from the repo root:
+
+```bash
+mkdir -p apps/mobile/credentials
+keytool -genkeypair -v \
+  -keystore apps/mobile/credentials/upload.keystore \
+  -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Copy `apps/mobile/credentials.json.example` to `apps/mobile/credentials.json` and set the passwords from that `keytool` prompt. Both files stay out of git. Keep a backup of the keystore. Later Play uploads have to be signed with this same key.
 
 ### Troubleshooting
 
