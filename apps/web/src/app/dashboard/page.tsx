@@ -30,14 +30,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 async function MetricsSection() {
   const [listenStats, longestStreak, longestSession] = await Promise.all([
     getBasicListenStats(),
     getLongestListeningStreak(),
-    getLongestListeningSession(),
-    delay(5000)
+    getLongestListeningSession()
   ]);
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
@@ -50,10 +47,7 @@ async function MetricsSection() {
 async function TopTracksSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const [topTracks] = await Promise.all([
-    getTopTracks({ startDate: fourWeeksAgo, limit: 250 }),
-    delay(5000)
-  ]);
+  const topTracks = await getTopTracks({ startDate: fourWeeksAgo, limit: 250 });
 
   if (topTracks.length === 0) return null;
 
@@ -82,10 +76,7 @@ async function TopTracksSection() {
 async function TopArtistsSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const [topArtists] = await Promise.all([
-    getTopArtists({ startDate: fourWeeksAgo, limit: 250 }),
-    delay(5000)
-  ]);
+  const topArtists = await getTopArtists({ startDate: fourWeeksAgo, limit: 250 });
 
   if (topArtists.length === 0) return null;
 
@@ -114,10 +105,7 @@ async function TopArtistsSection() {
 async function TopAlbumsSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const [topAlbums] = await Promise.all([
-    getTopAlbums({ startDate: fourWeeksAgo, limit: 250 }),
-    delay(5000)
-  ]);
+  const topAlbums = await getTopAlbums({ startDate: fourWeeksAgo, limit: 250 });
 
   if (topAlbums.length === 0) return null;
 
@@ -146,8 +134,7 @@ async function TopAlbumsSection() {
 async function StreamChartsSection() {
   const [monthlyStreamData, yearlyStreamData] = await Promise.all([
     getMonthlyStreamData(),
-    getYearlyStreamData(),
-    delay(5000)
+    getYearlyStreamData()
   ]);
 
   if (monthlyStreamData.length === 0 && yearlyStreamData.length === 0) return null;
@@ -161,7 +148,7 @@ async function StreamChartsSection() {
 }
 
 async function RecentListensSection() {
-  const [listens] = await Promise.all([getRecentListens({ limit: 50 }), delay(5000)]);
+  const listens = await getRecentListens({ limit: 50 });
 
   return (
     <div>
