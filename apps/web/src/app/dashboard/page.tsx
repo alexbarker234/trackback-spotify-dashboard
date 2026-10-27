@@ -4,10 +4,12 @@ import MonthlyStreamChart from "@/components/charts/dashboard/MonthlyStreamChart
 import YearlyStreamChart from "@/components/charts/dashboard/YearlyStreamChart";
 import StreamItemCard from "@/components/itemCards/StreamItemCard";
 import ItemCarousel from "@/components/ItemCarousel";
+import ItemCarouselSkeleton from "@/components/ItemCarouselSkeleton";
 import Loading from "@/components/Loading";
 import NowPlaying from "@/components/NowPlaying";
 import ListeningAnalytics from "@/components/statsGrid/ListeningAnalytics";
 import ListeningMetricsGrid from "@/components/statsGrid/ListeningMetricsGrid";
+import MetricsSectionSkeleton from "@/components/statsGrid/MetricsSectionSkeleton";
 import { auth } from "@/lib/auth";
 import { faCalendar, faCalendarWeek } from "@fortawesome/free-solid-svg-icons";
 import { getTopAlbums } from "@workspace/core/queries/albums";
@@ -28,11 +30,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function MetricsSection() {
   const [listenStats, longestStreak, longestSession] = await Promise.all([
     getBasicListenStats(),
     getLongestListeningStreak(),
-    getLongestListeningSession()
+    getLongestListeningSession(),
+    delay(5000)
   ]);
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
@@ -45,7 +50,10 @@ async function MetricsSection() {
 async function TopTracksSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const topTracks = await getTopTracks({ startDate: fourWeeksAgo, limit: 250 });
+  const [topTracks] = await Promise.all([
+    getTopTracks({ startDate: fourWeeksAgo, limit: 250 }),
+    delay(5000)
+  ]);
 
   if (topTracks.length === 0) return null;
 
@@ -74,7 +82,10 @@ async function TopTracksSection() {
 async function TopArtistsSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const topArtists = await getTopArtists({ startDate: fourWeeksAgo, limit: 250 });
+  const [topArtists] = await Promise.all([
+    getTopArtists({ startDate: fourWeeksAgo, limit: 250 }),
+    delay(5000)
+  ]);
 
   if (topArtists.length === 0) return null;
 
@@ -103,7 +114,10 @@ async function TopArtistsSection() {
 async function TopAlbumsSection() {
   const fourWeeksAgo = new Date();
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-  const topAlbums = await getTopAlbums({ startDate: fourWeeksAgo, limit: 250 });
+  const [topAlbums] = await Promise.all([
+    getTopAlbums({ startDate: fourWeeksAgo, limit: 250 }),
+    delay(5000)
+  ]);
 
   if (topAlbums.length === 0) return null;
 
@@ -132,7 +146,8 @@ async function TopAlbumsSection() {
 async function StreamChartsSection() {
   const [monthlyStreamData, yearlyStreamData] = await Promise.all([
     getMonthlyStreamData(),
-    getYearlyStreamData()
+    getYearlyStreamData(),
+    delay(5000)
   ]);
 
   if (monthlyStreamData.length === 0 && yearlyStreamData.length === 0) return null;
@@ -146,7 +161,7 @@ async function StreamChartsSection() {
 }
 
 async function RecentListensSection() {
-  const listens = await getRecentListens({ limit: 50 });
+  const [listens] = await Promise.all([getRecentListens({ limit: 50 }), delay(5000)]);
 
   return (
     <div>
@@ -207,7 +222,7 @@ export default async function Home() {
         <NowPlaying />
 
         {/* Metrics Section */}
-        <Suspense fallback={<Loading />}>
+        <Suspense fallback={<MetricsSectionSkeleton />}>
           <MetricsSection />
         </Suspense>
 
@@ -226,17 +241,38 @@ export default async function Home() {
         />
 
         {/* Top Tracks Section */}
-        <Suspense fallback={<Loading />}>
+        <Suspense
+          fallback={
+            <ItemCarouselSkeleton
+              title="Top Tracks"
+              subtitle="Your top tracks from the past 4 weeks"
+            />
+          }
+        >
           <TopTracksSection />
         </Suspense>
 
         {/* Top Artists Section */}
-        <Suspense fallback={<Loading />}>
+        <Suspense
+          fallback={
+            <ItemCarouselSkeleton
+              title="Top Artists"
+              subtitle="Your top artists from the past 4 weeks"
+            />
+          }
+        >
           <TopArtistsSection />
         </Suspense>
 
         {/* Top Albums Section */}
-        <Suspense fallback={<Loading />}>
+        <Suspense
+          fallback={
+            <ItemCarouselSkeleton
+              title="Top Albums"
+              subtitle="Your top albums from the past 4 weeks"
+            />
+          }
+        >
           <TopAlbumsSection />
         </Suspense>
 
